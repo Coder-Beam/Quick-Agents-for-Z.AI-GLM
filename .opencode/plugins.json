@@ -1,0 +1,62 @@
+{
+  "plugins": {
+    "required": [
+      {
+        "name": "opencode-dcp",
+        "package": "@tarquinen/opencode-dcp",
+        "description": "动态上下文剪枝，Token优化",
+        "priority": "P0",
+        "optional": true
+      },
+      {
+        "name": "opencode-skillful",
+        "package": "@zenobius/opencode-skillful",
+        "description": "延迟加载技能发现和注入",
+        "priority": "P1",
+        "optional": true
+      },
+      {
+        "name": "opencode-worktree",
+        "package": "kdco/worktree",
+        "description": "Git worktree隔离开发环境",
+        "priority": "P2",
+        "optional": true
+      },
+      {
+        "name": "superpowers",
+        "package": "git+https://github.com/obra/superpowers.git",
+        "description": "完整的TDD开发方法论",
+        "priority": "P1",
+        "optional": true
+      }
+    ],
+    "recommended": [
+      {
+        "name": "ui-ux-pro-max-skill",
+        "source": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+        "description": "UI/UX设计智能助手 - 67种UI样式、96种颜色板、100条推理规则",
+        "installCommand": "npm install -g uipro-cli && uipro init --ai opencode",
+        "priority": "P1",
+        "category": "ui-ux",
+        "forProjectTypes": ["web", "mobile", "landing-page", "spa"],
+        "optional": true,
+        "features": [
+          "67种专业UI样式",
+          "96种行业颜色板",
+          "57种字体配对",
+          "自动设计系统生成",
+          "13种技术栈支持"
+        ]
+      }
+    ],
+    "checkOnStartup": true,
+    "autoInstall": false,
+    "promptUser": true
+  },
+  "notes": {
+    "plugin_check": "QuickAgents不会自动安装插件，但会在初始化时检查插件状态",
+    "user_control": "用户完全控制是否安装插件",
+    "fallback": "所有核心功能都有Skills作为后备，插件是增强功能",
+    "ui_ux_recommendation": "Web/Mobile项目推荐安装ui-ux-pro-max-skill以获得专业UI设计支持"
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "boulder-schema.json",
+  "title": "Boulder Progress Tracking System",
+  "description": "QuickAgents 跨会话进度追踪系统配置",
+  "type": "object",
+  "required": ["version", "status", "tasks"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Boulder 系统版本",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "active_plan": {
+      "type": ["string", "null"],
+      "description": "当前活跃的计划文件路径",
+      "default": null
+    },
+    "session_ids": {
+      "type": "array",
+      "description": "所有工作过的会话ID列表",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "started_at": {
+      "type": ["string", "null"],
+      "description": "开始时间（ISO 8601格式）",
+      "format": "date-time",
+      "default": null
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "description": "最后更新时间（ISO 8601格式）",
+      "format": "date-time",
+      "default": null
+    },
+    "plan_name": {
+      "type": ["string", "null"],
+      "description": "计划名称（人类可读）",
+      "default": null
+    },
+    "total_tasks": {
+      "type": "integer",
+      "description": "总任务数",
+      "minimum": 0,
+      "default": 0
+    },
+    "completed_tasks": {
+      "type": "integer",
+      "description": "已完成任务数",
+      "minimum": 0,
+      "default": 0
+    },
+    "current_task": {
+      "type": ["string", "null"],
+      "description": "当前正在执行的任务ID",
+      "default": null
+    },
+    "status": {
+      "type": "string",
+      "description": "当前状态",
+      "enum": ["idle", "in_progress", "paused", "completed", "failed"],
+      "default": "idle"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "元数据",
+      "properties": {
+        "project_name": {
+          "type": "string",
+          "description": "项目名称"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "创建者"
+        },
+        "tags": {
+          "type": "array",
+          "description": "标签",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "description": "任务列表",
+      "items": {
+        "$ref": "#/definitions/Task"
+      },
+      "default": []
+    },
+    "notepads": {
+      "type": "object",
+      "description": "笔记本记录",
+      "additionalProperties": {
+        "$ref": "#/definitions/Notepad"
+      },
+      "default": {}
+    },
+    "checkpoints": {
+      "type": "array",
+      "description": "检查点列表",
+      "items": {
+        "$ref": "#/definitions/Checkpoint"
+      },
+      "default": []
+    }
+  },
+  "definitions": {
+    "Task": {
+      "type": "object",
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "任务ID（如 T001）"
+        },
+        "name": {
+          "type": "string",
+          "description": "任务名称"
+        },
+        "status": {
+          "type": "string",
+          "description": "任务状态",
+          "enum": ["pending", "in_progress", "completed", "failed", "blocked"]
+        },
+        "started_at": {
+          "type": ["string", "null"],
+          "description": "开始时间",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": ["string", "null"],
+          "description": "完成时间",
+          "format": "date-time"
+        },
+        "priority": {
+          "type": "string",
+          "description": "优先级",
+          "enum": ["P0", "P1", "P2", "P3"],
+          "default": "P1"
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "依赖的任务ID",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "assigned_to": {
+          "type": ["string", "null"],
+          "description": "分配给的agent",
+          "default": null
+        },
+        "notes": {
+          "type": "string",
+          "description": "备注",
+          "default": ""
+        }
+      }
+    },
+    "Notepad": {
+      "type": "object",
+      "description": "笔记本记录",
+      "properties": {
+        "learnings": {
+          "type": "array",
+          "description": "学习点",
+          "items": {
+            "type": "string"
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "description": "决策记录",
+          "items": {
+            "$ref": "#/definitions/Decision"
+          }
+        },
+        "issues": {
+          "type": "array",
+          "description": "遇到的问题",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gotchas": {
+          "type": "array",
+          "description": "踩坑记录",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "description": "常用命令",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Decision": {
+      "type": "object",
+      "description": "决策记录",
+      "required": ["id", "content", "rationale"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "决策ID"
+        },
+        "content": {
+          "type": "string",
+          "description": "决策内容"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "决策理由"
+        },
+        "made_at": {
+          "type": "string",
+          "description": "决策时间",
+          "format": "date-time"
+        },
+        "made_by": {
+          "type": "string",
+          "description": "决策者"
+        }
+      }
+    },
+    "Checkpoint": {
+      "type": "object",
+      "description": "检查点",
+      "required": ["id", "created_at", "tasks_completed"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "检查点ID"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "创建时间",
+          "format": "date-time"
+        },
+        "tasks_completed": {
+          "type": "array",
+          "description": "已完成的任务ID",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "检查点描述"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "创建检查点的会话ID"
+        }
+      }
+    }
+  }
+}
