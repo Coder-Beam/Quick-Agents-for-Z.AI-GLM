@@ -2,10 +2,10 @@
 # YAML Front Matter - 元数据区
 memory_type: project
 created_at: 2026-03-22T10:00:00Z
-updated_at: 2026-03-26T05:15:00Z
-version: 2.8.0
-tags: [project, initialization, quickagent, enhancement]
-related_files: [AGENTS.md, TASKS.md, DESIGN.md, IMPLEMENTATION_PLAN.md]
+updated_at: 2026-03-26T06:30:00Z
+version: 2.0.1
+tags: [project, initialization, quickagent, documentation, i18n]
+related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
 ---
 
 # 项目记忆文件 (MEMORY.md)

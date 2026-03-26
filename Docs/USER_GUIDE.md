@@ -1,580 +1,456 @@
 # QuickAgents 用户指南
 
-> AI代理项目初始化系统 - 快速启动指南
+> 完整的用户使用指南，帮助您高效使用QuickAgents
 
 ---
 
 ## 目录
 
-1. [快速开始](#快速开始)
-2. [核心概念](#核心概念)
-3. [使用流程](#使用流程)
-4. [代理系统](#代理系统)
-5. [技能系统](#技能系统)
-6. [高级功能](#高级功能)
-7. [最佳实践](#最佳实践)
-8. [故障排查](#故障排查)
+- [快速入门](#快速入门)
+- [触发词](#触发词)
+- [命令](#命令)
+- [技能](#技能)
+- [工作流程](#工作流程)
+- [最佳实践](#最佳实践)
+- [常见问题](#常见问题)
 
 ---
 
-## 快速开始
+## 快速入门
 
-### 系统要求
+### 前置条件
 
-- **OpenCode CLI/Desktop**: v1.0+
-- **Node.js**: v16+ (可选，用于某些技能)
-- **Git**: v2.0+
+- 已安装 OpenCode CLI 或桌面版
+- 已安装 Git
+- Node.js（可选，用于CLI工具）
 
-### 安装
+### 首次设置
+
+1. 使用以下方式之一安装QuickAgents：
 
 ```bash
-# 克隆仓库
-git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
-cd Quick-Agents-for-Z.AI-GLM
+# 方式1：CLI安装
+npm install -g quickagents-cli
+qa init
 
-# 复制到你的项目
-cp -r .opencode /path/to/your/project/
-cp AGENTS.md /path/to/your/project/
+# 方式2：一句话提示词（推荐）
+# 粘贴到AI代理中：
+# Install and configure QuickAgents by following the instructions here:
+# https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md
 ```
 
-### 第一个项目
-
-在OpenCode中发送：
+2. 启动初始化：
 
 ```
 启动QuickAgent
 ```
 
-系统将自动：
-1. 检测项目类型（新项目/现有项目）
-2. 启动需求澄清流程
-3. 创建项目文档
-4. 生成任务清单
+3. 回答配置问题（仅首次）
+
+4. 完成需求问询（7层）
+
+5. 开始开发！
 
 ---
 
-## 核心概念
+## 触发词
 
-### 三维记忆系统
+QuickAgents响应以下触发词（大小写不敏感）：
 
-QuickAgents采用基于论文《Memory in the Age of AI Agents》的三维记忆系统：
+| 触发词 | 说明 |
+|--------|------|
+| `启动QuickAgent` | 推荐，启动项目初始化 |
+| `启动QuickAgents` | 兼容 |
+| `启动QA` | 简短形式 |
+| `Start QA` | 英文 |
 
-| 记忆类型 | 功能 | 示例 |
-|---------|------|------|
-| **Factual Memory** | 静态事实 | 项目名称、技术栈、约束条件 |
-| **Experiential Memory** | 动态经验 | 操作历史、踩坑记录、最佳实践 |
-| **Working Memory** | 当前状态 | 当前任务、进度、阻塞点 |
+### 触发后发生什么
 
-**跨会话恢复**：
-```bash
-# 使用start-work命令恢复工作
+1. 调用 **yinglong-init** 代理
+2. 检测项目类型（新项目/现有项目）
+3. 检查配置文件
+4. 开始需求问询（如果是新项目）
+5. 创建文档结构
+6. 创建标准代理（编程项目）
+
+---
+
+## 命令
+
+### /start-work
+
+**用途**：跨会话恢复
+
+**使用方法**：
+```
 /start-work
-
-# 或发送跨会话衔接提示词
-📍 跨会话衔接提示词...
 ```
 
-### Boulder进度追踪
+**功能**：
+- 读取 MEMORY.md 恢复上下文
+- 读取 boulder.json 恢复进度
+- 显示当前状态
+- 从中断处继续
 
-基于Oh-My-OpenAgent的跨会话进度管理：
-
-```json
-{
-  "session_id": "abc123",
-  "completed_tasks": 41,
-  "total_tasks": 44,
-  "current_task": "T015",
-  "notepad": {
-    "learnings": [...],
-    "decisions": [...],
-    "questions": [...],
-    "pitfalls": [...]
-  }
-}
-```
-
-### Category系统
-
-语义化任务分类，根据"做什么"自动选择配置：
-
-| Category | 用途 | 默认模型 |
-|----------|------|---------|
-| `visual-engineering` | UI开发、前端设计 | Gemini 2.0 Flash |
-| `ultrabrain` | 深度推理、复杂分析 | GPT-5.4 |
-| `quick` | 快速响应、简单任务 | GLM-5 Flash |
-| `planning` | 计划制定、需求分析 | GLM-5 |
+**何时使用**：
+- 开始新会话时
+- 从中断中恢复
+- 继续处理任务
 
 ---
 
-## 使用流程
+### /ultrawork
 
-### 新项目初始化
+**用途**：超高效任务执行
 
-1. **触发初始化**：
-   ```
-   启动QuickAgent
-   ```
-
-2. **需求澄清**（12轮递进式询问）：
-   - L1: 业务本质
-   - L2: 用户画像
-   - L3: 核心流程
-   - L4: 功能清单
-   - L5: 数据模型
-   - L6: 技术栈
-   - L7: 交付标准
-   - L8-L12: 深度细节
-
-3. **项目创建**：
-   - 生成`Docs/`目录结构
-   - 创建`MEMORY.md`、`TASKS.md`等文档
-   - 初始化`.opencode/`配置
-
-### 现有项目分析
-
-1. **触发分析**：
-   ```
-   启动QuickAgent
-   ```
-
-2. **系统自动检测**：
-   - 读取`package.json`/`Cargo.toml`等
-   - 分析目录结构
-   - 识别技术栈
-
-3. **询问意图**：
-   - 继续开发
-   - 重新开始
-   - 功能增强
-
-### 跨会话工作恢复
-
-```bash
-# 方法1：使用start-work命令
-/start-work
-
-# 方法2：使用跨会话衔接提示词
-📍 跨会话衔接提示词
-## 当前进度
-- 已完成：xxx
-- 进度：xx%
-...
+**使用方法**：
+```
+/ultrawork <任务描述>
 ```
 
----
-
-## 代理系统
-
-### 核心代理（6个）
-
-#### @yinglong-init
-项目初始化专家，负责：
-- 项目类型检测
-- 需求收集与澄清
-- 文档结构创建
-
-**使用示例**：
+**示例**：
 ```
-@yinglong-init 初始化一个Vue3+TypeScript项目
-```
-
-#### @boyi-consult
-需求分析专家，负责：
-- 12轮需求澄清
-- 需求文档生成
-- 可行性评估
-
-**使用示例**：
-```
-@boyi-consult 分析用户管理模块的需求
-```
-
-#### @chisongzi-advise
-技术栈推荐专家，负责：
-- 技术选型建议
-- 架构设计评估
-- 最佳实践推荐
-
-**使用示例**：
-```
-@chisongzi-advise 推荐一个实时聊天系统的技术栈
-```
-
-#### @cangjie-doc
-文档管理专家，负责：
-- 文档创建与更新
-- 文档同步
-- 知识图谱维护
-
-**使用示例**：
-```
-@cangjie-doc 更新API文档
-```
-
-#### @huodi-skill
-技能管理专家，负责：
-- 技能搜索与评估
-- 技能安装与配置
-- 技能优化建议
-
-**使用示例**：
-```
-@huodi-skill 推荐一个代码格式化的技能
-```
-
-#### @fenghou-orchestrate
-主调度器，负责：
-- 任务分解
-- 代理协调
-- 进度追踪
-
-**使用示例**：
-```
-@fenghou-orchestrate 完成用户认证功能的开发
-```
-
-### 质量代理（4个）
-
-#### @jianming-review
-代码审查，确保：
-- 代码质量
-- 最佳实践
-- 安全漏洞
-
-#### @lishou-test
-测试执行，负责：
-- 单元测试
-- 集成测试
-- E2E测试
-
-#### @mengzhang-security
-安全审计，检查：
-- 安全漏洞
-- 权限问题
-- 敏感信息泄露
-
-#### @hengge-perf
-性能分析，识别：
-- 性能瓶颈
-- 内存泄漏
-- 优化建议
-
-### 工具代理（4个）
-
-#### @kuafu-debug
-调试代理，帮助：
-- 问题诊断
-- Bug修复
-- 日志分析
-
-#### @gonggu-gonggu-refactor
-重构代理，负责：
-- 代码重构
-- 架构优化
-- 技术债务清理
-
-#### @huodi-deps
-依赖管理，处理：
-- 依赖安装
-- 版本升级
-- 冲突解决
-
-#### @hengge-cicd
-CI/CD管理，负责：
-- 流水线配置
-- 自动化部署
-- 环境管理
-
----
-
-## 技能系统
-
-### 核心技能（14个）
-
-#### inquiry-skill
-互动询问卡，实现12轮需求澄清。
-
-#### project-memory-skill
-三维记忆系统，管理项目知识。
-
-#### tdd-workflow-skill
-TDD工作流，实现RED-GREEN-REFACTOR循环。
-
-#### git-commit-skill
-Git提交规范，自动生成符合规范的提交信息。
-
-#### code-review-skill
-代码审查，两阶段审查方法论。
-
-#### category-system-skill
-Category系统，语义化任务分类。
-
-#### background-agents-skill
-后台代理，并行执行任务。
-
-#### boulder-tracking-skill
-Boulder进度追踪，跨会话恢复。
-
-#### skill-integration-skill
-技能整合，向导式技能添加。
-
-#### multi-model-skill
-多模型协同，智能路由和fallback。
-
-#### lsp-ast-skill
-LSP/AST集成，智能诊断和重构。
-
-#### ultrawork-command
-超高效工作命令，一键完成复杂任务。
-
-#### start-work-command
-工作恢复命令，跨会话衔接。
-
-#### todo-continuation-enforcer
-Todo强制完成，确保任务不中断。
-
-### 技能使用示例
-
-#### 1. 需求澄清
-```
-启动QuickAgent
-# 系统自动使用inquiry-skill进行12轮询问
-```
-
-#### 2. TDD开发
-```
-# 在编写任何功能代码前，先编写测试
-@jianming-review 检查这个模块的测试覆盖率
-```
-
-#### 3. Git提交
-```
-# 完成任务后自动触发git-commit-skill
-# 自动生成符合规范的提交信息
-```
-
-#### 4. 多模型协同
-```
-# 系统自动根据任务类型选择模型
-@fenghou-orchestrate 分析这个复杂的分布式系统设计
-# 自动使用ultrabrain category → GPT-5.4深度推理
-```
-
----
-
-## 高级功能
-
-### ultrawork命令
-
-一键完成复杂任务：
-
-```bash
 /ultrawork 实现用户认证功能
+/ultrawork 修复登录bug
+/ultrawork 为UserService添加单元测试
 ```
 
-系统将：
-1. 分解任务为子任务
-2. 并行执行可并行部分
-3. 串行执行依赖部分
-4. 自动协调多个代理
-5. 追踪进度并报告
+**功能**：
+- 分析任务复杂度
+- 调度合适的代理
+- 以最高效率执行
+- 实时报告进度
 
-### Background Agents
+---
 
-后台并行执行：
+### /run-workflow
 
-```json
-{
-  "background_tasks": [
-    {
-      "id": "task-1",
-      "agent": "lishou-test",
-      "command": "运行单元测试",
-      "status": "running"
-    },
-    {
-      "id": "task-2",
-      "agent": "jianming-review",
-      "command": "审查代码质量",
-      "status": "pending"
-    }
-  ],
-  "max_concurrent": 5
-}
+**用途**：运行预定义工作流
+
+**使用方法**：
+```
+/run-workflow <工作流名称>
 ```
 
-### Prometheus规划系统
+**可用工作流**：
+- `full-review` - 完整代码审查
+- `deploy` - 部署工作流
+- `test-all` - 运行所有测试
 
-三方协作规划：
+---
 
-| 代理 | 角色 | 职责 |
-|------|------|------|
-| **Prometheus** | 规划器 | 访谈式需求收集、计划生成 |
-| **Metis** | 顾问 | 可行性分析、专业建议 |
-| **Momus** | 审查员 | 质量审查、标准合规 |
+### /enable-coordination
 
-**使用示例**：
+**用途**：启用多代理协调
+
+**使用方法**：
 ```
-@fenghou-plan 为这个电商系统制定开发计划
-```
-
-### LSP/AST集成
-
-智能代码诊断和重构：
-
-**支持的LSP**：
-- TypeScript (typescript-language-server)
-- Python (pyright)
-- Rust (rust-analyzer)
-- Go (gopls)
-- Java (jdtls)
-- C++ (clangd)
-
-**AST搜索**：
-```bash
-# 搜索所有函数定义
-/ast-search "function $NAME($PARAMS) { $BODY }"
-
-# 重写代码模式
-/ast-rewrite "var $VAR = $VALUE" → "const $VAR = $VALUE"
+/enable-coordination
 ```
 
-### 多模型协同
+**功能**：
+- 启用代理协调模式
+- 允许多个代理协同工作
+- 改善复杂任务处理
 
-智能模型路由：
+---
 
-```json
-{
-  "categories": {
-    "visual-engineering": {
-      "primary": "gemini-2.0-flash",
-      "fallback": ["gpt-5.4", "glm-5"]
-    },
-    "ultrabrain": {
-      "primary": "gpt-5.4",
-      "fallback": ["glm-5-plus", "gemini-2.0-flash"]
-    },
-    "quick": {
-      "primary": "glm-5-flash",
-      "fallback": ["gpt-4o-mini"]
-    }
-  }
-}
+### /disable-coordination
+
+**用途**：禁用多代理协调
+
+**使用方法**：
+```
+/disable-coordination
+```
+
+**功能**：
+- 禁用代理协调模式
+- 返回单代理模式
+- 适用于简单任务
+
+---
+
+## 技能
+
+### 核心技能
+
+| 技能 | 用途 | 自动触发 |
+|------|------|----------|
+| project-memory-skill | 三维记忆管理 | 是 |
+| boulder-tracking-skill | 跨会话进度追踪 | 是 |
+| category-system-skill | 语义化任务分类 | 是 |
+
+### 开发技能
+
+| 技能 | 用途 | 自动触发 |
+|------|------|----------|
+| inquiry-skill | 7层需求问询 | 初始化时 |
+| tdd-workflow-skill | 测试驱动开发工作流 | 代码任务 |
+| code-review-skill | 代码质量审查 | 审查时 |
+| git-commit-skill | Git提交标准化 | 提交时 |
+
+### 工具技能
+
+| 技能 | 用途 | 自动触发 |
+|------|------|----------|
+| multi-model-skill | 多模型支持 | 是 |
+| lsp-ast-skill | LSP/AST代码分析 | 代码任务 |
+| project-detector-skill | 项目类型检测 | 初始化时 |
+| background-agents-skill | 并行代理执行 | 复杂任务 |
+| skill-integration-skill | Skill整合管理 | 手动 |
+
+---
+
+## 工作流程
+
+### 新项目工作流
+
+```
+1. 触发：启动QuickAgent
+   ↓
+2. yinglong-init 启动
+   ↓
+3. 项目类型检测
+   ↓
+4. 配置检查
+   ↓
+5. 首次设置（如需要）
+   ↓
+6. 7层需求问询
+   ↓
+7. 技术栈推荐
+   ↓
+8. 任务分解
+   ↓
+9. 开始执行
+```
+
+### 日常开发工作流
+
+```
+1. 向AI描述任务
+   ↓
+2. fenghou-orchestrate 分类任务
+   ↓
+3. 调度合适的代理
+   ↓
+4. 执行任务
+   ↓
+5. 质量检查（审查、测试）
+   ↓
+6. Git提交
+   ↓
+7. 更新记忆
+```
+
+### 调试工作流
+
+```
+1. 报告问题：@kuafu-debug <问题>
+   ↓
+2. kuafu-debug 分析问题
+   ↓
+3. 识别根本原因
+   ↓
+4. 实现修复
+   ↓
+5. 测试验证修复
+   ↓
+6. 代码审查
+   ↓
+7. 提交更改
 ```
 
 ---
 
 ## 最佳实践
 
-### 1. 需求澄清
+### 1. 始终使用触发词
 
-- **完整参与12轮询问**：不要跳过任何轮次
-- **提供具体答案**：避免模糊表述
-- **主动补充细节**：如果AI遗漏，主动补充
+始终使用 `启动QuickAgent` 进行初始化，确保行为一致。
 
-### 2. 任务执行
+### 2. 完成需求问询
 
-- **严格串行**：一个任务完成后再开始下一个
-- **立即提交**：完成任务后立即提交Git
-- **同步文档**：提交前更新MEMORY.md
+不要跳过7层需求问询，详细回答每个问题：
+- L1：业务本质
+- L2：用户画像
+- L3：核心流程
+- L4：功能清单
+- L5：数据模型
+- L6：技术栈
+- L7：交付标准
 
-### 3. 测试驱动
+### 3. 利用代理专业化
 
-- **先写测试**：在编写功能代码前先写测试
-- **保持覆盖率**：核心代码100%，非核心≥80%
-- **持续测试**：每次提交前运行测试
+为特定任务使用特定代理：
+- `@jianming-review` 代码审查
+- `@lishou-test` 测试执行
+- `@mengzhang-security` 安全审计
+- `@kuafu-debug` 问题调试
 
-### 4. 代码质量
+### 4. 使用跨会话恢复
 
-- **遵循规范**：参考AGENTS.md的代码风格
-- **使用代理**：用@jianming-review审查代码
-- **解决债务**：及时修复技术债务
+开始新会话时：
+```
+/start-work
+```
 
-### 5. 跨会话管理
+这会恢复你的上下文和进度。
 
-- **使用start-work**：每次会话开始时恢复工作
-- **更新boulder.json**：定期保存进度
-- **记录智慧**：在notepad中记录学习点
+### 5. 频繁提交
 
----
+让 git-commit-skill 处理提交：
+- 标准化提交信息
+- 提交前检查
+- 文档更新
 
-## 故障排查
+### 6. 保持记忆更新
 
-### 问题1：代理无法启动
+MEMORY.md 是项目的"大脑"，保持更新：
+- 记录重要决策
+- 记录经验教训
+- 追踪当前状态
 
-**症状**：发送`@agent-name`无响应
+### 7. 复杂任务使用 /ultrawork
 
-**解决方案**：
-1. 检查`.opencode/agents/`目录是否存在对应代理
-2. 检查代理配置文件格式是否正确
-3. 重启OpenCode CLI/Desktop
-
-### 问题2：技能加载失败
-
-**症状**：提示"Skill not found"
-
-**解决方案**：
-1. 检查`.opencode/skills/`目录结构
-2. 验证`SKILL.md`文件格式
-3. 检查`registry.json`配置
-
-### 问题3：跨会话恢复失败
-
-**症状**：无法恢复之前的工作进度
-
-**解决方案**：
-1. 检查`.quickagents/boulder.json`是否存在
-2. 验证session_id是否正确
-3. 使用完整的跨会话衔接提示词
-
-### 问题4：多模型协同异常
-
-**症状**：模型切换失败或响应异常
-
-**解决方案**：
-1. 检查`.opencode/config/models.json`配置
-2. 验证API密钥是否有效
-3. 检查网络连接和API配额
-
-### 问题5：LSP诊断不准确
-
-**症状**：LSP提供的诊断信息不正确
-
-**解决方案**：
-1. 检查`.opencode/config/lsp-config.json`配置
-2. 确保LSP服务器已正确安装
-3. 重启LSP服务器
+对于复杂的多步骤任务：
+```
+/ultrawork 实现完整的OAuth2用户认证系统
+```
 
 ---
 
-## 附录
+## 常见问题
 
-### 常用命令速查
+### Q: 如何开始一个新项目？
 
-| 命令 | 用途 |
-|------|------|
-| `/start-work` | 恢复工作 |
-| `/ultrawork <task>` | 超高效执行任务 |
-| `@agent-name` | 调用特定代理 |
-| `启动QuickAgent` | 初始化项目 |
+**A**: 只需使用触发词：
+```
+启动QuickAgent
+```
+系统会引导你完成整个过程。
 
-### 配置文件位置
+### Q: 关闭会话后如何继续工作？
 
-| 文件 | 位置 |
-|------|------|
-| 代理配置 | `.opencode/agents/*.md` |
-| 命令配置 | `.opencode/commands/*.md` |
-| 技能配置 | `.opencode/skills/*/SKILL.md` |
-| Category配置 | `.opencode/config/categories.json` |
-| 模型配置 | `.opencode/config/models.json` |
-| 进度追踪 | `.quickagents/boulder.json` |
+**A**: 使用恢复命令：
+```
+/start-work
+```
 
-### 获取帮助
+### Q: 如何调用特定代理？
 
-- **GitHub Issues**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/issues
-- **文档**: `Docs/`目录
-- **知识图谱**: `Docs/INDEX.md`
+**A**: 使用@提及：
+```
+@jianming-review 请审查这段代码
+```
+
+### Q: 如何更改模型配置？
+
+**A**: 编辑 `.opencode/config/models.json` 或运行：
+```
+@huodi-skill 更新模型配置
+```
+
+### Q: 如果我没有Z.ai订阅怎么办？
+
+**A**: 你可以在 `models.json` 中配置其他模型。QuickAgents支持：
+- Claude模型
+- GPT模型
+- Gemini模型
+- 本地模型
+
+### Q: 如何添加新的LSP语言？
+
+**A**: 编辑 `.opencode/config/lsp-config.json`：
+```json
+{
+  "languages": ["typescript", "python"],
+  "servers": {
+    "python": {
+      "command": "pyright-langserver",
+      "args": ["--stdio"]
+    }
+  }
+}
+```
+
+### Q: 如何创建自定义技能？
+
+**A**: 使用技能管理代理：
+```
+@huodi-skill 创建一个新的代码格式化技能
+```
+
+### Q: /ultrawork 和普通任务有什么区别？
+
+**A**: `/ultrawork` 优化用于：
+- 复杂的多步骤任务
+- 需要多个代理的任务
+- 需要并行执行的任务
+
+普通任务通过直接对话处理。
+
+### Q: 如何查看我的进度？
+
+**A**: 查看进度文件：
+```bash
+cat .quickagents/boulder.json
+```
+
+或询问AI：
+```
+当前进度如何？
+```
+
+### Q: 如何重置QuickAgents？
+
+**A**: 删除配置并重新初始化：
+```bash
+rm -rf .opencode
+rm -rf .quickagents
+rm AGENTS.md
+启动QuickAgent
+```
 
 ---
 
-*文档版本: v1.0 | 更新时间: 2026-03-25*
+## 快速参考卡
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    QuickAgents 快速参考                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  触发词                                                          │
+│  ─────────────────────────────────────────────────────────────  │
+│  启动QuickAgent  启动QuickAgents  启动QA  Start QA               │
+│                                                                  │
+│  命令                                                            │
+│  ─────────────────────────────────────────────────────────────  │
+│  /start-work      - 跨会话恢复                                   │
+│  /ultrawork       - 超高效执行                                   │
+│  /run-workflow    - 运行预定义工作流                              │
+│  /enable-coord    - 启用代理协调                                  │
+│  /disable-coord   - 禁用代理协调                                  │
+│                                                                  │
+│  常用代理                                                        │
+│  ─────────────────────────────────────────────────────────────  │
+│  @jianming-review  - 代码审查                                    │
+│  @lishou-test      - 测试执行                                    │
+│  @kuafu-debug      - 问题调试                                    │
+│  @cangjie-doc      - 文档编写                                    │
+│                                                                  │
+│  关键文件                                                        │
+│  ─────────────────────────────────────────────────────────────  │
+│  AGENTS.md                    - 开发规范                         │
+│  .opencode/config/models.json - 模型配置                         │
+│  Docs/MEMORY.md               - 项目记忆                         │
+│  .quickagents/boulder.json    - 进度追踪                         │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+*版本: 2.0.1 | 更新时间: 2026-03-26*
