@@ -144,10 +144,14 @@ TDD规范执行                → 强制RED-GREEN-REFACTOR循环
 ```
 
 **整合建议**：
+```bash
+# 安装superpowers（在OpenCode CLI或桌面版中执行）
+Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md
+```
+
 ```json
-// opencode.json
+// opencode.json（其他配置）
 {
-  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
   "skills.paths": [".opencode/skills"]
 }
 ```
@@ -319,18 +323,19 @@ QuickAgents需求              proactive-agent解决方案
 ### 阶段1：插件安装（1天）
 
 ```bash
-# 1. 安装OpenCode插件
-# 编辑 opencode.json
+# 1. 安装OpenCode插件（编辑 opencode.json）
 {
   "plugin": [
     "@tarquinen/opencode-dcp@latest",
     "@zenobius/opencode-skillful",
-    "kdco/worktree",
-    "superpowers@git+https://github.com/obra/superpowers.git"
+    "kdco/worktree"
   ]
 }
 
-# 2. 重启OpenCode
+# 2. 安装superpowers（在OpenCode CLI或桌面版中执行）
+Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md
+
+# 3. 重启OpenCode
 opencode restart
 ```
 

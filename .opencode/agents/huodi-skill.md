@@ -231,15 +231,15 @@ Step 6: 执行安装
 
 ### UI/UX类
 
-| Skill | 来源 | 描述 |
-|-------|------|------|
-| ui-ux-pro-max | github:nextlevelbuilder/ui-ux-pro-max-skill | 67种UI样式，自动设计系统生成 |
+| Skill | 来源 | 描述 | 安装方式 |
+|-------|------|------|----------|
+| ui-ux-pro-max | github:nextlevelbuilder/ui-ux-pro-max-skill | 67种UI样式，自动设计系统生成 | `npm install -g uipro-cli && uipro init --ai opencode` |
 
 ### 开发工具类
 
-| Skill | 来源 | 描述 |
-|-------|------|------|
-| superpowers | github:obra/superpowers | TDD开发方法论 |
+| Skill | 来源 | 描述 | 安装方式 |
+|-------|------|------|----------|
+| superpowers | github:obra/superpowers | TDD开发方法论 | `Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md` |
 
 ## 安全考虑
 

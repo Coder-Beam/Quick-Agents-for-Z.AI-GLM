@@ -214,8 +214,27 @@
 ### （〇）必需技能检查与安装
 
 新项目开始时，**必须首先检查**以下必需技能是否已安装并可正常使用：
-- **superpowers** (https://github.com/obra/superpowers) - 通用开发增强技能
-- **ui-ux-pro-max-skill** (https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) - UI/UX专项技能
+
+#### superpowers - 通用开发增强技能
+- **来源**: https://github.com/obra/superpowers
+- **安装方式**: 在OpenCode CLI或桌面版中执行以下指令
+  ```
+  Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md
+  ```
+
+#### ui-ux-pro-max-skill - UI/UX专项技能
+- **来源**: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+- **安装方式**: 
+  ```bash
+  # 安装CLI工具
+  npm install -g uipro-cli
+  
+  # 进入项目目录
+  cd /path/to/your/project
+  
+  # 为OpenCode安装
+  uipro init --ai opencode
+  ```
 
 若未安装或无法正常使用，**必须优先安装**，安装完成并验证后方可继续项目开发。安装过程需记录在项目 `MEMORY.md` 中。
 
