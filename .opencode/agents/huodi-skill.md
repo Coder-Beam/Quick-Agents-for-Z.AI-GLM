@@ -137,6 +137,78 @@ Step 6: 执行安装
 /add-skill npm:skill-package-name
 ```
 
+### /install-offline-skill
+
+离线安装skill（适用于网络受限环境）
+
+```bash
+# 从已安装项目复制skill
+/install-offline-skill /path/to/existing/project/.opencode/skills/ui-ux-pro-max
+
+# 从源码包安装（需要指定类型）
+/install-offline-skill /path/to/source/package/src/ui-ux-pro-max --type ui-ux
+
+# 支持的类型
+--type ui-ux      # UI/UX类skill，自动生成SKILL.md
+--type tdd        # TDD类skill
+--type general    # 通用skill（默认）
+```
+
+**工作流程**：
+
+```
+用户: /install-offline-skill /path/to/source --type ui-ux
+
+Step 1: 验证源路径
+├── 检查路径是否存在
+├── 检查必需文件（data/, scripts/）
+└── 验证文件完整性
+
+Step 2: 分析skill类型
+├── ui-ux类型: 需要 data/ + scripts/，自动生成SKILL.md
+├── tdd类型: 检查SKILL.md是否存在
+└── general类型: 直接复制整个目录
+
+Step 3: 执行安装
+├── 创建目标目录 .opencode/skills/{skill-name}/
+├── 复制文件（排除__pycache__等）
+├── 生成SKILL.md（如需要）
+└── 更新registry.json
+
+Step 4: 验证安装
+├── 检查SKILL.md可读性
+├── 测试scripts可执行性（如有）
+└── 生成安装报告
+```
+
+**支持的离线来源**：
+
+| 类型 | 必需文件 | SKILL.md | 说明 |
+|------|----------|----------|------|
+| 已安装副本 | SKILL.md + data/ + scripts/ | 已有 | 直接复制 |
+| 源码包(ui-ux) | data/ + scripts/ | 自动生成 | 从模板生成 |
+| 源码包(general) | SKILL.md | 必须存在 | 直接复制 |
+
+**ui-ux-pro-max-skill离线安装示例**：
+
+```bash
+# 方式1：从已安装项目复制
+/install-offline-skill C:/59GAME/.opencode/skills/ui-ux-pro-max
+
+# 方式2：从源码包安装
+/install-offline-skill D:/Projects/ui-ux-pro-max-skill-2.5.0/src/ui-ux-pro-max --type ui-ux
+```
+
+**superpowers离线安装示例**：
+
+```bash
+# 从已安装项目复制brainstorming skill
+/install-offline-skill /path/to/project/.opencode/skills/brainstorming
+
+# 复制整个superpowers目录（如果存在）
+/install-offline-skill /path/to/project/.opencode/skills/using-superpowers
+```
+
 ### /list-skills
 
 列出已安装的skills

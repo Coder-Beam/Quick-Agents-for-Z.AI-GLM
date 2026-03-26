@@ -321,21 +321,57 @@ metadata:
 
 ### UI/UX类
 
-| Skill | 来源 | 功能 | 安装方式 | 推荐度 |
-|-------|------|------|----------|--------|
-| ui-ux-pro-max | github:nextlevelbuilder/ui-ux-pro-max-skill | 67种UI样式，自动设计系统 | `npm install -g uipro-cli && uipro init --ai opencode` | ⭐⭐⭐⭐⭐ |
+| Skill | 来源 | 功能 | 在线安装 | 离线安装 | 推荐度 |
+|-------|------|------|----------|----------|--------|
+| ui-ux-pro-max | github:nextlevelbuilder/ui-ux-pro-max-skill | 67种UI样式，自动设计系统 | `npm install -g uipro-cli && uipro init --ai opencode` | `/install-offline-skill /path/to/skill --type ui-ux` | ⭐⭐⭐⭐⭐ |
 
 ### 开发工具类
 
-| Skill | 来源 | 功能 | 安装方式 | 推荐度 |
-|-------|------|------|----------|--------|
-| superpowers | github:obra/superpowers | TDD开发方法论 | `Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md` | ⭐⭐⭐⭐ |
+| Skill | 来源 | 功能 | 在线安装 | 离线安装 | 推荐度 |
+|-------|------|------|----------|----------|--------|
+| superpowers | github:obra/superpowers | TDD开发方法论 | `Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md` | `/install-offline-skill /path/to/skill` | ⭐⭐⭐⭐ |
 
 ### 代码质量类
 
 | Skill | 来源 | 功能 | 推荐度 |
 |-------|------|------|--------|
 | code-review-skill | 内置 | 代码审查方法论 | ⭐⭐⭐⭐⭐ |
+
+## 离线安装指南
+
+当网络受限时，可使用以下离线安装方式：
+
+### ui-ux-pro-max-skill 离线安装
+
+```bash
+# 方式1：从已安装项目复制
+/install-offline-skill /path/to/existing/project/.opencode/skills/ui-ux-pro-max
+
+# 方式2：从源码包安装
+/install-offline-skill /path/to/ui-ux-pro-max-skill-x.x.x/src/ui-ux-pro-max --type ui-ux
+
+# 方式3：CLI离线模式
+npm install -g uipro-cli
+uipro init --ai opencode --offline
+```
+
+### superpowers 离线安装
+
+```bash
+# 从已安装项目复制
+/install-offline-skill /path/to/existing/project/.opencode/skills/brainstorming
+/install-offline-skill /path/to/existing/project/.opencode/skills/using-superpowers
+```
+
+### 验证安装
+
+```bash
+# 验证ui-ux-pro-max
+python3 .opencode/skills/ui-ux-pro-max/scripts/search.py "test" --domain style -n 1
+
+# 验证superpowers
+# 检查skill是否出现在available_skills列表中
+```
 
 ## 最佳实践
 

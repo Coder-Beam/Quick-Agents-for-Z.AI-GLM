@@ -217,26 +217,51 @@
 
 #### superpowers - 通用开发增强技能
 - **来源**: https://github.com/obra/superpowers
-- **安装方式**: 在OpenCode CLI或桌面版中执行以下指令
+- **安装方式**（任选其一）:
   ```
+  # 方式1：在线安装（推荐）
   Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.opencode/INSTALL.md
+  
+  # 方式2：离线安装（网络受限时）
+  # 从已安装项目复制 .opencode/skills/ 下的superpowers相关目录
+  /install-offline-skill /path/to/existing/project/.opencode/skills/brainstorming
   ```
 
 #### ui-ux-pro-max-skill - UI/UX专项技能
 - **来源**: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
-- **安装方式**: 
+- **安装方式**（任选其一）:
   ```bash
-  # 安装CLI工具
+  # 方式1：CLI在线安装（推荐）
   npm install -g uipro-cli
-  
-  # 进入项目目录
   cd /path/to/your/project
-  
-  # 为OpenCode安装
   uipro init --ai opencode
+  
+  # 方式2：CLI离线安装（网络受限时）
+  npm install -g uipro-cli
+  cd /path/to/your/project
+  uipro init --ai opencode --offline
+  
+  # 方式3：直接复制（从已安装项目）
+  # 复制整个ui-ux-pro-max文件夹到目标项目
+  cp -r /path/to/existing/project/.opencode/skills/ui-ux-pro-max .opencode/skills/
+  
+  # 方式4：从源码包安装
+  # 源码包结构：src/ui-ux-pro-max/data/ + src/ui-ux-pro-max/scripts/ + 生成SKILL.md
+  /install-offline-skill /path/to/ui-ux-pro-max-skill-x.x.x/src/ui-ux-pro-max --type ui-ux
   ```
 
 若未安装或无法正常使用，**必须优先安装**，安装完成并验证后方可继续项目开发。安装过程需记录在项目 `MEMORY.md` 中。
+
+#### 离线安装验证
+
+安装后验证skill是否可用：
+```bash
+# 验证ui-ux-pro-max
+python3 .opencode/skills/ui-ux-pro-max/scripts/search.py "test" --domain style -n 1
+
+# 验证superpowers
+# 检查skill是否出现在available_skills列表中
+```
 
 ### （一）测试驱动开发（TDD）与Red/Green法则
 
