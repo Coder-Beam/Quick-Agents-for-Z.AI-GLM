@@ -1,0 +1,234 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "QuickAgents Category System Configuration",
+  
+  "categories": {
+    "visual-engineering": {
+      "description": "前端开发、UI/UX设计、样式、动画等视觉相关工作",
+      "model": "gemini-2.0-flash-exp",
+      "temperature": 0.7,
+      "prompt_append": "你是一位资深的前端工程师和UI/UX设计师。专注于创建美观、响应式、用户友好的界面。注重设计细节、动画流畅度和用户体验。",
+      "reasoning_effort": "medium",
+      "use_cases": [
+        "前端组件开发",
+        "UI/UX设计",
+        "样式调整",
+        "动画实现",
+        "响应式布局"
+      ]
+    },
+    
+    "ultrabrain": {
+      "description": "深度逻辑推理、复杂架构决策、需要大量分析的任务",
+      "model": "glm-5",
+      "temperature": 0.1,
+      "prompt_append": "你是一位系统架构师和战略顾问。运用深度逻辑推理能力，进行复杂的架构设计和决策分析。注重长期可维护性、扩展性和最佳实践。",
+      "reasoning_effort": "high",
+      "thinking": {
+        "type": "enabled",
+        "budget_tokens": 16000
+      },
+      "use_cases": [
+        "系统架构设计",
+        "技术选型决策",
+        "复杂问题分析",
+        "性能优化策略",
+        "安全架构设计"
+      ]
+    },
+    
+    "deep": {
+      "description": "目标导向的自主问题解决，行动前进行深入研究",
+      "model": "glm-5",
+      "temperature": 0.2,
+      "prompt_append": "你是一位深入研究型工程师。在采取行动前，先彻底研究代码库、理解现有模式、分析依赖关系。确保解决方案与现有系统完美融合。",
+      "reasoning_effort": "medium",
+      "use_cases": [
+        "代码库深度分析",
+        "复杂重构",
+        "遗留系统理解",
+        "跨模块协调",
+        "技术债务清理"
+      ]
+    },
+    
+    "artistry": {
+      "description": "高度创造性或艺术性任务、创新想法",
+      "model": "gemini-2.0-flash-exp",
+      "temperature": 0.9,
+      "prompt_append": "你是一位创意工程师。大胆创新，打破常规，探索新颖的解决方案。不惧怕尝试新方法，从失败中学习。",
+      "use_cases": [
+        "创新功能设计",
+        "实验性开发",
+        "创意问题解决",
+        "新框架探索"
+      ]
+    },
+    
+    "quick": {
+      "description": "简单任务 - 单文件修改、拼写错误、简单调整",
+      "model": "glm-4-flash",
+      "temperature": 0.3,
+      "prompt_append": "你是一位高效的快速修复专家。快速、准确地完成简单任务。不要过度设计，直接解决问题。",
+      "reasoning_effort": "low",
+      "use_cases": [
+        "拼写错误修复",
+        "简单重构",
+        "配置调整",
+        "文档更新",
+        "小bug修复"
+      ]
+    },
+    
+    "unspecified-low": {
+      "description": "不符合其他类别的任务，低复杂度",
+      "model": "glm-4-flash",
+      "temperature": 0.3,
+      "prompt_append": "通用低复杂度任务处理。高效、准确地完成分配的工作。",
+      "reasoning_effort": "low"
+    },
+    
+    "unspecified-high": {
+      "description": "不符合其他类别的任务，高复杂度",
+      "model": "glm-5",
+      "temperature": 0.2,
+      "prompt_append": "通用高复杂度任务处理。运用全面的分析能力，系统化地解决问题。",
+      "reasoning_effort": "high",
+      "thinking": {
+        "type": "enabled",
+        "budget_tokens": 8000
+      }
+    },
+    
+    "writing": {
+      "description": "文档编写、技术写作、说明文档",
+      "model": "gemini-2.0-flash-exp",
+      "temperature": 0.5,
+      "prompt_append": "你是一位技术文档专家。编写清晰、准确、易于理解的文档。注重结构、逻辑和可读性。",
+      "use_cases": [
+        "API文档",
+        "用户指南",
+        "README编写",
+        "技术博客",
+        "代码注释"
+      ]
+    },
+    
+    "testing": {
+      "description": "测试编写、测试框架、测试策略",
+      "model": "glm-5",
+      "temperature": 0.1,
+      "prompt_append": "你是一位测试专家。编写全面、可靠的测试用例。注重边界条件、异常处理和测试覆盖率。",
+      "use_cases": [
+        "单元测试",
+        "集成测试",
+        "E2E测试",
+        "测试策略设计"
+      ]
+    },
+    
+    "debugging": {
+      "description": "调试、问题诊断、错误修复",
+      "model": "glm-5",
+      "temperature": 0.1,
+      "prompt_append": "你是一位调试专家。系统化地诊断问题、分析日志、追踪错误根源。注重根本原因分析而非表面修复。",
+      "use_cases": [
+        "Bug诊断",
+        "性能问题分析",
+        "错误追踪",
+        "日志分析"
+      ]
+    }
+  },
+  
+  "mapping_rules": {
+    "keywords": {
+      "visual-engineering": [
+        "UI", "ux", "界面", "前端", "样式", "CSS", "动画", "布局",
+        "响应式", "组件", "页面", "设计", "视觉效果"
+      ],
+      "ultrabrain": [
+        "架构", "设计", "决策", "策略", "规划", "优化", "分析",
+        "评估", "选型", "方案", "系统设计"
+      ],
+      "deep": [
+        "重构", "迁移", "研究", "分析", "理解", "深入", "遗留",
+        "技术债", "复杂", "跨模块"
+      ],
+      "artistry": [
+        "创新", "创意", "实验", "新颖", "探索", "尝试", "突破"
+      ],
+      "quick": [
+        "修复", "fix", "改", "更新", "简单", "快速", "小", "拼写"
+      ],
+      "writing": [
+        "文档", "readme", "说明", "指南", "注释", "doc", "文档化"
+      ],
+      "testing": [
+        "测试", "test", "单元测试", "集成测试", "覆盖率", "验证"
+      ],
+      "debugging": [
+        "调试", "debug", "问题", "错误", "bug", "诊断", "修复", "失败"
+      ]
+    },
+    
+    "file_patterns": {
+      "visual-engineering": [
+        "*.tsx", "*.jsx", "*.vue", "*.css", "*.scss", "*.less",
+        "*/components/*", "*/pages/*", "*/views/*"
+      ],
+      "testing": [
+        "*.test.ts", "*.spec.ts", "*.test.js", "*.spec.js",
+        "*/tests/*", "*/__tests__/*"
+      ],
+      "writing": [
+        "*.md", "README*", "CHANGELOG*", "*/docs/*"
+      ]
+    },
+    
+    "complexity_detection": {
+      "simple": {
+        "max_files": 1,
+        "max_lines": 50,
+        "keywords": ["修复", "fix", "改", "rename", "拼写", "简单"]
+      },
+      "medium": {
+        "max_files": 5,
+        "max_lines": 200,
+        "keywords": ["实现", "implement", "添加", "add", "创建", "create"]
+      },
+      "complex": {
+        "min_files": 6,
+        "min_lines": 201,
+        "keywords": ["重构", "refactor", "迁移", "migrate", "架构", "architecture"]
+      }
+    }
+  },
+  
+  "model_fallback": {
+    "visual-engineering": ["gemini-2.0-flash-exp", "glm-5", "glm-4-flash"],
+    "ultrabrain": ["glm-5", "gemini-2.0-flash-exp", "glm-4-flash"],
+    "deep": ["glm-5", "gemini-2.0-flash-exp", "glm-4-flash"],
+    "artistry": ["gemini-2.0-flash-exp", "glm-5", "glm-4-flash"],
+    "quick": ["glm-4-flash", "glm-5", "gemini-2.0-flash-exp"],
+    "unspecified-low": ["glm-4-flash", "glm-5"],
+    "unspecified-high": ["glm-5", "gemini-2.0-flash-exp", "glm-4-flash"],
+    "writing": ["gemini-2.0-flash-exp", "glm-5", "glm-4-flash"],
+    "testing": ["glm-5", "glm-4-flash", "gemini-2.0-flash-exp"],
+    "debugging": ["glm-5", "glm-4-flash", "gemini-2.0-flash-exp"]
+  },
+  
+  "custom_categories": {
+    "_comment": "在此添加自定义 Category",
+    "_example": {
+      "my-custom-category": {
+        "description": "自定义类别示例",
+        "model": "glm-5",
+        "temperature": 0.5,
+        "prompt_append": "自定义提示词",
+        "use_cases": ["示例用例"]
+      }
+    }
+  }
+}

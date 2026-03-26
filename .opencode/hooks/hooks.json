@@ -1,0 +1,153 @@
+{
+  "$schema": "https://opencode.ai/schemas/hooks.json",
+  "version": "1.0.0",
+  "description": "QuickAgents Hooks Configuration - 自动化钩子系统",
+  "enabled": true,
+  "hooks": {
+    "pre-tool": {
+      "description": "工具执行前钩子",
+      "enabled": true,
+      "timeout": 30000,
+      "hooks": [
+        {
+          "name": "secret-detector",
+          "script": "pre-tool/secret-detector.sh",
+          "enabled": true,
+          "priority": 100,
+          "description": "检测敏感信息泄露",
+          "triggers": ["write", "edit", "bash"]
+        },
+        {
+          "name": "file-protector",
+          "script": "pre-tool/file-protector.sh",
+          "enabled": true,
+          "priority": 90,
+          "description": "保护关键文件不被修改",
+          "triggers": ["write", "edit"],
+          "protectedFiles": [
+            ".env",
+            ".env.*",
+            "*.pem",
+            "*.key",
+            "credentials.json",
+            "secrets.json"
+          ]
+        }
+      ]
+    },
+    "post-tool": {
+      "description": "工具执行后钩子",
+      "enabled": true,
+      "timeout": 60000,
+      "hooks": [
+        {
+          "name": "auto-formatter",
+          "script": "post-tool/auto-formatter.sh",
+          "enabled": true,
+          "priority": 50,
+          "description": "自动格式化代码",
+          "triggers": ["write", "edit"],
+          "filePatterns": ["*.ts", "*.js", "*.json", "*.md"]
+        },
+        {
+          "name": "type-checker",
+          "script": "post-tool/type-checker.sh",
+          "enabled": true,
+          "priority": 40,
+          "description": "类型检查",
+          "triggers": ["write", "edit"],
+          "filePatterns": ["*.ts", "*.tsx"]
+        }
+      ]
+    },
+    "pre-commit": {
+      "description": "Git提交前钩子",
+      "enabled": true,
+      "timeout": 120000,
+      "hooks": [
+        {
+          "name": "test-runner",
+          "script": "pre-commit/test-runner.sh",
+          "enabled": true,
+          "priority": 100,
+          "description": "运行相关测试",
+          "runOnChangedFilesOnly": true
+        },
+        {
+          "name": "lint-check",
+          "script": "pre-commit/lint-check.sh",
+          "enabled": true,
+          "priority": 90,
+          "description": "代码质量检查",
+          "fixOnFail": true
+        }
+      ]
+    },
+    "session": {
+      "description": "会话生命周期钩子",
+      "enabled": true,
+      "hooks": [
+        {
+          "name": "env-check",
+          "script": "session/env-check.sh",
+          "enabled": true,
+          "priority": 100,
+          "description": "环境检查",
+          "trigger": "start"
+        },
+        {
+          "name": "metrics-logger",
+          "script": "session/metrics-logger.sh",
+          "enabled": true,
+          "priority": 50,
+          "description": "会话指标记录",
+          "trigger": "end"
+        }
+      ]
+    },
+    "task": {
+      "description": "任务生命周期钩子",
+      "enabled": true,
+      "hooks": [
+        {
+          "name": "task-validator",
+          "script": "task/task-validator.sh",
+          "enabled": true,
+          "priority": 100,
+          "description": "任务开始前验证",
+          "trigger": "before"
+        },
+        {
+          "name": "task-completer",
+          "script": "task/task-completer.sh",
+          "enabled": true,
+          "priority": 50,
+          "description": "任务完成后处理",
+          "trigger": "after"
+        }
+      ]
+    },
+    "notification": {
+      "description": "通知钩子",
+      "enabled": true,
+      "hooks": [
+        {
+          "name": "desktop-notify",
+          "script": "notification/desktop-notify.sh",
+          "enabled": true,
+          "priority": 100,
+          "description": "桌面通知",
+          "events": ["task_complete", "error", "review_required"]
+        }
+      ]
+    }
+  },
+  "globalSettings": {
+    "logLevel": "info",
+    "logFile": ".opencode/logs/hooks.log",
+    "failFast": true,
+    "parallel": false,
+    "retryCount": 2,
+    "retryDelay": 1000
+  }
+}
