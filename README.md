@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
-[![Version](https://img.shields.io/badge/Version-2.0.1-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
+[![Version](https://img.shields.io/badge/Version-2.1.0-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
 [![npm](https://img.shields.io/badge/npm-quickagents--cli-red.svg)](https://www.npmjs.com/package/quickagents-cli)
 
 **[中文](#quickagents---ai-代理项目初始化系统)** | **English**
@@ -70,8 +70,9 @@ Based on the paper "Memory in the Age of AI Agents":
 | **Tools** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
 | **Planning** | fenghou-plan, boyi-consult, jianming-review |
 
-### 📦 12 Specialized Skills
+### 📦 18 Specialized Skills
 
+#### Core Skills (12)
 | Skill | Purpose |
 |-------|---------|
 | project-memory-skill | Three-dimensional memory management |
@@ -86,6 +87,16 @@ Based on the paper "Memory in the Age of AI Agents":
 | project-detector-skill | Project type detection |
 | background-agents-skill | Parallel agent execution |
 | skill-integration-skill | Skill integration management |
+
+#### Research-Based Skills (6) - v2.1.0
+| Skill | Purpose | Source |
+|-------|---------|--------|
+| lazy-discovery-skill | Lazy tool loading, 50%+ context reduction | OpenDev |
+| event-reminder-skill | Event-driven reminders, anti-instruction-fade | OpenDev |
+| doom-loop-skill | Loop detection, prevent repeated calls | OpenDev |
+| adaptive-compression-skill | Adaptive compression, 54% peak reduction | VeRO |
+| vero-evaluation-skill | Versioned evaluation (V-E-R-O) | VeRO |
+| aci-design-skill | ACI design principles | SWE-agent |
 
 ### 📚 Complete Documentation System
 
@@ -182,7 +193,7 @@ your-project/
 │
 ├── .opencode/             # OpenCode configuration
 │   ├── agents/            # 17 professional agents
-│   ├── skills/            # 12 specialized skills
+│   ├── skills/            # 18 specialized skills
 │   ├── commands/          # 6 core commands
 │   ├── hooks/             # Automation hooks
 │   ├── config/            # Configuration files
@@ -235,7 +246,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*Version: 2.0.1 | Last Updated: 2026-03-26*
+*Version: 2.1.0 | Last Updated: 2026-03-27*
 
 ---
 
@@ -306,8 +317,9 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 | **工具** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
 | **规划** | fenghou-plan, boyi-consult, jianming-review |
 
-### 📦 12个专项技能
+### 📦 18个专项技能
 
+#### 核心技能 (12个)
 | 技能 | 用途 |
 |------|------|
 | project-memory-skill | 三维记忆管理 |
@@ -322,6 +334,16 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 | project-detector-skill | 项目类型检测 |
 | background-agents-skill | 并行代理执行 |
 | skill-integration-skill | Skill整合管理 |
+
+#### 研究论文技能 (6个) - v2.1.0新增
+| 技能 | 用途 | 来源 |
+|------|------|------|
+| lazy-discovery-skill | 工具懒加载，减少上下文50%+ | OpenDev |
+| event-reminder-skill | 事件驱动提醒，对抗指令遗忘 | OpenDev |
+| doom-loop-skill | 循环检测，防止重复调用 | OpenDev |
+| adaptive-compression-skill | 自适应压缩，峰值减少54% | VeRO |
+| vero-evaluation-skill | 版本化评估(V-E-R-O) | VeRO |
+| aci-design-skill | ACI设计原则 | SWE-agent |
 
 ### 📚 完整文档体系
 
@@ -418,7 +440,7 @@ your-project/
 │
 ├── .opencode/             # OpenCode配置
 │   ├── agents/            # 17个专业代理
-│   ├── skills/            # 12个专项技能
+│   ├── skills/            # 18个专项技能
 │   ├── commands/          # 6个核心命令
 │   ├── hooks/             # 自动化钩子
 │   ├── config/            # 配置文件
@@ -471,4 +493,4 @@ your-project/
 
 ---
 
-*版本: 2.0.1 | 更新时间: 2026-03-26*
+*版本: 2.1.0 | 更新时间: 2026-03-27*
