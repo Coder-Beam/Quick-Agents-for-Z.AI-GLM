@@ -191,7 +191,7 @@ Main configuration file controlling QuickAgents' core behavior:
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "triggerWords": [
     "启动QuickAgent",
     "启动QuickAgents",
@@ -219,7 +219,7 @@ Task classification configuration for intelligent model selection:
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "categories": {
     "quick": {
       "description": "Quick tasks",
@@ -246,7 +246,7 @@ LSP server configuration supporting multiple languages:
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "languages": ["typescript", "python", "rust"],
   "ast-grep": true,
   "servers": {
@@ -428,9 +428,9 @@ Memory is stored in `MEMORY.md` file using a hybrid format:
 ---
 # YAML Front Matter - Metadata
 memory_type: project | feature | module
-created_at: 2026-03-26T10:00:00Z
-updated_at: 2026-03-26T15:30:00Z
-version: 2.0.1
+created_at: 2026-03-27T10:00:00Z
+updated_at: 2026-03-27T15:30:00Z
+version: 2.1.0
 tags: [tag1, tag2, tag3]
 ---
 
@@ -461,4 +461,4 @@ tags: [tag1, tag2, tag3]
 
 ---
 
-*Version: 2.0.1 | Last Updated: 2026-03-26*
+*Version: 2.1.0 | Last Updated: 2026-03-27*

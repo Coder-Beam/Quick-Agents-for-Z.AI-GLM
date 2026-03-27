@@ -191,7 +191,7 @@ QuickAgents/
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "triggerWords": [
     "启动QuickAgent",
     "启动QuickAgents",
@@ -219,7 +219,7 @@ QuickAgents/
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "categories": {
     "quick": {
       "description": "快速任务",
@@ -246,7 +246,7 @@ LSP服务器配置，支持多语言：
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "languages": ["typescript", "python", "rust"],
   "ast-grep": true,
   "servers": {
@@ -428,9 +428,9 @@ LSP服务器配置，支持多语言：
 ---
 # YAML Front Matter - 元数据区
 memory_type: project | feature | module
-created_at: 2026-03-26T10:00:00Z
-updated_at: 2026-03-26T15:30:00Z
-version: 2.0.1
+created_at: 2026-03-27T10:00:00Z
+updated_at: 2026-03-27T15:30:00Z
+version: 2.1.0
 tags: [tag1, tag2, tag3]
 ---
 
@@ -461,4 +461,4 @@ tags: [tag1, tag2, tag3]
 
 ---
 
-*版本: 2.0.1 | 更新时间: 2026-03-26*
+*版本: 2.1.0 | 更新时间: 2026-03-27*

@@ -162,7 +162,7 @@ Based on user's subscription, generate `.opencode/config/models.json`:
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "primary": "zai-coding-plan/glm-5",
   "categories": {
     "quick": "zai-coding-plan/glm-5-flash",
@@ -179,7 +179,7 @@ Based on user's subscription, generate `.opencode/config/models.json`:
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "primary": "opencode/glm-5",
   "categories": {
     "quick": "opencode/glm-5-flash",
@@ -198,7 +198,7 @@ Based on user's subscription, generate `.opencode/config/models.json`:
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "primary": "anthropic/claude-opus-4-6",
   "categories": {
     "quick": "opencode/glm-5-flash",
@@ -223,7 +223,7 @@ Based on user's development language, generate `.opencode/config/lsp-config.json
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "languages": ["typescript"],
   "ast-grep": true,
   "servers": {
@@ -239,7 +239,7 @@ Based on user's development language, generate `.opencode/config/lsp-config.json
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "languages": ["typescript", "python", "rust"],
   "ast-grep": true,
   "servers": {
@@ -404,4 +404,4 @@ cat .opencode/config/models.json | python -m json.tool
 
 ---
 
-*Version: 2.0.1 | Last Updated: 2026-03-26*
+*Version: 2.1.0 | Last Updated: 2026-03-27*
