@@ -1,8 +1,8 @@
-# QuickAgents v2.0.1 Release Notes
+# QuickAgents v2.1.0 Release Notes
 
-> AI代理项目初始化系统 - 首个正式版本
+> AI代理项目初始化系统 - 增强版本
 
-**发布日期**: 2026-03-25
+**发布日期**: 2026-03-27
 
 ---
 
@@ -198,6 +198,53 @@ node tests/run-all-tests.js
 
 ---
 
+## 🆕 v2.1.0 更新内容
+
+### 新增Skills（基于OpenDev/VeRO/SWE-agent论文）
+
+#### P0 优先级 - 立即可实施
+| Skill | 功能 | 来源 |
+|-------|------|------|
+| `lazy-discovery-skill` | 工具懒加载，减少初始上下文50%+ | OpenDev |
+| `event-reminder-skill` | 事件驱动提醒，对抗指令遗忘 | OpenDev |
+| `doom-loop-skill` | 循环检测机制，防止重复调用 | OpenDev |
+
+#### P1 优先级 - 短期可实施
+| Skill | 功能 | 来源 |
+|-------|------|------|
+| `adaptive-compression-skill` | 自适应压缩策略，峰值上下文减少54% | OpenDev |
+| `vero-evaluation-skill` | 版本化评估体系(V-E-R-O) | VeRO |
+
+#### P2 优先级 - 中期可实施
+| Skill | 功能 | 来源 |
+|-------|------|------|
+| `aci-design-skill` | ACI设计原则(4大原则) | SWE-agent |
+
+### 新增配置和目录
+- `.opencode/evaluation/vero-config.yaml` - VeRO评估配置
+- `.opencode/snapshots/` - 快照存储目录
+- `.opencode/traces/` - 追踪记录目录
+
+### AGENTS.md 更新
+- 新增「八、事件驱动提醒机制」章节
+- 新增「九、ACI设计原则」章节
+- 添加压缩阈值策略(70%/80%/85%/90%/99%)
+- 添加Doom-Loop防护配置
+- 添加核心常量定义
+
+### 核心常量
+```python
+MAX_UNDO_HISTORY = 50
+DOOM_LOOP_THRESHOLD = 3
+DOOM_LOOP_WINDOW = 20
+MAX_CONCURRENT_TOOLS = 5
+TOOL_OUTPUT_OFFLOAD_THRESHOLD = 8000
+MAX_TOOL_RESULT_SUMMARY = 300
+SUBAGENT_ITERATION_LIMIT = 15
+```
+
+---
+
 ## 🗺️ 路线图
 
 ### v1.1.0（计划）
@@ -236,4 +283,4 @@ MIT License
 
 ---
 
-*QuickAgents v2.0.1 - 让AI代理开发更简单*
+*QuickAgents v2.1.0 - 让AI代理开发更简单*
