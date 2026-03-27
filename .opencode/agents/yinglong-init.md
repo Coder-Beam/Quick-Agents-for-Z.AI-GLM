@@ -919,6 +919,85 @@ ui-ux-pro-max-skill 支持以下技术栈：
 
 ---
 
+## 工具懒加载机制
+
+基于OpenDev论文(lazy-discovery-skill)，减少初始上下文负担50%+。
+
+### 核心工具（始终加载）
+
+```yaml
+CORE_TOOLS:
+  - bash      # 执行命令
+  - read      # 读取文件
+  - write     # 写入文件
+  - edit      # 编辑文件
+```
+
+### 任务类型工具映射
+
+```yaml
+TASK_TYPE_TOOLS:
+  code_review:
+    - grep        # 内容搜索
+    - glob        # 文件匹配
+    - skill       # 技能调用
+    
+  ui_design:
+    - skill       # ui-ux-pro-max
+    - read
+    - write
+    
+  testing:
+    - bash
+    - read
+    - skill       # tdd-workflow
+    
+  debugging:
+    - bash
+    - grep
+    - read
+    - skill       # systematic-debugging
+    
+  documentation:
+    - read
+    - write
+    - edit
+    - glob
+```
+
+### 懒加载触发逻辑
+
+```
+任务开始
+    ↓
+分析任务类型（从用户描述中提取关键词）
+    ↓
+识别需要的工具集
+    ↓
+检查工具是否已加载
+    ├─ 已加载 → 直接使用
+    └─ 未加载 → 动态加载 + 记录日志
+    ↓
+执行任务
+```
+
+### Token节省估算
+
+```
+全量加载: ~5000 tokens (所有工具描述)
+核心加载: ~1500 tokens (4个核心工具)
+节省: ~3500 tokens (70%)
+```
+
+### 与事件驱动提醒集成
+
+懒加载机制与event-reminder-skill配合：
+- 工具加载时检查上下文压力
+- 超过70%时优先使用已加载工具
+- 超过85%时延迟加载非必要工具
+
+---
+
 ## 注意事项
 
 1. **最小干预原则**：优先快速模式，仅必要时使用深度模式
