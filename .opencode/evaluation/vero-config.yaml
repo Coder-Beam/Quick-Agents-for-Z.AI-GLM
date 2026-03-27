@@ -1,0 +1,111 @@
+# VeRO Evaluation Configuration
+# 基于VeRO论文 (arXiv:2602.22480) 的评估配置
+
+version: "1.0"
+enabled: true
+
+# 版本化快照配置
+versioning:
+  enabled: true
+  snapshot_dir: ".opencode/snapshots/"
+  max_snapshots: 10
+  auto_snapshot:
+    - task_start        # 任务开始时
+    - test_pass         # 测试通过时
+    - git_commit        # Git提交时
+    - task_complete     # 任务完成时
+    - error_recovery    # 错误恢复时
+
+# 奖励评估配置
+rewards:
+  metrics:
+    task_completion_rate:
+      weight: 0.30
+      description: "任务完成率"
+      
+    test_pass_rate:
+      weight: 0.25
+      description: "测试通过率"
+      
+    code_quality_score:
+      weight: 0.20
+      description: "代码质量评分"
+      factors:
+        complexity: 0.3
+        coverage: 0.4
+        lint_score: 0.3
+      
+    time_efficiency:
+      weight: 0.15
+      description: "时间效率"
+      
+    error_recovery_rate:
+      weight: 0.10
+      description: "错误恢复率"
+  
+  # 预算控制
+  budget:
+    # 小型项目
+    small:
+      max_llm_calls: 50
+      max_tool_calls: 200
+      max_time_minutes: 60
+      max_tokens: 200000
+    
+    # 中型项目（默认）
+    medium:
+      max_llm_calls: 100
+      max_tool_calls: 500
+      max_time_minutes: 120
+      max_tokens: 500000
+    
+    # 大型项目
+    large:
+      max_llm_calls: 200
+      max_tool_calls: 1000
+      max_time_minutes: 240
+      max_tokens: 1000000
+    
+    # 预算阈值
+    warn_threshold: 0.80    # 80%时警告
+    halt_threshold: 1.00    # 100%时暂停
+
+# 观察追踪配置
+observations:
+  enabled: true
+  trace_dir: ".opencode/traces/"
+  
+  # 追踪内容
+  capture:
+    - tool_calls           # 工具调用
+    - reasoning_steps      # 推理步骤
+    - error_patterns       # 错误模式
+    - performance_metrics  # 性能指标
+  
+  # 保留策略
+  retention_days: 30
+
+# 报告配置
+reporting:
+  auto_generate: true
+  output_dir: "Docs/evaluation/"
+  format: markdown
+  include_snapshots: true
+  include_traces: true
+  include_budget: true
+
+# 集成配置
+integration:
+  git:
+    enabled: true
+    pre_commit_check: true
+    include_in_message: true
+  
+  memory:
+    sync_with_memory_md: true
+    update_factual_memory: true
+  
+  skills:
+    - event-reminder-skill
+    - doom-loop-skill
+    - adaptive-compression-skill
