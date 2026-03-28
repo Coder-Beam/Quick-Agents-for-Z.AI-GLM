@@ -1551,4 +1551,57 @@ permission:
 
 ---
 
+## 二二、版本更新规范
+
+### （一）版本检测
+
+QuickAgents在启动时自动检测新版本：
+- 读取本地 `.quickagents/VERSION.md`
+- 对比远程 `VERSION.md`
+- 发现新版本时提示用户
+
+### （二）更新命令
+
+| 命令 | 功能 |
+|------|------|
+| `/qa-update` | 检测并更新 |
+| `/qa-update --check` | 仅检测，不更新 |
+| `/qa-update --version` | 显示当前版本 |
+| `/qa-update --rollback` | 回滚到上一版本 |
+
+### （三）更新范围
+
+**全量更新**:
+- `.opencode/agents/`
+- `.opencode/skills/`
+- `.opencode/commands/`
+- `.opencode/hooks/`
+- `AGENTS.md`
+- `VERSION.md`
+
+**不更新**（用户数据）:
+- `.opencode/memory/`
+- `.quickagents/`
+- `.opencode/config/models.json`
+- `.opencode/config/lsp-config.json`
+
+### （四）配置处理
+
+| 配置文件 | 处理方式 |
+|----------|----------|
+| categories.json | 智能合并 |
+| quickagents.json | 智能合并 |
+| models.json | 保留用户配置 |
+| lsp-config.json | 保留用户配置 |
+
+### （五）备份机制
+
+更新前自动备份:
+```
+.opencode/config.backup/YYYYMMDD_HHMMSS/
+Docs.backup/YYYYMMDD_HHMMSS/
+```
+
+---
+
 *文档版本: v9.0 | 更新时间: 2026-03-28*
