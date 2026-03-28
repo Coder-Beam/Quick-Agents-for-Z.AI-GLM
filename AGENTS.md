@@ -1505,4 +1505,50 @@ permission:
 
 ---
 
-*文档版本: v8.0 | 更新时间: 2026-03-22*
+## 二一、经验收集规范
+
+### （一）收集目标
+
+在使用QuickAgents过程中自动收集经验，为系统升级提供指导。
+
+### （二）存储位置
+
+```
+~/.quickagents/feedback/
+├── bugs.md           # Bug/错误
+├── improvements.md   # 改进建议
+├── best-practices.md # 最佳实践
+├── skill-review.md   # Skill评估
+└── agent-review.md   # Agent评估
+```
+
+### （三）触发机制
+
+| 触发点 | 说明 |
+|--------|------|
+| 任务完成 | 分析本次任务，提取经验 |
+| Git提交 | 分析变更，记录改进点 |
+| 手动触发 | `/feedback <类型> <描述>` |
+
+### （四）命令集
+
+```bash
+/feedback bug <描述>       # 记录Bug
+/feedback improve <描述>   # 记录改进建议
+/feedback best <描述>      # 记录最佳实践
+/feedback skill <名> <评>  # 评估Skill
+/feedback agent <名> <评>  # 评估Agent
+/feedback view [类型]      # 查看收集的经验
+```
+
+### （五）去重逻辑
+
+同一小时内，相同类型+相似描述的经验只保留一条。
+
+### （六）隐私保护
+
+所有数据存储在用户本地，不会上传到云端。
+
+---
+
+*文档版本: v9.0 | 更新时间: 2026-03-28*
