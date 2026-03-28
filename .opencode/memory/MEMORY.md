@@ -3,7 +3,7 @@
 memory_type: project
 created_at: 2026-03-22T10:00:00Z
 updated_at: 2026-03-26T01:30:00Z
-version: 2.1.0
+version: 2.1.1
 tags: [project, initialization, quickagent, enhancement]
 related_files: [AGENTS.md, TASKS.md, DESIGN.md, IMPLEMENTATION_PLAN.md]
 ---

@@ -1,8 +1,8 @@
-# QuickAgents v2.1.0 Release Notes
+# QuickAgents v2.1.1 Release Notes
 
-> AI代理项目初始化系统 - 增强版本
+> AI代理项目初始化系统 - 经验收集增强
 
-**发布日期**: 2026-03-27
+**发布日期**: 2026-03-28
 
 ---
 
@@ -11,9 +11,10 @@
 QuickAgents是一个基于OpenCode生态的AI代理项目初始化系统，提供：
 - 🚀 **开箱即用**：发送"启动QuickAgent"即可开始
 - 🧠 **三维记忆**：跨会话上下文保持和经验积累
-- 🤖 **多代理协作**：17个专业代理 + 14个核心技能
+- 🤖 **多代理协作**：17个专业代理 + 18个核心技能
 - 📊 **进度追踪**：Boulder系统实现跨会话恢复
 - ⚡ **超高效执行**：ultrawork命令一键完成复杂任务
+- 📝 **经验收集**：自动收集使用经验，助力系统进化
 
 ---
 
@@ -195,6 +196,49 @@ node tests/run-all-tests.js
 1. **models.json为空** - 多模型协同配置需手动填充
 2. **lsp-config.json为空** - LSP配置需手动填充
 3. **部分Skill缺少"使用场景"** - 文档待完善
+
+---
+
+## 🆕 v2.1.1 更新内容
+
+### 新增功能
+
+#### 经验收集系统
+
+新增 `feedback-collector-skill`，自动收集使用过程中的经验：
+
+**存储位置**: `~/.quickagents/feedback/`
+
+| 文件 | 内容 |
+|------|------|
+| bugs.md | Bug/错误 |
+| improvements.md | 改进建议 |
+| best-practices.md | 最佳实践 |
+| skill-review.md | Skill评估 |
+| agent-review.md | Agent评估 |
+
+**命令集**:
+```bash
+/feedback bug <描述>       # 记录Bug
+/feedback improve <描述>   # 记录改进建议
+/feedback best <描述>      # 记录最佳实践
+/feedback skill <名> <评>  # 评估Skill
+/feedback agent <名> <评>  # 评估Agent
+/feedback view [类型]      # 查看收集的经验
+```
+
+**触发机制**:
+- 任务完成时自动分析
+- Git提交后自动分析
+- 支持手动触发
+
+**去重逻辑**: 同一小时内相似描述只保留一条
+
+### 文档更新
+
+- 新增设计文档: `Docs/specs/2026-03-28-feedback-collector-design.md`
+- AGENTS.md 新增「二一、经验收集规范」章节
+- Skills总数: 17 → 18
 
 ---
 

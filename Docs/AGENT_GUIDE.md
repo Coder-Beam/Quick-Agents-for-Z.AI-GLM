@@ -632,7 +632,7 @@
 
 ---
 
-*版本: 2.1.0 | 更新时间: 2026-03-27*
+*版本: 2.1.1 | 更新时间: 2026-03-27*
 
 ---
 
@@ -1162,4 +1162,4 @@ Or simply describe the task, the system will dispatch automatically.
 
 ---
 
-*Version: 2.1.0 | Last Updated: 2026-03-27*
+*Version: 2.1.1 | Last Updated: 2026-03-27*

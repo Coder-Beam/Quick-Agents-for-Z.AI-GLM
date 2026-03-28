@@ -145,7 +145,7 @@ echo "✅ QuickAgents文件已下载"
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "primary": "zai-coding-plan/glm-5",
   "categories": {
     "quick": "zai-coding-plan/glm-5-flash",
@@ -162,7 +162,7 @@ echo "✅ QuickAgents文件已下载"
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "primary": "opencode/glm-5",
   "categories": {
     "quick": "opencode/glm-5-flash",
@@ -181,7 +181,7 @@ echo "✅ QuickAgents文件已下载"
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "primary": "anthropic/claude-opus-4-6",
   "categories": {
     "quick": "opencode/glm-5-flash",
@@ -206,7 +206,7 @@ echo "✅ QuickAgents文件已下载"
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "languages": ["typescript"],
   "ast-grep": true,
   "servers": {
@@ -222,7 +222,7 @@ echo "✅ QuickAgents文件已下载"
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "languages": ["typescript", "python", "rust"],
   "ast-grep": true,
   "servers": {
@@ -363,4 +363,4 @@ cat .opencode/config/models.json | python -m json.tool
 
 ---
 
-*文档版本: v2.1.0 | 更新时间: 2026-03-27*
+*文档版本: v2.1.1 | 更新时间: 2026-03-27*

@@ -14,7 +14,7 @@ allowed-tools:
 metadata:
   category: memory
   priority: critical
-  version: 2.1.0
+  version: 2.1.1
 ---
 
 # Project Memory Skill

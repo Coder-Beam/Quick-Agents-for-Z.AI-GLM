@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
-[![Version](https://img.shields.io/badge/Version-2.1.0-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
+[![Version](https://img.shields.io/badge/Version-2.1.1-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
 [![npm](https://img.shields.io/badge/npm-quickagents--cli-red.svg)](https://www.npmjs.com/package/quickagents-cli)
 
 **[中文](#quickagents---ai-代理项目初始化系统)** | **English**
@@ -70,7 +70,7 @@ Based on the paper "Memory in the Age of AI Agents":
 | **Tools** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
 | **Planning** | fenghou-plan, boyi-consult, jianming-review |
 
-### 📦 18 Specialized Skills
+### 📦 19 Specialized Skills
 
 #### Core Skills (12)
 | Skill | Purpose |
@@ -97,6 +97,11 @@ Based on the paper "Memory in the Age of AI Agents":
 | adaptive-compression-skill | Adaptive compression, 54% peak reduction | VeRO |
 | vero-evaluation-skill | Versioned evaluation (V-E-R-O) | VeRO |
 | aci-design-skill | ACI design principles | SWE-agent |
+
+#### Feedback Skills (1) - v2.1.1
+| Skill | Purpose |
+|-------|---------|
+| feedback-collector-skill | Collect usage experience for system improvement |
 
 ### 📚 Complete Documentation System
 
@@ -193,7 +198,7 @@ your-project/
 │
 ├── .opencode/             # OpenCode configuration
 │   ├── agents/            # 17 professional agents
-│   ├── skills/            # 18 specialized skills
+│   ├── skills/            # 19 specialized skills
 │   ├── commands/          # 6 core commands
 │   ├── hooks/             # Automation hooks
 │   ├── config/            # Configuration files
@@ -246,7 +251,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*Version: 2.1.0 | Last Updated: 2026-03-27*
+*Version: 2.1.1 | Last Updated: 2026-03-27*
 
 ---
 
@@ -317,7 +322,7 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 | **工具** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
 | **规划** | fenghou-plan, boyi-consult, jianming-review |
 
-### 📦 18个专项技能
+### 📦 19个专项技能
 
 #### 核心技能 (12个)
 | 技能 | 用途 |
@@ -344,6 +349,11 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 | adaptive-compression-skill | 自适应压缩，峰值减少54% | VeRO |
 | vero-evaluation-skill | 版本化评估(V-E-R-O) | VeRO |
 | aci-design-skill | ACI设计原则 | SWE-agent |
+
+#### 经验收集技能 (1个) - v2.1.1新增
+| 技能 | 用途 |
+|------|------|
+| feedback-collector-skill | 收集使用经验，助力系统进化 |
 
 ### 📚 完整文档体系
 
@@ -440,7 +450,7 @@ your-project/
 │
 ├── .opencode/             # OpenCode配置
 │   ├── agents/            # 17个专业代理
-│   ├── skills/            # 18个专项技能
+│   ├── skills/            # 19个专项技能
 │   ├── commands/          # 6个核心命令
 │   ├── hooks/             # 自动化钩子
 │   ├── config/            # 配置文件
@@ -493,4 +503,4 @@ your-project/
 
 ---
 
-*版本: 2.1.0 | 更新时间: 2026-03-27*
+*版本: 2.1.1 | 更新时间: 2026-03-27*

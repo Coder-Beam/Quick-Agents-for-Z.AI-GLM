@@ -191,7 +191,7 @@ QuickAgents/
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "triggerWords": [
     "启动QuickAgent",
     "启动QuickAgents",
@@ -219,7 +219,7 @@ QuickAgents/
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "categories": {
     "quick": {
       "description": "快速任务",
@@ -246,7 +246,7 @@ LSP服务器配置，支持多语言：
 
 ```json
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "languages": ["typescript", "python", "rust"],
   "ast-grep": true,
   "servers": {
@@ -430,7 +430,7 @@ LSP服务器配置，支持多语言：
 memory_type: project | feature | module
 created_at: 2026-03-27T10:00:00Z
 updated_at: 2026-03-27T15:30:00Z
-version: 2.1.0
+version: 2.1.1
 tags: [tag1, tag2, tag3]
 ---
 
@@ -461,4 +461,4 @@ tags: [tag1, tag2, tag3]
 
 ---
 
-*版本: 2.1.0 | 更新时间: 2026-03-27*
+*版本: 2.1.1 | 更新时间: 2026-03-27*

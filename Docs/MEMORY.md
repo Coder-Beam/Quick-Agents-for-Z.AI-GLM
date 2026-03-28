@@ -3,7 +3,7 @@
 memory_type: project
 created_at: 2026-03-22T10:00:00Z
 updated_at: 2026-03-26T06:30:00Z
-version: 2.1.0
+version: 2.1.1
 tags: [project, initialization, quickagent, documentation, i18n]
 related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
 ---
@@ -24,7 +24,7 @@ related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
 | 项目路径 | D:\Projects\QuickAgents |
 | 技术栈 | TypeScript (核心引擎) + 方法论框架 |
 | 启动时间 | 2026-03-22 |
-| 当前版本 | `v2.1.0` (增强版) |
+| 当前版本 | `v2.1.1` (增强版) |
 | 项目类型 | 完整系统（方法论 + 核心引擎 + 平台集成） |
 
 ### 1.2 技术决策

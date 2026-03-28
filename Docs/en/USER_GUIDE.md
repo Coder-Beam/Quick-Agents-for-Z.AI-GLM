@@ -453,4 +453,4 @@ rm AGENTS.md
 
 ---
 
-*Version: 2.1.0 | Last Updated: 2026-03-27*
+*Version: 2.1.1 | Last Updated: 2026-03-27*
