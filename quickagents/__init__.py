@@ -58,13 +58,28 @@ from .core.loop_detector import LoopDetector
 from .core.reminder import Reminder
 from .core.cache_db import CacheDB
 from .utils.hash_cache import HashCache
+from .skills import (
+    FeedbackCollector, get_feedback_collector,
+    TDDWorkflow, TDDPhase, get_tdd_workflow,
+    GitCommit, get_git_commit
+)
 
 __all__ = [
+    # Core modules
     'FileManager',
     'MemoryManager', 
     'LoopDetector',
     'Reminder',
     'CacheDB',
     'HashCache',
+    # Skills modules (100% localized)
+    'FeedbackCollector',
+    'get_feedback_collector',
+    'TDDWorkflow',
+    'TDDPhase',
+    'get_tdd_workflow',
+    'GitCommit',
+    'get_git_commit',
+    # Version
     '__version__',
 ]

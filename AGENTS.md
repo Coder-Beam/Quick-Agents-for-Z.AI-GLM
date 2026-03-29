@@ -1855,10 +1855,10 @@ stats             -- 统计数据
 | project-memory-skill | ✅ 100% | MemoryManager + CacheDB |
 | lazy-discovery-skill | ✅ 100% | 内置工具分类 |
 | event-reminder-skill | ✅ 100% | Reminder |
-| feedback-collector-skill | ✅ 80% | 文件收集本地化 |
+| feedback-collector-skill | ✅ 100% | FeedbackCollector |
+| tdd-workflow-skill | ✅ 100% | TDDWorkflow |
+| git-commit-skill | ✅ 100% | GitCommit |
 | ui-ux-pro-max | ✅ 已有Python | search.py, core.py |
-| tdd-workflow-skill | ⏳ 部分 | 流程控制可本地化 |
-| git-commit-skill | ⏳ 部分 | git命令可本地化 |
 | inquiry-skill | ❌ 难以本地化 | 需要AI对话能力 |
 | si-hybrid-skill | ❌ 难以本地化 | 方法论指导 |
 

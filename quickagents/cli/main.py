@@ -14,6 +14,23 @@ QuickAgents CLI - 命令行工具
     qa loop check            # 检查循环模式
     qa loop reset            # 重置循环检测
     qa stats                 # 查看整体统计
+    
+    # 新增：Skills本地化命令
+    qa feedback bug <desc>   # 记录Bug
+    qa feedback improve <desc> # 记录改进建议
+    qa feedback best <desc>  # 记录最佳实践
+    qa feedback view [type]  # 查看收集的经验
+    
+    qa tdd red [test_file]   # RED阶段：运行测试（应失败）
+    qa tdd green [test_file] # GREEN阶段：运行测试（应通过）
+    qa tdd refactor [test_file] # REFACTOR阶段
+    qa tdd stats             # TDD统计
+    qa tdd coverage          # 检查覆盖率
+    
+    qa git status            # Git状态
+    qa git check             # Pre-commit检查
+    qa git commit <type> <scope> <subject> # 执行提交
+    qa git push              # 推送到远程
 """
 
 import sys
@@ -29,6 +46,9 @@ from core.memory import MemoryManager
 from core.loop_detector import LoopDetector
 from core.reminder import Reminder
 from core.cache_db import CacheDB
+from skills.feedback_collector import FeedbackCollector
+from skills.tdd_workflow import TDDWorkflow, TDDPhase
+from skills.git_commit import GitCommit
 
 
 def cmd_read(args):
@@ -85,7 +105,6 @@ def cmd_cache(args):
         print(f"✅ 已清空 {count} 个文件缓存")
     
     elif args.action == 'list':
-        # 列出所有缓存文件
         with db._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT path, content_hash, size, access_count FROM file_cache')
@@ -192,6 +211,142 @@ def cmd_reminder(args):
         print(f"  上下文使用: {stats['context_usage']}%")
 
 
+# ==================== 新增：Skills本地化命令 ====================
+
+def cmd_feedback(args):
+    """经验收集命令"""
+    collector = FeedbackCollector()
+    
+    if args.action == 'bug':
+        success = collector.record('bug', args.description, scenario=args.scenario)
+        if success:
+            print(f"✅ 已记录Bug: {args.description}")
+        else:
+            print("ℹ️ 重复记录已忽略")
+    
+    elif args.action == 'improve':
+        success = collector.record('improve', args.description, scenario=args.scenario)
+        if success:
+            print(f"✅ 已记录改进建议: {args.description}")
+        else:
+            print("ℹ️ 重复记录已忽略")
+    
+    elif args.action == 'best':
+        success = collector.record('best', args.description, scenario=args.scenario)
+        if success:
+            print(f"✅ 已记录最佳实践: {args.description}")
+        else:
+            print("ℹ️ 重复记录已忽略")
+    
+    elif args.action == 'view':
+        feedback_type = args.type if hasattr(args, 'type') and args.type else None
+        feedbacks = collector.get_feedback(feedback_type, limit=20)
+        
+        print(f"📋 经验收集 ({len(feedbacks)} 条)")
+        print("-" * 50)
+        for fb in feedbacks:
+            print(f"  [{fb['type']}] {fb['timestamp']}")
+            print(f"    {fb['description'][:50]}...")
+    
+    elif args.action == 'stats':
+        stats = collector.get_stats()
+        print("📊 经验收集统计")
+        print(f"  总计: {stats['total']} 条")
+        for ftype, count in stats['by_type'].items():
+            print(f"  {ftype}: {count} 条")
+
+
+def cmd_tdd(args):
+    """TDD工作流命令"""
+    tdd = TDDWorkflow()
+    
+    if args.action == 'red':
+        result = tdd.run_red(args.test_file)
+        print(f"🔴 RED阶段: {'测试失败 ✓' if not result['passed'] else '测试通过 ⚠️'}")
+        print(f"  耗时: {result['duration_ms']}ms")
+        if result['passed']:
+            print("  ⚠️ 测试已通过，需要先写失败的测试！")
+    
+    elif args.action == 'green':
+        result = tdd.run_green(args.test_file)
+        print(f"🟢 GREEN阶段: {'测试通过 ✓' if result['passed'] else '测试失败 ❌'}")
+        print(f"  耗时: {result['duration_ms']}ms")
+        if result['passed']:
+            print("  ✅ 可以进入Refactor阶段")
+    
+    elif args.action == 'refactor':
+        result = tdd.run_refactor(args.test_file)
+        print(f"🔄 REFACTOR阶段: {'测试通过 ✓' if result['passed'] else '测试失败 ❌'}")
+        print(f"  耗时: {result['duration_ms']}ms")
+    
+    elif args.action == 'stats':
+        stats = tdd.get_stats()
+        print("📊 TDD统计")
+        print(f"  RED次数: {stats['red_count']}")
+        print(f"  GREEN次数: {stats['green_count']}")
+        print(f"  REFACTOR次数: {stats['refactor_count']}")
+        print(f"  测试命令: {stats['test_command']}")
+    
+    elif args.action == 'coverage':
+        result = tdd.check_coverage(threshold=80)
+        print(f"📈 测试覆盖率: {result['coverage']}%")
+        print(f"  达标: {'✅' if result['meets_threshold'] else '❌'}")
+
+
+def cmd_git(args):
+    """Git提交命令"""
+    git = GitCommit()
+    
+    if args.action == 'status':
+        status = git.get_status()
+        print(f"🌿 分支: {status['branch']}")
+        print(f"  领先: {status['ahead']}, 落后: {status['behind']}")
+        
+        if status['staged']:
+            print(f"\n✅ 已暂存 ({len(status['staged'])})")
+            for f in status['staged'][:5]:
+                print(f"  {f}")
+        
+        if status['unstaged']:
+            print(f"\n📝 未暂存 ({len(status['unstaged'])})")
+            for f in status['unstaged'][:5]:
+                print(f"  {f}")
+        
+        if status['untracked']:
+            print(f"\n❓ 未跟踪 ({len(status['untracked'])})")
+            for f in status['untracked'][:5]:
+                print(f"  {f}")
+    
+    elif args.action == 'check':
+        print("🔍 执行Pre-commit检查...")
+        checks = git.run_pre_commit_checks()
+        
+        print(f"\n{'✅' if checks['all_passed'] else '❌'} 检查结果")
+        for check_name, result in checks['checks'].items():
+            status = '✅' if result['passed'] else ('⏭️' if result.get('skipped') else '❌')
+            print(f"  {status} {check_name}")
+    
+    elif args.action == 'commit':
+        print("🔍 执行Pre-commit检查...")
+        result = git.commit(
+            args.type, args.scope, args.subject,
+            run_checks=True
+        )
+        
+        if result['success']:
+            print(f"✅ 提交成功: {result['commit_hash']}")
+            print(f"   {result['message'].split(chr(10))[0]}")
+        else:
+            print(f"❌ 提交失败: {result['message']}")
+    
+    elif args.action == 'push':
+        result = git.push()
+        if result['success']:
+            print("✅ 推送成功")
+        else:
+            print(f"❌ 推送失败: {result['message']}")
+
+
 def main():
     parser = argparse.ArgumentParser(description='QuickAgents CLI')
     subparsers = parser.add_subparsers(dest='command', help='命令')
@@ -245,6 +400,30 @@ def main():
     p_reminder = subparsers.add_parser('reminder', help='提醒系统')
     p_reminder.add_argument('action', choices=['check', 'stats'], help='操作')
     p_reminder.set_defaults(func=cmd_reminder)
+    
+    # ==================== 新增命令 ====================
+    
+    # feedback 命令
+    p_feedback = subparsers.add_parser('feedback', help='经验收集')
+    p_feedback.add_argument('action', choices=['bug', 'improve', 'best', 'view', 'stats'], help='操作')
+    p_feedback.add_argument('description', nargs='?', help='描述')
+    p_feedback.add_argument('--scenario', '-s', help='场景上下文')
+    p_feedback.add_argument('--type', '-t', help='反馈类型（view时使用）')
+    p_feedback.set_defaults(func=cmd_feedback)
+    
+    # tdd 命令
+    p_tdd = subparsers.add_parser('tdd', help='TDD工作流')
+    p_tdd.add_argument('action', choices=['red', 'green', 'refactor', 'stats', 'coverage'], help='操作')
+    p_tdd.add_argument('test_file', nargs='?', help='测试文件')
+    p_tdd.set_defaults(func=cmd_tdd)
+    
+    # git 命令
+    p_git = subparsers.add_parser('git', help='Git提交管理')
+    p_git.add_argument('action', choices=['status', 'check', 'commit', 'push'], help='操作')
+    p_git.add_argument('type', nargs='?', help='提交类型')
+    p_git.add_argument('scope', nargs='?', help='范围')
+    p_git.add_argument('subject', nargs='?', help='主题')
+    p_git.set_defaults(func=cmd_git)
     
     args = parser.parse_args()
     
