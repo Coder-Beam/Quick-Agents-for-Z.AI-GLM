@@ -418,3 +418,90 @@ class TestSQLiteStorageQuery:
         assert 'by_type' in stats
         assert stats['by_type']['requirement'] == 3
         assert stats['by_type']['decision'] == 2
+
+
+class TestSQLiteStorageFindPath:
+    """Tests for find_path method."""
+    
+    @pytest.fixture
+    def storage_with_graph(self, tmp_path):
+        """Create storage with a graph for path testing."""
+        db_path = str(tmp_path / "test_kg.db")
+        storage = SQLiteGraphStorage(db_path)
+        storage.initialize({})
+        
+        # Create nodes: A -> B -> C -> D, A -> D (direct)
+        nodes = ['A', 'B', 'C', 'D']
+        for n in nodes:
+            storage.create_node(KnowledgeNode(
+                id=f"kn_{n}", node_type=NodeType.FACT,
+                title=f"Node {n}", content=f"Content {n}",
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+        
+        # Create edges
+        edges = [
+            ('A', 'B', EdgeType.RELATED_TO),
+            ('B', 'C', EdgeType.RELATED_TO),
+            ('C', 'D', EdgeType.RELATED_TO),
+            ('A', 'D', EdgeType.RELATED_TO),  # Direct path
+        ]
+        for i, (src, tgt, etype) in enumerate(edges):
+            storage.create_edge(KnowledgeEdge(
+                id=f"ke_{i:02d}", source_node_id=f"kn_{src}", target_node_id=f"kn_{tgt}",
+                edge_type=etype,
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+        
+        return storage
+    
+    def test_find_path_direct(self, storage_with_graph):
+        """Test finding direct path A -> D."""
+        path = storage_with_graph.find_path("kn_A", "kn_D")
+        assert path is not None
+        assert path == ["kn_A", "kn_D"]  # Direct path preferred
+    
+    def test_find_path_multi_hop(self, storage_with_graph):
+        """Test finding multi-hop path A -> B -> C."""
+        # Remove direct edge first
+        storage_with_graph.delete_edge("ke_03")
+        
+        path = storage_with_graph.find_path("kn_A", "kn_C")
+        assert path is not None
+        assert path == ["kn_A", "kn_B", "kn_C"]
+    
+    def test_find_path_no_path(self, storage_with_graph):
+        """Test when no path exists."""
+        # Add isolated node
+        storage_with_graph.create_node(KnowledgeNode(
+            id="kn_X", node_type=NodeType.FACT,
+            title="Isolated", content="No connections",
+            created_at=datetime.now(), updated_at=datetime.now()
+        ))
+        
+        path = storage_with_graph.find_path("kn_A", "kn_X")
+        assert path is None
+    
+    def test_find_path_max_depth_exceeded(self, storage_with_graph):
+        """Test when path exceeds max depth."""
+        # Create a long chain
+        for i in range(5, 10):
+            storage_with_graph.create_node(KnowledgeNode(
+                id=f"kn_N{i}", node_type=NodeType.FACT,
+                title=f"Node {i}", content=f"Content {i}",
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+            storage_with_graph.create_edge(KnowledgeEdge(
+                id=f"ke_long_{i}", source_node_id=f"kn_N{i-1}" if i > 5 else "kn_D",
+                target_node_id=f"kn_N{i}",
+                edge_type=EdgeType.RELATED_TO,
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+        
+        path = storage_with_graph.find_path("kn_A", "kn_N9", max_depth=2)
+        assert path is None  # Path too long
+    
+    def test_find_path_same_node(self, storage_with_graph):
+        """Test finding path to same node."""
+        path = storage_with_graph.find_path("kn_A", "kn_A")
+        assert path == ["kn_A"]

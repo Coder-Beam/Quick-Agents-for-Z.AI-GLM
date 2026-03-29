@@ -434,8 +434,54 @@ class SQLiteGraphStorage(GraphStorageInterface):
             rows = cursor.fetchall()
             return [self._row_to_edge(row) for row in rows]
     
-    def find_path(self, from_node: str, to_node: str, max_depth: int = 5) -> Optional[List[str]]:
-        raise NotImplementedError("Implemented in Task 2.5")
+    def find_path(
+        self,
+        from_node: str,
+        to_node: str,
+        max_depth: int = 5
+    ) -> Optional[List[str]]:
+        """
+        Find shortest path between two nodes using BFS.
+        
+        Args:
+            from_node: Starting node ID
+            to_node: Target node ID
+            max_depth: Maximum search depth
+            
+        Returns:
+            List of node IDs forming the path, or None if no path found
+        """
+        if from_node == to_node:
+            return [from_node]
+        
+        from collections import deque
+        
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # BFS
+            visited = {from_node}
+            queue = deque([(from_node, [from_node])])
+            
+            while queue and len(queue[0][1]) <= max_depth:
+                current, path = queue.popleft()
+                
+                # Get neighbors
+                cursor.execute(
+                    "SELECT target_node_id FROM knowledge_edges WHERE source_node_id = ?",
+                    (current,)
+                )
+                neighbors = [row[0] for row in cursor.fetchall()]
+                
+                for neighbor in neighbors:
+                    if neighbor == to_node:
+                        return path + [neighbor]
+                    
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append((neighbor, path + [neighbor]))
+            
+            return None
     
     def get_stats(self) -> Dict[str, Any]:
         """Get storage statistics."""
