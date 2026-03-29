@@ -1711,4 +1711,157 @@ Docs.backup/YYYYMMDD_HHMMSS/
 
 ---
 
-*文档版本: v10.0 | 更新时间: 2026-03-29*
+## 二四、本地化Python包 (quickagents)
+
+### （一）概述
+
+`quickagents` 是一个Python包，将QuickAgents的核心功能本地化，大幅降低大模型Token消耗。
+
+**核心优势**:
+- 文件操作哈希检测，Token节省90%+
+- SQLite缓存系统，零安装依赖
+- 循环检测、事件提醒本地处理
+- CLI工具支持
+
+### （二）安装
+
+```bash
+# 开发模式安装
+cd QuickAgents
+pip install -e .
+
+# 或直接安装
+pip install quickagents
+```
+
+### （三）核心模块
+
+| 模块 | 功能 | Token节省 |
+|------|------|-----------|
+| FileManager | 智能文件读写（哈希检测） | 90%+ |
+| CacheDB | SQLite缓存管理 | 100% |
+| MemoryManager | 三维记忆管理 | 100% |
+| LoopDetector | 循环检测 | 100% |
+| Reminder | 事件提醒 | 100% |
+
+### （四）使用方式
+
+#### Python API
+
+```python
+from quickagents import FileManager, CacheDB, LoopDetector
+
+# 智能文件操作
+fm = FileManager()
+content, changed = fm.read_if_changed('Docs/MEMORY.md')
+if not changed:
+    print("使用缓存，节省Token！")
+
+# 编辑文件（自动验证）
+result = fm.edit('file.py', 'old', 'new')
+if result['success'] and result['token_saved'] > 0:
+    print(f"节省Token: {result['token_saved']}")
+
+# 循环检测
+detector = LoopDetector(threshold=3)
+loop = detector.check('read', {'path': 'file.py'})
+if loop:
+    print(f"检测到循环: {loop['count']}次")
+
+# 查看统计
+db = CacheDB()
+stats = db.get_stats()
+```
+
+#### CLI工具
+
+```bash
+# 文件操作
+qa read <file>           # 智能读取
+qa write <file> <content> # 写入
+qa edit <file> <old> <new> # 编辑
+
+# 缓存管理
+qa cache stats           # 缓存统计
+qa cache list            # 缓存列表
+qa cache clear           # 清空缓存
+
+# 记忆管理
+qa memory get <key>      # 获取记忆
+qa memory set <key> <val> # 设置记忆
+qa memory search <keyword> # 搜索记忆
+
+# 循环检测
+qa loop check            # 检查循环
+qa loop stats            # 统计信息
+
+# 整体统计
+qa stats                 # 查看统计
+```
+
+### （五）哈希检测原理
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    哈希检测工作流程                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  传统方式:                                                  │
+│  AI调用Read → 读取整个文件 → 消耗大量Token                  │
+│                                                             │
+│  哈希检测方式:                                              │
+│  1. 本地计算文件哈希 (0 Token)                              │
+│  2. 对比SQLite缓存中的哈希 (0 Token)                        │
+│  3. 哈希相同 → 使用缓存内容 (0 Token)                       │
+│  4. 哈希不同 → 读取文件更新缓存 (消耗Token)                 │
+│                                                             │
+│  效果: 文件未变化时Token节省100%                            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### （六）SQLite缓存结构
+
+缓存存储位置: `.quickagents/cache.db`
+
+```sql
+-- 核心表
+file_cache        -- 文件哈希缓存
+memory            -- 记忆存储
+operation_history -- 操作历史
+loop_detection    -- 循环检测
+stats             -- 统计数据
+```
+
+### （七）工具调用错误修复
+
+详见: `Docs/guides/TOOL_ERROR_FIX_GUIDE.md`
+
+**常见错误**:
+1. `oldString not found` - 文件内容已变化
+2. `File not found` - 路径错误
+3. `You must use Read first` - 未先读取
+
+**解决方案**:
+- 使用 `FileManager` 替代直接工具调用
+- FileManager自动处理哈希检测和验证
+- 减少工具调用失败率
+
+### （八）Skills本地化状态
+
+| Skill | 本地化程度 | 说明 |
+|-------|-----------|------|
+| doom-loop-skill | ✅ 100% | LoopDetector |
+| project-memory-skill | ✅ 100% | MemoryManager + CacheDB |
+| lazy-discovery-skill | ✅ 100% | 内置工具分类 |
+| event-reminder-skill | ✅ 100% | Reminder |
+| feedback-collector-skill | ✅ 80% | 文件收集本地化 |
+| ui-ux-pro-max | ✅ 已有Python | search.py, core.py |
+| tdd-workflow-skill | ⏳ 部分 | 流程控制可本地化 |
+| git-commit-skill | ⏳ 部分 | git命令可本地化 |
+| inquiry-skill | ❌ 难以本地化 | 需要AI对话能力 |
+| si-hybrid-skill | ❌ 难以本地化 | 方法论指导 |
+
+---
+
+*文档版本: v10.1 | 更新时间: 2026-03-29*
