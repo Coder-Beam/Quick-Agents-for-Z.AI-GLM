@@ -8,8 +8,8 @@
 
 | 属性 | 值 |
 |------|-----|
-| 版本号 | 2.3.0 |
-| Git标签 | v2.3.0 |
+| 版本号 | 2.3.1 |
+| Git标签 | v2.3.1 |
 | 发布日期 | 2026-03-29 |
 | 最低兼容版本 | 2.0.0 |
 | 仓库地址 | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -34,62 +34,92 @@ qa hooks install
 
 ---
 
-## 本次更新 (v2.3.0)
+## 本次更新 (v2.3.1)
 
-**重大更新 - 统一自我进化系统**
+**重大更新 - 浏览器自动化与DevTools集成**
 
 ### 新增功能
 
-#### SkillEvolution - 统一的Skills自我进化系统
+#### Browser - 浏览器自动化模块
 
-自动触发、统一存储、经验闭环：
+支持Chromium和Lightpanda两种后端：
 
-| 触发类型 | 触发条件 | 自动操作 |
-|----------|----------|----------|
-| TASK_COMPLETE | 任务完成 | 记录Skills使用、分析失败原因 |
-| GIT_COMMIT | Git提交 | 分析提交内容、检测改进点 |
-| PERIODIC | 10任务/7天 | 执行Skills优化、更新统计 |
-| ERROR_DETECTED | 错误检测 | 记录错误、建议修复方案 |
+| 后端 | 说明 | 安装 |
+|------|------|------|
+| chromium | 默认，Playwright + Chromium | `pip install quickagents[browser]` |
+| lightpanda | 轻量级headless浏览器 | 用户自行安装 |
 
-#### GitHooks - Git钩子集成
+**功能**:
+- 获取控制台日志 (Console) - 捕获所有console.log/warn/error
+- 获取网络请求 (Network) - 分析HTTP请求和响应
+- 获取性能指标 (Performance) - 页面性能分析
+- 执行JavaScript - 在页面上下文中执行脚本
+- 截图 - 页面截图
+- Cookie管理 - 读写Cookie
 
-```bash
-qa hooks install    # 安装钩子
-qa hooks status     # 查看状态
+#### Lightpanda 集成
+
+Lightpanda是一个用Zig编写的轻量级headless浏览器：
+- 比Chrome快11倍
+- 内存少9倍
+- CDP协议兼容
+- 专为AI Agent设计
+
+**使用方式**:
+```python
+from quickagents import Browser
+
+# 默认Chromium
+browser = Browser()
+
+# 使用Lightpanda（需先启动lightpanda serve）
+browser = Browser(backend='lightpanda')
+
+# 打开页面
+page = browser.open('https://example.com')
+
+# 获取控制台日志
+console_logs = page.get_console_logs()
+
+# 获取网络请求
+network = page.get_network_requests()
+
+# 关闭
+browser.close()
 ```
 
 #### 新增CLI命令
 
 ```bash
-qa evolution status      # 进化系统状态
-qa evolution stats [skill] # Skills使用统计
-qa evolution optimize    # 执行定期优化
-qa evolution history <skill> # 查看进化历史
-qa hooks install         # 安装Git钩子
+# 浏览器相关（需要pip install quickagents[browser]）
+qa browser open <url>     # 打开URL
+qa browser screenshot <url> <file>  # 截图
+qa browser console <url>  # 获取控制台日志
+qa browser network <url>  # 获取网络请求
 ```
 
-### 架构改进
+### 安装方式
 
-- **统一存储**: 所有进化数据存入UnifiedDB
-- **Python API**: 0 Token消耗，本地处理
-- **自动闭环**: 收集 -> 分析 -> 改进 -> 验证
+```bash
+# 基础安装
+pip install quickagents
 
-### Skills本地化状态 (90%)
+# 完整安装（包含浏览器自动化）
+pip install quickagents[browser]
 
-| Skill | 状态 | 模块 |
-|-------|------|------|
-| skill-evolution | ✅ 100% | SkillEvolution (新增) |
-| git-hooks | ✅ 100% | GitHooks (新增) |
-| doom-loop-skill | ✅ 100% | LoopDetector |
-| project-memory-skill | ✅ 100% | MemoryManager + CacheDB |
-| feedback-collector-skill | ✅ 100% | FeedbackCollector |
-| tdd-workflow-skill | ✅ 100% | TDDWorkflow |
-| git-commit-skill | ✅ 100% | GitCommit |
+# 完整安装后还需要安装浏览器
+playwright install chromium
+```
 
-### 删除的内容
+### 依赖更新
 
-- `skills/self-improving-agent/hooks/openclaw/handler.ts` - TypeScript Hook已删除
-- 项目现在100% Python化
+pyproject.toml新增可选依赖：
+```toml
+[project.optional-dependencies]
+browser = [
+    "playwright>=1.40.0",
+]
+```
 
 ---
 
