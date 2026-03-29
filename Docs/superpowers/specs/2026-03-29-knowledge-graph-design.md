@@ -1,9 +1,9 @@
 # Knowledge Graph Feature Design Specification
 
 > **Created**: 2026-03-29  
-> **Version**: 1.0.0  
+> **Version**: 1.0.1  
 > **Author**: Prometheus (Planning Agent)  
-> **Status**: Design Approved
+> **Status**: Spec Review Approved
 
 ---
 
@@ -49,7 +49,7 @@ Implement a **Knowledge Graph** system integrated with UnifiedDB:
 | Feature | Description |
 |---------|-------------|
 | Knowledge Nodes | 6 types: requirement, decision, insight, fact, concept, source |
-| Knowledge Edges | 10 types: depends_on, cites, evolves_from, maps_to, etc. |
+| Knowledge Edges | 11 types: depends_on, cites, evolves_from, maps_to, indirectly_related_to, etc. |
 | Extraction | Auto-extract from text/files with confidence scoring |
 | Discovery | 4 strategies for relation discovery |
 | Search | Full-text search with filters, sorting, pagination |
