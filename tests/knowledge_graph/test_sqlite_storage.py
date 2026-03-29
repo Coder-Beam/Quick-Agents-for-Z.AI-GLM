@@ -323,3 +323,98 @@ class TestSQLiteStorageEdgeCRUD:
         result = storage.create_edge(edge)
         assert result.evidence == "This decision supports the requirement"
         assert result.weight == 0.9
+
+
+class TestSQLiteStorageQuery:
+    """Tests for query methods."""
+    
+    @pytest.fixture
+    def storage_with_data(self, tmp_path):
+        """Create storage with sample data."""
+        db_path = str(tmp_path / "test_kg.db")
+        storage = SQLiteGraphStorage(db_path)
+        storage.initialize({})
+        
+        nodes = [
+            KnowledgeNode(
+                id=f"kn_{i:03d}",
+                node_type=NodeType.REQUIREMENT if i < 3 else NodeType.DECISION,
+                title=f"Node {i}",
+                content=f"Content {i}",
+                project_name="TestProject" if i < 4 else "OtherProject",
+                importance=0.5 + (i * 0.05),
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+            for i in range(5)
+        ]
+        for node in nodes:
+            storage.create_node(node)
+        
+        storage.create_edge(KnowledgeEdge(
+            id="ke_001", source_node_id="kn_000", target_node_id="kn_001",
+            edge_type=EdgeType.DEPENDS_ON,
+            created_at=datetime.now(), updated_at=datetime.now()
+        ))
+        storage.create_edge(KnowledgeEdge(
+            id="ke_002", source_node_id="kn_001", target_node_id="kn_002",
+            edge_type=EdgeType.MAPS_TO,
+            created_at=datetime.now(), updated_at=datetime.now()
+        ))
+        
+        return storage
+    
+    def test_query_nodes_no_filter(self, storage_with_data):
+        """Test query all nodes."""
+        nodes = storage_with_data.query_nodes({})
+        assert len(nodes) == 5
+    
+    def test_query_nodes_by_type(self, storage_with_data):
+        """Test filter by node type."""
+        nodes = storage_with_data.query_nodes({'node_type': 'requirement'})
+        assert len(nodes) == 3
+        assert all(n.node_type == NodeType.REQUIREMENT for n in nodes)
+    
+    def test_query_nodes_by_project(self, storage_with_data):
+        """Test filter by project."""
+        nodes = storage_with_data.query_nodes({'project_name': 'TestProject'})
+        assert len(nodes) == 4
+    
+    def test_query_nodes_with_limit(self, storage_with_data):
+        """Test pagination with limit."""
+        nodes = storage_with_data.query_nodes({}, limit=2)
+        assert len(nodes) == 2
+    
+    def test_query_nodes_with_offset(self, storage_with_data):
+        """Test pagination with offset."""
+        page1 = storage_with_data.query_nodes({}, limit=2, offset=0)
+        page2 = storage_with_data.query_nodes({}, limit=2, offset=2)
+        assert len(page1) == 2
+        assert len(page2) == 2
+        assert page1[0].id != page2[0].id
+    
+    def test_query_edges_no_filter(self, storage_with_data):
+        """Test query all edges."""
+        edges = storage_with_data.query_edges({})
+        assert len(edges) == 2
+    
+    def test_query_edges_by_type(self, storage_with_data):
+        """Test filter edges by type."""
+        edges = storage_with_data.query_edges({'edge_type': 'depends_on'})
+        assert len(edges) == 1
+        assert edges[0].edge_type == EdgeType.DEPENDS_ON
+    
+    def test_query_edges_by_source(self, storage_with_data):
+        """Test filter edges by source node."""
+        edges = storage_with_data.query_edges({'source_node_id': 'kn_000'})
+        assert len(edges) == 1
+    
+    def test_get_stats(self, storage_with_data):
+        """Test get_stats returns correct counts."""
+        stats = storage_with_data.get_stats()
+        
+        assert stats['total_nodes'] == 5
+        assert stats['total_edges'] == 2
+        assert 'by_type' in stats
+        assert stats['by_type']['requirement'] == 3
+        assert stats['by_type']['decision'] == 2

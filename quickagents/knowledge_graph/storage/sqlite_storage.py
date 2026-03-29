@@ -381,14 +381,86 @@ class SQLiteGraphStorage(GraphStorageInterface):
             
             return cursor.rowcount > 0
     
-    def query_nodes(self, filters: Dict[str, Any], limit: int = 100, offset: int = 0) -> List[KnowledgeNode]:
-        raise NotImplementedError("Implemented in Task 2.4")
+    def query_nodes(
+        self,
+        filters: Dict[str, Any],
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[KnowledgeNode]:
+        """Query nodes with filters."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            where_clauses = []
+            values = []
+            
+            for key, value in filters.items():
+                where_clauses.append(f"{key} = ?")
+                values.append(value)
+            
+            where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+            
+            cursor.execute(
+                f"SELECT * FROM knowledge_nodes WHERE {where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                values + [limit, offset]
+            )
+            
+            rows = cursor.fetchall()
+            return [self._row_to_node(row) for row in rows]
     
-    def query_edges(self, filters: Dict[str, Any], limit: int = 100) -> List[KnowledgeEdge]:
-        raise NotImplementedError("Implemented in Task 2.4")
+    def query_edges(
+        self,
+        filters: Dict[str, Any],
+        limit: int = 100
+    ) -> List[KnowledgeEdge]:
+        """Query edges with filters."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            where_clauses = []
+            values = []
+            
+            for key, value in filters.items():
+                where_clauses.append(f"{key} = ?")
+                values.append(value)
+            
+            where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+            
+            cursor.execute(
+                f"SELECT * FROM knowledge_edges WHERE {where_sql} LIMIT ?",
+                values + [limit]
+            )
+            
+            rows = cursor.fetchall()
+            return [self._row_to_edge(row) for row in rows]
     
     def find_path(self, from_node: str, to_node: str, max_depth: int = 5) -> Optional[List[str]]:
         raise NotImplementedError("Implemented in Task 2.5")
     
     def get_stats(self) -> Dict[str, Any]:
-        raise NotImplementedError("Implemented in Task 2.4")
+        """Get storage statistics."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM knowledge_nodes")
+            total_nodes = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM knowledge_edges")
+            total_edges = cursor.fetchone()[0]
+            
+            cursor.execute(
+                "SELECT node_type, COUNT(*) as count FROM knowledge_nodes GROUP BY node_type"
+            )
+            by_type = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            cursor.execute(
+                "SELECT edge_type, COUNT(*) as count FROM knowledge_edges GROUP BY edge_type"
+            )
+            by_edge_type = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            return {
+                'total_nodes': total_nodes,
+                'total_edges': total_edges,
+                'by_type': by_type,
+                'by_edge_type': by_edge_type
+            }
