@@ -8,8 +8,8 @@
 
 | 属性 | 值 |
 |------|-----|
-| 版本号 | 2.1.1 |
-| Git标签 | v2.1.1 |
+| 版本号 | 2.2.0 |
+| Git标签 | v2.2.0 |
 | 发布日期 | 2026-03-29 |
 | 最低兼容版本 | 2.0.0 |
 | 仓库地址 | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -23,6 +23,9 @@
 # 从PyPI安装
 pip install quickagents
 
+# 完整安装（包含Windows功能）
+pip install quickagents[full]
+
 # 使用CLI
 qa --help
 qa stats
@@ -31,24 +34,68 @@ qa cache stats
 
 ---
 
-## 本次更新 (v2.1.1)
+## 本次更新 (v2.2.0)
 
-**新增功能**:
+**重大更新 - Skills本地化 + Python包发布**
+
+### 新增功能
+
+#### quickagents Python包
+完整的Python本地化包，Token节省90%+：
+
+| 模块 | 功能 | Token节省 |
+|------|------|-----------|
+| FileManager | 智能文件读写（哈希检测） | 90%+ |
+| CacheDB | SQLite缓存管理 | 100% |
+| MemoryManager | 三维记忆管理 | 100% |
+| LoopDetector | 循环检测 | 100% |
+| Reminder | 事件提醒 | 100% |
+| FeedbackCollector | 经验收集 | 100% |
+| TDDWorkflow | TDD工作流 | 100% |
+| GitCommit | Git提交管理 | 100% |
+| ScriptHelper | Windows脚本替代 | 100% |
+
+#### Skills本地化状态 (80%)
+
+| Skill | 状态 | 模块 |
+|-------|------|------|
+| doom-loop-skill | ✅ 100% | LoopDetector |
+| project-memory-skill | ✅ 100% | MemoryManager + CacheDB |
+| lazy-discovery-skill | ✅ 100% | 内置工具分类 |
+| event-reminder-skill | ✅ 100% | Reminder |
+| feedback-collector-skill | ✅ 100% | FeedbackCollector |
+| tdd-workflow-skill | ✅ 100% | TDDWorkflow |
+| git-commit-skill | ✅ 100% | GitCommit |
+| ui-ux-pro-max | ✅ 已有Python | search.py, core.py |
+| inquiry-skill | ❌ 难以本地化 | 需要AI对话 |
+| si-hybrid-skill | ❌ 难以本地化 | 方法论指导 |
+
+### 变更内容
+- **移除npm包**：统一使用PyPI发布
+- **新增ScriptHelper**：替代.bat/.ps1/.vbs脚本
+- **依赖配置**：psutil>=5.9.0 (核心), pywin32>=305 (Windows)
+
+### 文档更新
+- AGENTS.md 新增「二四、本地化Python包 (quickagents)」章节
+- 新增 `Docs/guides/TOOL_ERROR_FIX_GUIDE.md` 工具错误修复指南
+
+---
+
+## 历史版本
+
+### v2.1.1 (2026-03-28)
 - `feedback-collector-skill` - 经验收集系统
-- `quickagents` Python包 - 本地化Skills，Token节省90%+
-  - FileManager: 哈希检测文件读写
-  - CacheDB: SQLite缓存系统
-  - MemoryManager: 三维记忆管理
-  - LoopDetector: 循环检测
-  - Reminder: 事件提醒
-  - FeedbackCollector: 经验收集
-  - TDDWorkflow: TDD工作流
-  - GitCommit: Git提交管理
+- Skills本地化框架搭建
 
-**更新内容**:
-- Skills本地化: 8个Skills完全本地化
-- 移除npm包，统一使用PyPI
-- AGENTS.md 新增「二四、本地化Python包」章节
+### v2.1.0 (2026-03-27)
+- 基于OpenDev/VeRO/SWE-agent论文的6个新Skills
+- 事件驱动提醒机制
+- ACI设计原则
+
+### v2.0.0 (2026-03-25)
+- 三维记忆系统
+- 17个专业代理
+- 12个核心技能
 
 ---
 
@@ -70,4 +117,4 @@ https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/VERS
 
 ---
 
-*最后更新: 2026-03-28*
+*最后更新: 2026-03-29*

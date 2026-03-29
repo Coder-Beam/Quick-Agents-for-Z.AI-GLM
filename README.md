@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
-[![Version](https://img.shields.io/badge/Version-2.1.1-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
+[![Version](https://img.shields.io/badge/Version-2.2.0-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
 [![PyPI](https://img.shields.io/badge/PyPI-quickagents-blue.svg)](https://pypi.org/project/quickagents/)
 
 **[中文](#quickagents---ai-代理项目初始化系统)** | **English**
@@ -70,7 +70,7 @@ Based on the paper "Memory in the Age of AI Agents":
 | **Tools** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
 | **Planning** | fenghou-plan, boyi-consult, jianming-review |
 
-### 📦 19 Specialized Skills
+### 📦 20 Specialized Skills
 
 #### Core Skills (12)
 | Skill | Purpose |
@@ -102,6 +102,11 @@ Based on the paper "Memory in the Age of AI Agents":
 | Skill | Purpose |
 |-------|---------|
 | feedback-collector-skill | Collect usage experience for system improvement |
+
+#### Methodology Skills (1) - v2.2.0
+| Skill | Purpose |
+|-------|---------|
+| si-hybrid-skill | Stage-Iteration hybrid methodology (Waterfall + Agile + TDD) |
 
 ### 📚 Complete Documentation System
 
@@ -251,7 +256,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*Version: 2.1.1 | Last Updated: 2026-03-27*
+*Version: 2.2.0 | Last Updated: 2026-03-29*
 
 ---
 
@@ -322,7 +327,7 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 | **工具** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
 | **规划** | fenghou-plan, boyi-consult, jianming-review |
 
-### 📦 19个专项技能
+### 📦 20个专项技能
 
 #### 核心技能 (12个)
 | 技能 | 用途 |
@@ -354,6 +359,11 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 | 技能 | 用途 |
 |------|------|
 | feedback-collector-skill | 收集使用经验，助力系统进化 |
+
+#### 方法论技能 (1个) - v2.2.0新增
+| 技能 | 用途 |
+|------|------|
+| si-hybrid-skill | 阶段-迭代混合模型（瀑布+敏捷+TDD） |
 
 ### 📚 完整文档体系
 
