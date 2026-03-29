@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quickagents"
-version = "2.2.0"
-description = "QuickAgents - AI Agent Enhancement Toolkit"
+version = "2.3.0"
+description = "QuickAgents - AI Agent Enhancement Toolkit with Self-Evolution"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     {name = "QuickAgents Team"}
 ]
-keywords = ["ai", "agent", "cache", "memory", "tdd", "windows", "automation"]
+keywords = ["ai", "agent", "cache", "memory", "tdd", "windows", "automation", "evolution", "self-improving"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

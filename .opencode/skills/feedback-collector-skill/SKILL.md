@@ -5,8 +5,9 @@ description: |
   自动触发：任务完成、Git提交后分析。
   手动触发：/feedback <类型> <描述>
   
-  Architecture (v2.2.0+):
+  Architecture (v2.3.0+):
   - SQLite主存储: unified.db/feedback表
+  - 与SkillEvolution集成: 自动收集Skills使用经验
   - Markdown辅助备份: ~/.quickagents/feedback/*.md
 license: MIT
 allowed-tools:
@@ -17,7 +18,7 @@ allowed-tools:
 metadata:
   category: feedback
   priority: medium
-  version: 2.0.0
+  version: 2.3.0
   localized: true
 ---
 
@@ -25,36 +26,47 @@ metadata:
 
 收集QuickAgents使用经验，为系统升级提供指导。
 
-## 架构 (v2.2.0+)
+## 架构 (v2.3.0+)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    经验收集架构                                      │
+│                    经验收集与自我进化架构                            │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │   AI代理 ──► .quickagents/unified.db ◄── 主存储 (SQLite)           │
 │              │         feedback表                                   │
+│              │         skill_evolution表                            │
+│              │                                                      │
+│              ▼ (SkillEvolution自动收集)                             │
+│       on_task_complete() ──► 自动记录Skills使用                    │
+│       on_git_commit() ──► 自动分析提交内容                         │
+│       check_periodic_trigger() ──► 定期优化检查                    │
 │              │                                                      │
 │              ▼ (自动同步)                                           │
 │       ~/.quickagents/feedback/ ◄── Markdown备份                    │
-│       ├── bugs.md                                                   │
-│       ├── improvements.md                                           │
-│       ├── best-practices.md                                         │
-│       ├── skill-review.md                                           │
-│       └── agent-review.md                                           │
+│       ~/.quickagents/evolution/ ◄── Skills进化记录                 │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Python API
+## Python API (推荐)
 
 ```python
-from quickagents import UnifiedDB, FeedbackType, MarkdownSync
+from quickagents import UnifiedDB, SkillEvolution, FeedbackType, MarkdownSync
 
 db = UnifiedDB('.quickagents/unified.db')
-sync = MarkdownSync(db)
+evolution = SkillEvolution(db)
 
-# 添加反馈
+# 方式1: 使用SkillEvolution自动收集（推荐）
+result = evolution.on_task_complete({
+    'task_id': 'T001',
+    'task_name': '实现认证',
+    'skills_used': ['tdd-workflow-skill', 'git-commit-skill'],
+    'success': True,
+    'duration_ms': 45000
+})
+
+# 方式2: 手动添加反馈
 db.add_feedback(
     FeedbackType.BUG,
     'lazy-discovery未正确加载',
@@ -62,10 +74,18 @@ db.add_feedback(
     project_name='my-project'
 )
 
+# 方式3: Git提交自动分析
+evolution.on_git_commit()
+
+# 方式4: 定期优化
+if evolution.check_periodic_trigger():
+    result = evolution.run_periodic_optimization()
+
 # 查询反馈
 bugs = db.get_feedbacks(FeedbackType.BUG, limit=10)
 
 # 同步到Markdown
+sync = MarkdownSync(db)
 sync.sync_feedback()
 ```
 

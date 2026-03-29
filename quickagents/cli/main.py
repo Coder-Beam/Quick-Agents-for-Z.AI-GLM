@@ -16,6 +16,18 @@ QuickAgents CLI - 命令行工具
     qa stats                 # 查看整体统计
     qa sync [table]          # 同步SQLite到Markdown
     
+    # 自我进化系统命令
+    qa evolution status      # 进化系统状态
+    qa evolution stats [skill] # Skills使用统计
+    qa evolution optimize    # 执行定期优化
+    qa evolution history <skill> # 查看Skill进化历史
+    qa evolution sync        # 同步到Markdown
+    
+    # Git钩子命令
+    qa hooks install         # 安装Git钩子
+    qa hooks uninstall       # 卸载Git钩子
+    qa hooks status          # 钩子状态
+    
     # Skills本地化命令
     qa feedback bug <desc>   # 记录Bug
     qa feedback improve <desc> # 记录改进建议
@@ -46,6 +58,8 @@ from quickagents.core.reminder import Reminder
 from quickagents.core.cache_db import CacheDB
 from quickagents.core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType
 from quickagents.core.markdown_sync import MarkdownSync
+from quickagents.core.evolution import SkillEvolution, EvolutionTrigger, get_evolution
+from quickagents.core.git_hooks import GitHooks
 from quickagents.skills.feedback_collector import FeedbackCollector
 from quickagents.skills.tdd_workflow import TDDWorkflow, TDDPhase
 from quickagents.skills.git_commit import GitCommit
@@ -385,6 +399,142 @@ def cmd_git(args):
             print(f"[FAIL] 推送失败: {result['message']}")
 
 
+# ==================== 自我进化系统命令 ====================
+
+def cmd_evolution(args):
+    """自我进化系统命令"""
+    db_path = '.quickagents/unified.db'
+    
+    if not os.path.exists(db_path):
+        print(f"[FAIL] 数据库不存在: {db_path}")
+        print("  请先使用UnifiedDB创建数据库")
+        return
+    
+    db = UnifiedDB(db_path)
+    evolution = SkillEvolution(db)
+    
+    if args.action == 'status':
+        print("[Evolution] 自我进化系统状态")
+        print("=" * 50)
+        
+        # 检查定期优化
+        should_optimize = evolution.check_periodic_trigger()
+        print(f"  需要优化: {'是' if should_optimize else '否'}")
+        
+        # 获取所有Skills统计
+        stats = evolution.get_all_skills_stats()
+        print(f"  已跟踪Skills: {len(stats)}")
+        
+        # 获取任务计数
+        task_count = evolution._get_task_count()
+        print(f"  任务计数: {task_count}/{evolution.PERIODIC_TASK_THRESHOLD}")
+        
+        # 获取上次优化时间
+        last_opt = evolution._get_last_optimization_time()
+        if last_opt:
+            print(f"  上次优化: {last_opt.strftime('%Y-%m-%d %H:%M')}")
+        else:
+            print("  上次优化: 从未执行")
+    
+    elif args.action == 'stats':
+        skill_name = args.skill if hasattr(args, 'skill') and args.skill else None
+        
+        if skill_name:
+            # 单个Skill统计
+            stats = evolution.get_skill_stats(skill_name)
+            print(f"[Evolution] {skill_name} 统计")
+            print("=" * 50)
+            print(f"  总使用次数: {stats['total_usage']}")
+            print(f"  成功次数: {stats['success_count']}")
+            print(f"  失败次数: {stats['failure_count']}")
+            print(f"  成功率: {stats['success_rate']:.1%}")
+            if stats['avg_duration_ms']:
+                print(f"  平均耗时: {stats['avg_duration_ms']:.0f}ms")
+            
+            if stats['recent_errors']:
+                print("\n[Recent Errors]")
+                for err in stats['recent_errors'][:3]:
+                    print(f"  - {err['error_message'][:50]}...")
+        else:
+            # 所有Skills统计
+            all_stats = evolution.get_all_skills_stats()
+            print(f"[Evolution] 所有Skills统计 ({len(all_stats)} 个)")
+            print("=" * 50)
+            
+            for skill, stats in sorted(all_stats.items(), key=lambda x: x[1]['count'], reverse=True):
+                rate = stats['success_rate']
+                status = '[OK]' if rate >= 0.8 else ('[WARN]' if rate >= 0.6 else '[FAIL]')
+                print(f"  {status} {skill}: {stats['count']}次, 成功率 {rate:.0%}")
+    
+    elif args.action == 'optimize':
+        print("[Evolution] 执行定期优化...")
+        result = evolution.run_periodic_optimization()
+        
+        print(f"\n[OK] 优化完成")
+        print(f"  审查Skills: {len(result['skills_reviewed'])}")
+        
+        if result['skills_to_update']:
+            print(f"\n[WARN] 需要改进的Skills:")
+            for skill in result['skills_to_update']:
+                print(f"  - {skill}")
+    
+    elif args.action == 'history':
+        skill_name = args.skill
+        if not skill_name:
+            print("[FAIL] 请指定Skill名称")
+            return
+        
+        history = evolution.get_skill_history(skill_name)
+        print(f"[Evolution] {skill_name} 进化历史 ({len(history)} 条)")
+        print("=" * 50)
+        
+        for entry in history[:10]:
+            print(f"\n  [{entry['created_at'][:10]}] {entry['change_type']}")
+            print(f"    触发: {entry['trigger_type']}")
+            print(f"    描述: {entry['description']}")
+    
+    elif args.action == 'sync':
+        print("[Evolution] 同步到Markdown...")
+        result = evolution.sync_to_markdown()
+        
+        print(f"[OK] 已同步 {result['skills_synced']} 个Skills")
+        for f in result['files_created'][:5]:
+            print(f"  - {f}")
+
+
+def cmd_hooks(args):
+    """Git钩子命令"""
+    hooks = GitHooks()
+    
+    if args.action == 'install':
+        print("[Hooks] 安装Git钩子...")
+        result = hooks.install()
+        
+        if 'error' in result:
+            print(f"[FAIL] {result['error']}")
+        else:
+            print("[OK] Git钩子已安装")
+            for hook, success in result.items():
+                print(f"  - {hook}: {'成功' if success else '失败'}")
+    
+    elif args.action == 'uninstall':
+        print("[Hooks] 卸载Git钩子...")
+        result = hooks.uninstall()
+        
+        print("[OK] Git钩子已卸载")
+        for hook, success in result.items():
+            print(f"  - {hook}: {'成功' if success else '失败'}")
+    
+    elif args.action == 'status':
+        status = hooks.get_status()
+        print("[Hooks] Git钩子状态")
+        print("=" * 50)
+        print(f"  是Git仓库: {'是' if status['is_git_repo'] else '否'}")
+        print(f"  post-commit: {'已安装' if status['post_commit_installed'] else '未安装'}")
+        if status['post_commit_has_backup']:
+            print("  存在备份: 是")
+
+
 def main():
     parser = argparse.ArgumentParser(description='QuickAgents CLI')
     subparsers = parser.add_subparsers(dest='command', help='命令')
@@ -468,6 +618,19 @@ def main():
     p_git.add_argument('scope', nargs='?', help='范围')
     p_git.add_argument('subject', nargs='?', help='主题')
     p_git.set_defaults(func=cmd_git)
+    
+    # ==================== 自我进化系统命令 ====================
+    
+    # evolution 命令
+    p_evolution = subparsers.add_parser('evolution', help='自我进化系统')
+    p_evolution.add_argument('action', choices=['status', 'stats', 'optimize', 'history', 'sync'], help='操作')
+    p_evolution.add_argument('skill', nargs='?', help='Skill名称')
+    p_evolution.set_defaults(func=cmd_evolution)
+    
+    # hooks 命令
+    p_hooks = subparsers.add_parser('hooks', help='Git钩子管理')
+    p_hooks.add_argument('action', choices=['install', 'uninstall', 'status'], help='操作')
+    p_hooks.set_defaults(func=cmd_hooks)
     
     args = parser.parse_args()
     

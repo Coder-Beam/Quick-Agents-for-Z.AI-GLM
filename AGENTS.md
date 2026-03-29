@@ -1542,44 +1542,115 @@ permission:
 
 ---
 
-## 二一、Skills自我持续进化规范
+## 二一、Skills自我持续进化规范 (v2.3.0+)
 
-### （一）进化触发机制
+### （一）统一进化系统
 
-1. **任务完成后自动分析**：
-   - 每次任务完成后，AI分析本次任务中Skills的使用情况
-   - 识别Skills的不足之处和改进空间
-   - 记录优化建议到MEMORY.md
+QuickAgents v2.3.0+ 采用统一的自我进化系统，所有操作通过Python API执行，0 Token消耗：
 
-2. **定期自动优化**：
-   - 每10个任务或每周（以先到者为准）执行一次Skills优化
-   - 分析Skills使用统计数据
-   - 综合用户反馈和AI自我评估
-   - 执行优化更新
+```python
+from quickagents import UnifiedDB, SkillEvolution, get_evolution
 
-### （二）全生命周期管理
+# 获取进化系统实例
+evolution = get_evolution()
 
-1. **创建**：
-   - 识别新需求，创建对应的Skill
-   - 用户确认后创建Skill文件
-   - 记录创建原因和预期用途
+# 任务完成时自动触发
+evolution.on_task_complete({
+    'task_id': 'T001',
+    'task_name': '实现认证',
+    'skills_used': ['tdd-workflow-skill', 'git-commit-skill'],
+    'success': True,
+    'duration_ms': 45000
+})
 
-2. **更新**：
-   - 根据使用经验优化Skill指令和模板
-   - 记录更新历史和改进内容
-   - 保持向后兼容性
+# Git提交时自动触发
+evolution.on_git_commit()
 
-3. **归档**：
-   - 不再使用的Skill移至归档目录
-   - 保留归档记录以供参考
-   - 标注归档原因
+# 检查是否需要定期优化
+if evolution.check_periodic_trigger():
+    result = evolution.run_periodic_optimization()
+```
 
-4. **删除**：
-   - 仅在用户明确确认后删除Skill
-   - 删除前创建备份
-   - 记录删除原因
+### （二）自动触发机制
 
-### （三）效果评估机制
+| 触发类型 | 触发条件 | 自动操作 |
+|----------|----------|----------|
+| TASK_COMPLETE | 任务完成 | 记录Skills使用、分析失败原因、提取模式 |
+| GIT_COMMIT | Git提交 | 分析提交内容、检测改进点 |
+| PERIODIC | 10任务/7天 | 执行Skills优化、更新统计 |
+| ERROR_DETECTED | 错误检测 | 记录错误、建议修复方案 |
+
+### （三）CLI命令
+
+```bash
+# 查看进化系统状态
+qa evolution status
+
+# 查看Skills使用统计
+qa evolution stats [skill_name]
+
+# 执行定期优化
+qa evolution optimize
+
+# 查看Skill进化历史
+qa evolution history <skill_name>
+
+# 同步到Markdown
+qa evolution sync
+
+# 安装Git钩子（自动触发）
+qa hooks install
+```
+
+### （四）Git钩子集成
+
+安装Git钩子后，每次提交自动触发进化分析：
+
+```bash
+# 安装钩子
+qa hooks install
+
+# 钩子状态
+qa hooks status
+```
+
+### （五）数据存储
+
+所有进化数据存储在UnifiedDB中：
+
+| 表名 | 功能 |
+|------|------|
+| skill_evolution | Skills进化记录 |
+| skill_usage | Skills使用统计 |
+| feedback | 经验收集 |
+| evolution_config | 进化配置 |
+
+### （六）生命周期管理
+
+```python
+# 记录Skill创建
+evolution.record_skill_creation(
+    skill_name='new-skill',
+    reason='解决重复模式',
+    expected_use='自动检测XXX问题'
+)
+
+# 记录Skill更新
+evolution.record_skill_update(
+    skill_name='tdd-workflow-skill',
+    version='1.1.0',
+    changes=['添加覆盖率检查', '优化测试命令'],
+    reason='提高测试覆盖率要求'
+)
+
+# 记录Skill归档
+evolution.record_skill_archive(
+    skill_name='deprecated-skill',
+    reason='功能已整合到其他Skill'
+)
+```
+
+### （七）效果评估机制
 
 采用综合评估方法：
 
@@ -1589,59 +1660,62 @@ permission:
 | 用户反馈 | 满意度、改进建议、问题报告 | 40% |
 | AI自评 | 执行效果、改进空间、最佳实践 | 20% |
 
-### （四）进化记录
-
-所有Skills的进化过程必须记录在`.opencode/skills/`目录下的`EVOLUTION.md`文件中：
-
-```markdown
-# Skills进化记录
-
-## [Skill名称] - [日期]
-
-### 更新内容
-- 更新点1
-- 更新点2
-
-### 更新原因
-- 触发原因说明
-
-### 效果评估
-- 综合评分：X/10
-- 改进建议：...
-```
-
 ---
 
-## 二二、经验收集规范
+## 二二、经验收集规范 (v2.3.0+)
 
-### （一）收集目标
+### （一）统一收集系统
 
-在使用QuickAgents过程中自动收集经验，为系统升级提供指导。
+经验收集已整合到SkillEvolution中，通过Python API执行：
+
+```python
+from quickagents import get_evolution, FeedbackType
+
+evolution = get_evolution()
+
+# 方式1: 任务完成时自动收集（推荐）
+evolution.on_task_complete(task_info)
+
+# 方式2: 手动添加反馈
+evolution.db.add_feedback(
+    FeedbackType.BUG,
+    '发现bug',
+    description='详细描述',
+    project_name='my-project'
+)
+
+# 方式3: 错误检测时自动收集
+evolution.on_error_detected({
+    'error_type': 'ImportError',
+    'error_message': '模块未找到',
+    'context': '导入quickagents时'
+})
+```
 
 ### （二）存储位置
 
 ```
-~/.quickagents/feedback/
-├── bugs.md           # Bug/错误
-├── improvements.md   # 改进建议
-├── best-practices.md # 最佳实践
-├── skill-review.md   # Skill评估
-└── agent-review.md   # Agent评估
+.quickagents/unified.db  (SQLite主存储)
+├── feedback表           (经验收集)
+├── skill_evolution表    (Skills进化)
+└── skill_usage表        (使用统计)
+
+~/.quickagents/feedback/ (Markdown备份)
+├── bugs.md
+├── improvements.md
+├── best-practices.md
+├── skill-review.md
+└── agent-review.md
 ```
 
-### （三）触发机制
-
-| 触发点 | 说明 |
-|--------|------|
-| 任务完成 | 分析本次任务，提取经验 |
-| Git提交 | 分析变更，记录改进点 |
-| 手动触发 | `/feedback <类型> <描述>` |
-
-### （四）命令集
+### （三）CLI命令
 
 ```bash
-/feedback bug <描述>       # 记录Bug
-/feedback improve <描述>   # 记录改进建议
+qa feedback bug <描述>       # 记录Bug
+qa feedback improve <描述>   # 记录改进建议
+qa feedback best <描述>      # 记录最佳实践
+qa feedback view [类型]      # 查看收集的经验
+qa feedback stats            # 查看统计
 /feedback best <描述>      # 记录最佳实践
 /feedback skill <名> <评>  # 评估Skill
 /feedback agent <名> <评>  # 评估Agent
@@ -1932,10 +2006,12 @@ stats             -- 统计数据
 | feedback-collector-skill | ✅ 100% | FeedbackCollector |
 | tdd-workflow-skill | ✅ 100% | TDDWorkflow |
 | git-commit-skill | ✅ 100% | GitCommit |
+| skill-evolution | ✅ 100% | SkillEvolution (v2.3.0新增) |
+| git-hooks | ✅ 100% | GitHooks (v2.3.0新增) |
 | ui-ux-pro-max | ✅ 已有Python | search.py, core.py |
 | inquiry-skill | ❌ 难以本地化 | 需要AI对话能力 |
 | si-hybrid-skill | ❌ 难以本地化 | 方法论指导 |
 
 ---
 
-*文档版本: v10.2 | 更新时间: 2026-03-29*
+*文档版本: v10.3 | 更新时间: 2026-03-29*

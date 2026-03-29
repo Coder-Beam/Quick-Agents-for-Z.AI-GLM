@@ -8,8 +8,8 @@
 
 | 属性 | 值 |
 |------|-----|
-| 版本号 | 2.2.0 |
-| Git标签 | v2.2.0 |
+| 版本号 | 2.3.0 |
+| Git标签 | v2.3.0 |
 | 发布日期 | 2026-03-29 |
 | 最低兼容版本 | 2.0.0 |
 | 仓库地址 | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -28,60 +28,77 @@ pip install quickagents[full]
 
 # 使用CLI
 qa --help
-qa stats
-qa cache stats
+qa evolution status
+qa hooks install
 ```
 
 ---
 
-## 本次更新 (v2.2.0)
+## 本次更新 (v2.3.0)
 
-**重大更新 - Skills本地化 + Python包发布**
+**重大更新 - 统一自我进化系统**
 
 ### 新增功能
 
-#### quickagents Python包
-完整的Python本地化包，Token节省90%+：
+#### SkillEvolution - 统一的Skills自我进化系统
 
-| 模块 | 功能 | Token节省 |
-|------|------|-----------|
-| FileManager | 智能文件读写（哈希检测） | 90%+ |
-| CacheDB | SQLite缓存管理 | 100% |
-| MemoryManager | 三维记忆管理 | 100% |
-| LoopDetector | 循环检测 | 100% |
-| Reminder | 事件提醒 | 100% |
-| FeedbackCollector | 经验收集 | 100% |
-| TDDWorkflow | TDD工作流 | 100% |
-| GitCommit | Git提交管理 | 100% |
-| ScriptHelper | Windows脚本替代 | 100% |
+自动触发、统一存储、经验闭环：
 
-#### Skills本地化状态 (80%)
+| 触发类型 | 触发条件 | 自动操作 |
+|----------|----------|----------|
+| TASK_COMPLETE | 任务完成 | 记录Skills使用、分析失败原因 |
+| GIT_COMMIT | Git提交 | 分析提交内容、检测改进点 |
+| PERIODIC | 10任务/7天 | 执行Skills优化、更新统计 |
+| ERROR_DETECTED | 错误检测 | 记录错误、建议修复方案 |
+
+#### GitHooks - Git钩子集成
+
+```bash
+qa hooks install    # 安装钩子
+qa hooks status     # 查看状态
+```
+
+#### 新增CLI命令
+
+```bash
+qa evolution status      # 进化系统状态
+qa evolution stats [skill] # Skills使用统计
+qa evolution optimize    # 执行定期优化
+qa evolution history <skill> # 查看进化历史
+qa hooks install         # 安装Git钩子
+```
+
+### 架构改进
+
+- **统一存储**: 所有进化数据存入UnifiedDB
+- **Python API**: 0 Token消耗，本地处理
+- **自动闭环**: 收集 -> 分析 -> 改进 -> 验证
+
+### Skills本地化状态 (90%)
 
 | Skill | 状态 | 模块 |
 |-------|------|------|
+| skill-evolution | ✅ 100% | SkillEvolution (新增) |
+| git-hooks | ✅ 100% | GitHooks (新增) |
 | doom-loop-skill | ✅ 100% | LoopDetector |
 | project-memory-skill | ✅ 100% | MemoryManager + CacheDB |
-| lazy-discovery-skill | ✅ 100% | 内置工具分类 |
-| event-reminder-skill | ✅ 100% | Reminder |
 | feedback-collector-skill | ✅ 100% | FeedbackCollector |
 | tdd-workflow-skill | ✅ 100% | TDDWorkflow |
 | git-commit-skill | ✅ 100% | GitCommit |
-| ui-ux-pro-max | ✅ 已有Python | search.py, core.py |
-| inquiry-skill | ❌ 难以本地化 | 需要AI对话 |
-| si-hybrid-skill | ❌ 难以本地化 | 方法论指导 |
 
-### 变更内容
-- **移除npm包**：统一使用PyPI发布
-- **新增ScriptHelper**：替代.bat/.ps1/.vbs脚本
-- **依赖配置**：psutil>=5.9.0 (核心), pywin32>=305 (Windows)
+### 删除的内容
 
-### 文档更新
-- AGENTS.md 新增「二四、本地化Python包 (quickagents)」章节
-- 新增 `Docs/guides/TOOL_ERROR_FIX_GUIDE.md` 工具错误修复指南
+- `skills/self-improving-agent/hooks/openclaw/handler.ts` - TypeScript Hook已删除
+- 项目现在100% Python化
 
 ---
 
 ## 历史版本
+
+### v2.2.0 (2026-03-29)
+- UnifiedDB统一存储架构
+- SQLite主存储 + Markdown辅助备份
+- Token节省60%+
 
 ### v2.1.1 (2026-03-28)
 - `feedback-collector-skill` - 经验收集系统
