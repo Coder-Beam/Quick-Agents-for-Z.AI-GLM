@@ -107,9 +107,10 @@ Implement a **Knowledge Graph** system integrated with UnifiedDB:
 
 ### 2.7 Knowledge Extraction Strategy
 
-**Layered Auto-Extraction**:
+**Layered Auto-Extraction (Three-Tier Model)**:
 - High-confidence (≥0.8): Auto-store without confirmation
-- Low-confidence (<0.8): Wait for user confirmation
+- Medium-confidence (0.5-0.8): Mark for user confirmation
+- Low-confidence (<0.5): Discard or explicitly request user confirmation
 
 ---
 
@@ -291,6 +292,7 @@ END;
 | `contradicts` | Conflict | Discovered contradiction |
 | `supports` | Support | Evidence supports conclusion |
 | `related_to` | General | Generic association |
+| `indirectly_related_to` | Transitive | Computed: A→B→C implies A indirectly_related_to C |
 
 ---
 
@@ -360,6 +362,14 @@ score = 0.4 * relevance + 0.3 * importance + 0.3 * recency
 - Node importance ≥ 0.8
 - Node type in [requirement, decision, fact]
 - Manual sync_to_memory=True
+
+**How `sync_to_memory=True` is Set**:
+1. **Auto-detection**: When creating a node via `create_node()`, the system auto-sets this flag if:
+   - `importance >= 0.8` AND `node_type in [requirement, decision, fact]`
+2. **Manual setting**: User can explicitly set via:
+   - Python API: `kg.create_node(..., metadata={'sync_to_memory': True})`
+   - CLI: `qa knowledge create-node ... --sync`
+   - Update: `kg.update_node(node_id, metadata={'sync_to_memory': True})`
 
 **Sync Format**:
 ```markdown
