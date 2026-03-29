@@ -33,16 +33,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Windows特定功能
-windows = [
-    "pywin32>=305",
-    "wmi>=1.5.1",
+# 浏览器自动化功能
+browser = [
+    "playwright>=1.40.0",
 ]
 # 完整安装（包含所有功能）
 full = [
-    "pywin32>=305",
-    "wmi>=1.5.1",
-    "psutil>=5.9.0",
+    "pywin32>=305;         # Windows功能
+    "wmi>=1.5.1",            # WMI
+    "psutil>=5.9.0",          # 系统工具
+    "playwright>=1.40.0",   # 浏览器自动化
 ]
 
 [project.scripts]

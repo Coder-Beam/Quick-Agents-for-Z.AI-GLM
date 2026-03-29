@@ -77,9 +77,11 @@ from .skills import (
     TDDWorkflow, TDDPhase, get_tdd_workflow,
     GitCommit, get_git_commit
 )
-
 # Windows脚本替代工具（可选依赖）
 from .utils.script_helper import ScriptHelper
+
+# 浏览器自动化（可选依赖）
+from .browser import Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest
 
 __all__ = [
     # Unified database (v2.2.0+)
@@ -114,6 +116,12 @@ __all__ = [
     'get_git_commit',
     # Windows script helper (optional)
     'ScriptHelper',
+    # Browser automation (optional)
+    'Browser',
+    'BrowserBackend',
+    'Page',
+    'ConsoleLog',
+    'NetworkRequest',
     # Version
     '__version__',
 ]
