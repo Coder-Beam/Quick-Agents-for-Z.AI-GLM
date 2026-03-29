@@ -8,8 +8,8 @@
 
 | 属性 | 值 |
 |------|-----|
-| 版本号 | 2.3.1 |
-| Git标签 | v2.3.1 |
+| 版本号 | 2.4.0 |
+| Git标签 | v2.4.0 |
 | 发布日期 | 2026-03-29 |
 | 最低兼容版本 | 2.0.0 |
 | 仓库地址 | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -34,96 +34,115 @@ qa hooks install
 
 ---
 
-## 本次更新 (v2.3.1)
+## 本次更新 (v2.4.0)
 
-**重大更新 - 浏览器自动化与DevTools集成**
+**重大更新 - 浏览器自动化强制安装 + Lightpanda默认**
+
+### 架构变更
+
+| 变更 | 之前 (v2.3.x) | 现在 (v2.4.0) |
+|------|---------------|---------------|
+| **Playwright** | 可选依赖 | **强制依赖** |
+| **Lightpanda** | 用户自行安装 | **自动安装** |
+| **默认后端** | Chromium | **Lightpanda** |
+| **版本号** | 固定版本 | **latest (最新)** |
 
 ### 新增功能
 
-#### Browser - 浏览器自动化模块
+#### 1. 强制安装浏览器依赖
 
-支持Chromium和Lightpanda两种后端：
+```bash
+pip install quickagents  # 自动安装 Playwright
+```
 
-| 后端 | 说明 | 安装 |
-|------|------|------|
-| chromium | 默认，Playwright + Chromium | `pip install quickagents[browser]` |
-| lightpanda | 轻量级headless浏览器 | 用户自行安装 |
+首次使用时自动安装Chromium浏览器。
 
-**功能**:
-- 获取控制台日志 (Console) - 捕获所有console.log/warn/error
-- 获取网络请求 (Network) - 分析HTTP请求和响应
-- 获取性能指标 (Performance) - 页面性能分析
-- 执行JavaScript - 在页面上下文中执行脚本
-- 截图 - 页面截图
-- Cookie管理 - 读写Cookie
+#### 2. 自动安装Lightpanda
 
-#### Lightpanda 集成
-
-Lightpanda是一个用Zig编写的轻量级headless浏览器：
-- 比Chrome快11倍
-- 内存少9倍
-- CDP协议兼容
-- 专为AI Agent设计
-
-**使用方式**:
 ```python
 from quickagents import Browser
 
-# 默认Chromium
+# 首次使用时自动检测和安装
+browser = Browser()  # 自动确保依赖已安装
+```
+
+#### 3. 启动时更新第三方依赖
+
+```python
+from quickagents import update_browser_dependencies
+
+# 更新Playwright和Chromium到最新版本
+update_browser_dependencies()
+```
+
+#### 4. 默认使用Lightpanda
+
+```python
+from quickagents import Browser
+
+# 默认使用Lightpanda（更快、更轻量）
 browser = Browser()
 
-# 使用Lightpanda（需先启动lightpanda serve）
-browser = Browser(backend='lightpanda')
-
-# 打开页面
-page = browser.open('https://example.com')
-
-# 获取控制台日志
-console_logs = page.get_console_logs()
-
-# 获取网络请求
-network = page.get_network_requests()
-
-# 关闭
-browser.close()
+# 如果Lightpanda不可用，自动回退到Chromium
+# 或者明确指定回退
+browser = Browser(fallback_to_chromium=True)
 ```
 
-#### 新增CLI命令
+### Lightpanda优势
 
-```bash
-# 浏览器相关（需要pip install quickagents[browser]）
-qa browser open <url>     # 打开URL
-qa browser screenshot <url> <file>  # 截图
-qa browser console <url>  # 获取控制台日志
-qa browser network <url>  # 获取网络请求
-```
+| 特性 | Lightpanda | Chromium |
+|------|------------|----------|
+| **速度** | 11x faster | 基准 |
+| **内存** | 9x less | 基准 |
+| **启动** | 秒级 | 秒级 |
+| **专为AI** | ✅ | ❌ |
 
-### 安装方式
+### pyproject.toml变更
 
-```bash
-# 基础安装
-pip install quickagents
-
-# 完整安装（包含浏览器自动化）
-pip install quickagents[browser]
-
-# 完整安装后还需要安装浏览器
-playwright install chromium
-```
-
-### 依赖更新
-
-pyproject.toml新增可选依赖：
 ```toml
+# 之前
+dependencies = ["psutil>=5.9.0"]
 [project.optional-dependencies]
-browser = [
-    "playwright>=1.40.0",
+browser = ["playwright>=1.40.0"]
+
+# 现在
+dependencies = [
+    "psutil",      # latest
+    "playwright",  # latest - 强制依赖
 ]
+```
+
+### 新增模块
+
+| 模块 | 文件 | 功能 |
+|------|------|------|
+| **BrowserInstaller** | `quickagents/browser/installer.py` | 自动检测和安装 |
+
+### API变更
+
+```python
+# 新增函数
+from quickagents import (
+    ensure_browser_installed,     # 确保浏览器已安装
+    update_browser_dependencies,  # 更新依赖
+)
+
+# 确保安装
+ensure_browser_installed(auto_install=True)
+
+# 更新到最新版本
+update_browser_dependencies()
 ```
 
 ---
 
 ## 历史版本
+
+### v2.3.1 (2026-03-29)
+- 浏览器自动化模块（可选安装）
+
+### v2.3.0 (2026-03-29)
+- 统一自我进化系统
 
 ### v2.2.0 (2026-03-29)
 - UnifiedDB统一存储架构

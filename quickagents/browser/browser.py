@@ -1,65 +1,45 @@
 """
-Browser - 浏览器自动化核心实现
+Browser - 浏览器自动化核心实现 (v2.4.0)
 
-支持后端:
-- chromium (默认): Playwright + Chromium
-- lightpanda: Playwright + Lightpanda (用户自行安装)
-
-功能:
-- 打开页面
-- 获取控制台日志 (DevTools Console)
-- 获取网络请求 (Network)
-- 获取性能指标 (Performance)
-- 执行JavaScript
-- 截图
-- PDF生成
-- Cookie管理
+架构变更:
+- 默认使用 Lightpanda (轻量级headless浏览器)
+- 强制安装 Playwright + Lightpanda
+- 启动时自动检测和安装
+- 支持更新第三方依赖
 
 使用方式:
     from quickagents import Browser
-
-    # 默认使用Chromium
+    
+    # 默认使用Lightpanda（自动安装）
     browser = Browser()
     
-    # 使用Lightpanda（需先启动lightpanda serve）
-    browser = Browser(backend='lightpanda')
+    # 回退到Chromium
+    browser = Browser(fallback_to_chromium=True)
     
     # 打开页面
     page = browser.open('https://example.com')
     
-    # 等待页面加载
-    time.sleep(2)  # 等待2秒后检查是否有控制台日志
+    # 获取控制台日志
     console_logs = page.get_console_logs()
-    print(f"控制台日志数量: {len(console_logs)}")
-            
-            for log in console_logs:
-                print(f"  [{log.type}] {log.message[:100]}")
-    
-    # 获取网络请求
-    network = page.get_network_requests()
-    print(f"网络请求数量: {len(network)}")
-            
-            for req in network:
-                print(f"  [{req.method}] {req.url}")
-                print(f"    状态: {req.status}")
-                print(f"    耗时: {req.duration_ms:.2f}ms")
     
     # 关闭浏览器
     browser.close()
 """
 
-import subprocess
+import os
 import time
+import socket
 from typing import Dict, List, Optional, Any
 from enum import Enum
 from dataclasses import dataclass, field
-from datetime import datetime
+
+from .installer import ensure_browser_installed, check_lightpanda, update_dependencies
 
 
 class BrowserBackend(Enum):
     """浏览器后端类型"""
-    CHROMIUM = "chromium"
-    LIGHTPANDA = "lightpanda"
+    LIGHTPANDA = "lightpanda"   # 默认
+    CHROMIUM = "chromium"       # 回退选项
 
 
 @dataclass
@@ -100,11 +80,7 @@ class PerformanceMetric:
 
 
 class Page:
-    """
-    页面对象
-    
-    管理单个页面的操作
-    """
+    """页面对象"""
     
     def __init__(self, playwright_page, url: str):
         self._page = playwright_page
@@ -115,7 +91,6 @@ class Page:
     
     def _setup_listeners(self):
         """设置事件监听器"""
-        # 监听控制台日志
         def on_console(msg):
             log = ConsoleLog(
                 type=msg.type,
@@ -129,7 +104,6 @@ class Page:
         
         self._page.on('console', on_console)
         
-        # 监听网络请求
         def on_request(request):
             req = NetworkRequest(
                 request_id=request.headers.get('x-request-id', ''),
@@ -142,163 +116,117 @@ class Page:
             self._network_requests.append(req)
         
         def on_response(response):
-            # 找到对应的请求并更新状态
             for req in self._network_requests:
-                if req.url == response.url:
+                if req.url == response.url and req.status == 0:
                     req.status = response.status
                     req.response_time = time.time()
                     req.duration_ms = (req.response_time - req.request_time) * 1000
                     req.mime_type = response.headers.get('content-type', '')
                     req.response_headers = dict(response.headers)
+                    break
         
         self._page.on('request', on_request)
         self._page.on('response', on_response)
     
-    def get_console_logs(self, url_filter: str = None,
-                 type_filter: str = None) -> List[ConsoleLog]:
-        """
-        获取控制台日志
-        
-        Args:
-            url_filter: URL过滤（可选）
-            type_filter: 类型过滤（可选）
-        
-        Returns:
-            控制台日志列表
-        """
-        logs = self._console_logs.copy()
-        
-        if url_filter:
-            logs = [log for log in logs if url_filter in log.url]
-        
-        if type_filter:
-            logs = [log for log in logs if log.type in type_filter]
-        
-        return logs
+    def get_console_logs(self, log_type: str = None) -> List[ConsoleLog]:
+        """获取控制台日志"""
+        if log_type:
+            return [log for log in self._console_logs if log.type == log_type]
+        return self._console_logs.copy()
     
-    def get_network_requests(self, url_filter: str = None,
-                      status_filter: int = None,
-                      method_filter: str = None) -> List[NetworkRequest]:
-        """
-        获取网络请求
-        
-        Args:
-            url_filter: URL过滤（可选）
-            status_filter: 状态码过滤（可选）
-            method_filter: HTTP方法过滤（可选）
-        
-        Returns:
-            网络请求列表
-        """
-        requests = self._network_requests.copy()
-        
-        if url_filter:
-            requests = [req for req in requests if url_filter in req.url]
-        
-        if status_filter is not None:
-            requests = [req for req in requests if req.status == status_filter]
-        
-        if method_filter:
-            requests = [req for req in requests if req.method == method_filter]
-        
-        return requests
+    def get_errors(self) -> List[ConsoleLog]:
+        """获取错误日志"""
+        return [log for log in self._console_logs if log.type in ('error', 'warning')]
     
-    def get_performance(self) -> Dict[str, Any]:
-        """
-        获取性能指标
-        
-        Returns:
-            性能指标字典
-        """
-        metrics = {}
-        
+    def get_network_requests(self, resource_type: str = None) -> List[NetworkRequest]:
+        """获取网络请求"""
+        if resource_type:
+            return [req for req in self._network_requests if req.resource_type == resource_type]
+        return self._network_requests.copy()
+    
+    def get_api_requests(self) -> List[NetworkRequest]:
+        """获取API请求"""
+        return [req for req in self._network_requests if req.resource_type in ('xhr', 'fetch')]
+    
+    def get_performance(self) -> List[PerformanceMetric]:
+        """获取性能指标"""
         try:
-                # 使用Playwright的性能API
-                perf_entries = self._page.evaluate('performance.getEntries()')
-                
-                for entry in perf_entries:
-                    metrics[entry['name']] = PerformanceMetric(
-                        name=entry['name'],
-                        value=entry['startTime'] if 'startTime' in entry else entry.get('value', 00),
-                        unit='ms'
-                    )
+            timing = self._page.evaluate('''() => {
+                const t = performance.timing;
+                return {
+                    dns: t.domainLookupEnd - t.domainLookupStart,
+                    tcp: t.connectEnd - t.connectStart,
+                    request: t.responseStart - t.requestStart,
+                    response: t.responseEnd - t.responseStart,
+                    dom: t.domComplete - t.domInteractive,
+                    load: t.loadEventEnd - t.navigationStart
+                };
+            }''')
+            
+            return [PerformanceMetric(name=k, value=v, unit='ms') for k, v in timing.items()]
         except Exception:
-            pass
-        
-        return metrics
+            return []
     
     def evaluate(self, script: str) -> Any:
-        """
-        执行JavaScript并返回结果
-        
-        Args:
-            script: JavaScript代码
-        
-        Returns:
-            执行结果
-        """
+        """执行JavaScript"""
         return self._page.evaluate(script)
     
     def screenshot(self, path: str, full_page: bool = False) -> str:
-        """
-        截图
-        
-        Args:
-            path: 保存路径
-            full_page: 是否全页面（默认False）
-        """
-        return self._page.screenshot(path=path, full_page=full_page)
+        """截图"""
+        self._page.screenshot(path=path, full_page=full_page)
+        return path
+    
+    def wait_for_selector(self, selector: str, timeout: int = 30000) -> bool:
+        """等待元素"""
+        try:
+            self._page.wait_for_selector(selector, timeout=timeout)
+            return True
+        except Exception:
+            return False
+    
+    def click(self, selector: str) -> bool:
+        """点击元素"""
+        try:
+            self._page.click(selector)
+            return True
+        except Exception:
+            return False
+    
+    def fill(self, selector: str, value: str) -> bool:
+        """填充输入框"""
+        try:
+            self._page.fill(selector, value)
+            return True
+        except Exception:
+            return False
     
     def get_content(self) -> str:
-        """获取页面HTML内容"""
+        """获取页面HTML"""
         return self._page.content()
     
     def get_title(self) -> str:
         """获取页面标题"""
         return self._page.title()
     
-    def get_url(self) -> str:
-        """获取当前URL"""
-        return self._page.url
-    
-    def set_cookie(self, cookies: Dict[str, str]) -> None:
-        """
-        设置Cookie
-        
-        Args:
-            cookies: Cookie字典
-        """
-        self._context.add_cookies(cookies)
-    
-    def get_cookies(self) -> Dict[str, str]:
-        """获取所有Cookie"""
-        return self._context.cookies()
-    
-    def clear_console_logs(self) -> None:
-        """清空控制台日志缓存"""
-        self._console_logs.clear()
-    
-    def clear_network_requests(self) -> None:
-        """清空网络请求缓存"""
-        self._network_requests.clear()
+    def close(self):
+        """关闭页面"""
+        self._page.close()
 
 
 class Browser:
     """
-    浏览器自动化管理器
+    浏览器自动化管理器 (v2.4.0)
     
-    支持后端:
-    - chromium (默认): Playwright + Chromium
-    - lightpanda: Playwright + Lightpanda (用户自行安装)
+    默认使用Lightpanda，自动安装依赖。
     
     使用方式:
         from quickagents import Browser
         
-        # 默认使用Chromium
+        # 默认使用Lightpanda（自动安装）
         browser = Browser()
         
-        # 使用Lightpanda
-        browser = Browser(backend='lightpanda')
+        # 回退到Chromium
+        browser = Browser(fallback_to_chromium=True)
         
         # 打开页面
         page = browser.open('https://example.com')
@@ -310,109 +238,129 @@ class Browser:
         browser.close()
     """
     
-    def __init__(self, backend: str = 'chromium', headless: bool = True,
-                 lightpanda_host: str = 'localhost',
-                 lightpanda_port: int = 9222,
-                 lightpanda_timeout: int = 30000):
+    LIGHTPANDA_PORT = 9222
+    
+    def __init__(self, 
+                 backend: str = 'lightpanda',
+                 fallback_to_chromium: bool = True,
+                 auto_install: bool = True,
+                 headless: bool = True):
         """
         初始化浏览器
         
         Args:
-            backend: 后端类型 ('chromium' 或 'lightpanda')
-            headless: 是否无头模式（默认True）
-            lightpanda_host: Lightpanda主机（默认localhost）
-            lightpanda_port: Lightpanda端口（默认9222）
-            lightpanda_timeout: Lightpanda连接超时（默认30秒）
+            backend: 后端类型 ('lightpanda' 或 'chromium')
+            fallback_to_chromium: 如果Lightpanda不可用，是否回退到Chromium
+            auto_install: 是否自动安装依赖
+            headless: 是否无头模式
         """
-        self.backend = backend
+        self.preferred_backend = backend
+        self.fallback_to_chromium = fallback_to_chromium
+        self.auto_install = auto_install
         self.headless = headless
-        self.lightpanda_host = lightpanda_host
-        self.lightpanda_port = lightpanda_port
-        self.lightpanda_timeout = lightpanda_timeout
-        
         
         self._playwright = None
         self._browser = None
         self._context = None
         self._pages: List[Page] = []
+        self._actual_backend: Optional[BrowserBackend] = None
         
+        # 确保依赖已安装
+        if auto_install:
+            self._ensure_dependencies()
+        
+        # 初始化浏览器
         self._init_browser()
     
-    def _init_browser(self) -> None:
+    def _ensure_dependencies(self):
+        """确保依赖已安装"""
+        print("[Browser] 检查浏览器依赖...")
+        result = ensure_browser_installed(auto_install=True)
+        
+        if result['errors']:
+            print(f"[Browser] 安装警告: {result['errors']}")
+        
+        if not result['playwright']['installed']:
+            raise RuntimeError("Playwright安装失败")
+    
+    def _init_browser(self):
         """初始化浏览器"""
         try:
-            from playwright.sync_api import sync_playwright, Browser as PwBrowser
-            from playwright.sync_api._generated import Page as PwPage
+            from playwright.sync_api import sync_playwright
         except ImportError:
             raise ImportError(
-                "Playwright未安装。请使用: pip install quickagents[browser]"
+                "Playwright未安装。请运行: pip install playwright && playwright install chromium"
             )
         
-        if self.backend == 'lightpanda':
-            self._init_lightpanda()
-        else:
-            self._init_chromium()
+        self._playwright = sync_playwright().start()
+        
+        # 尝试使用Lightpanda
+        if self.preferred_backend == 'lightpanda':
+            if self._try_lightpanda():
+                self._actual_backend = BrowserBackend.LIGHTPANDA
+                print("[Browser] 使用 Lightpanda 后端")
+                return
+            
+            # 回退到Chromium
+            if self.fallback_to_chromium:
+                print("[Browser] Lightpanda不可用，回退到 Chromium")
+                self._init_chromium()
+                self._actual_backend = BrowserBackend.CHROMIUM
+                return
+            else:
+                raise RuntimeError("Lightpanda不可用且禁用了回退")
+        
+        # 直接使用Chromium
+        self._init_chromium()
+        self._actual_backend = BrowserBackend.CHROMIUM
+        print("[Browser] 使用 Chromium 后端")
     
-    def _init_chromium(self) -> None:
-        """初始化Chromium浏览器"""
-        self._playwright = sync_playwright()
+    def _try_lightpanda(self) -> bool:
+        """尝试连接Lightpanda"""
+        # 检查Lightpanda是否可用
+        installed, path = check_lightpanda()
+        if not installed:
+            print("[Browser] Lightpanda未安装")
+            return False
+        
+        # 检查端口是否开放
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('localhost', self.LIGHTPANDA_PORT))
+        sock.close()
+        
+        if result != 0:
+            print(f"[Browser] Lightpanda服务未启动 (端口 {self.LIGHTPANDA_PORT})")
+            print("[Browser] 请先启动: lightpanda serve --port 9222")
+            return False
+        
+        # 尝试连接
+        try:
+            self._browser = self._playwright.chromium.connect_over_cdp(
+                f"http://localhost:{self.LIGHTPANDA_PORT}"
+            )
+            self._context = self._browser.new_context()
+            return True
+        except Exception as e:
+            print(f"[Browser] 连接Lightpanda失败: {e}")
+            return False
+    
+    def _init_chromium(self):
+        """初始化Chromium"""
         self._browser = self._playwright.chromium.launch(headless=self.headless)
         self._context = self._browser.new_context()
     
-    def _init_lightpanda(self) -> None:
-        """初始化Lightpanda浏览器"""
-        # 检查Lightpanda是否可用
-        if not self._check_lightpanda_available():
-            raise RuntimeError(
-                f"Lightpanda不可用。请确保Lightpanda已安装并运行:\n"
-                安装: 从 https://lightpanda.io 下载
-                启动: lightpanda serve --port {self.lightpanda_port}
-                等待: 等待Lightpanda启动（约5秒）
-                然后: Browser(backend='lightpanda')
-                """
-            )
-        
-        # 连接到Lightpanda CDP
-        try:
-                self._playwright = sync_playwright()
-                # 使用CDP连接到Lightpanda
-                self._browser = self._playwright.chromium.connect_over_cdp(
-                    endpoint_url=f"http://{self.lightpanda_host}:{self.lightpanda_port}"
-                )
-                self._context = self._browser.new_context()
-            except Exception as e:
-                raise RuntimeError(f"无法连接到Lightpanda: {e}")
+    @property
+    def backend(self) -> str:
+        """获取实际使用的后端"""
+        return self._actual_backend.value if self._actual_backend else 'unknown'
     
-    def _check_lightpanda_available(self) -> bool:
-        """检查Lightpanda是否可用"""
-        import socket
-        
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-                result = sock.connect_ex((self.lightpanda_host, self.lightpanda_port))
-                sock.close()
-                return True
-            except:
-                return False
-    
-    def open(self, url: str, wait_until: str = 'load',
-                timeout: int = 30000) -> Page:
-        """
-        打开页面
-        
-        Args:
-            url: 页面URL
-            wait_until: 等待加载状态 ('load', 'domcontentloaded', 'networkidle')
-            timeout: 超时时间（毫秒）
-        
-        Returns:
-            Page对象
-        """
+    def open(self, url: str, wait_until: str = 'load', timeout: int = 30000) -> Page:
+        """打开页面"""
         if not self._context:
             raise RuntimeError("浏览器未初始化")
         
         playwright_page = self._context.new_page()
-        page.goto(url, timeout=timeout, wait_until=wait_until)
+        playwright_page.goto(url, timeout=timeout, wait_until=wait_until)
         
         qa_page = Page(playwright_page, url)
         self._pages.append(qa_page)
@@ -431,8 +379,17 @@ class Browser:
         """获取所有页面"""
         return self._pages.copy()
     
-    def close(self) -> None:
+    def close(self):
         """关闭浏览器"""
+        for page in self._pages:
+            try:
+                page.close()
+            except Exception:
+                pass
+        
+        if self._context:
+            self._context.close()
+        
         if self._browser:
             self._browser.close()
         
@@ -442,9 +399,17 @@ class Browser:
         self._pages.clear()
     
     def __enter__(self):
-        """上下文管理器"""
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """退出时关闭浏览器"""
         self.close()
+
+
+def update_all_dependencies() -> Dict:
+    """
+    更新所有浏览器依赖到最新版本
+    
+    Returns:
+        更新结果
+    """
+    return update_dependencies()
