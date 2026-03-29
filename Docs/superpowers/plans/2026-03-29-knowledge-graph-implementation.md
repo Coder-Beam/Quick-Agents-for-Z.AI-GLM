@@ -1,10 +1,15 @@
-# Knowledge Graph Implementation Plan
+# Knowledge Graph Implementation Plan - Part 1
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement a lightweight knowledge graph system integrated with UnifiedDB, supporting knowledge extraction, relation discovery, and intelligent search.
+**Goal:** Implement foundation and storage layer for knowledge graph system.
 
-**Architecture:** Three-layer architecture (Application → Abstraction → Storage) with 6 minimal unit classes behind a facade pattern. SQLite graph storage with FTS5 full-text search, pluggable interfaces for future Neo4j/VectorDB integration.
+**Scope:** This is **Part 1 of 3** in the phased implementation:
+- **Part 1 (this document)**: Phase 1-2 - Foundation + Storage Layer
+- **Part 2**: Phase 3 - Core Components (6 minimal unit classes)
+- **Part 3**: Phase 4-5 - Integration + Testing + Documentation
+
+**Architecture:** Three-layer architecture (Application → Abstraction → Storage) with SQLite graph storage using FTS5 for full-text search.
 
 **Tech Stack:** Python 3.8+, SQLite with FTS5, dataclasses, enum, abc
 
@@ -1599,499 +1604,463 @@ git commit -m "feat(knowledge-graph): implement edge CRUD operations in SQLite s
 
 ---
 
-## Phase 3: Core Components (Minimal Units)
-
-### Task 3.1: Implement NodeManager
+### Task 2.4: Implement query_nodes, query_edges, get_stats in SQLite storage
 
 **Files:**
-- Create: `quickagents/knowledge_graph/core/node_manager.py`
-- Test: `tests/knowledge_graph/test_node_manager.py`
+- Modify: `quickagents/knowledge_graph/storage/sqlite_storage.py`
+- Test: `tests/knowledge_graph/test_sqlite_storage.py` (extend)
 
-- [ ] **Step 1: Write failing tests for NodeManager (20 test cases)**
+- [ ] **Step 1: Write failing tests for query methods**
 
-Create: `tests/knowledge_graph/test_node_manager.py`
+Add to `tests/knowledge_graph/test_sqlite_storage.py`:
 
 ```python
-"""Tests for NodeManager - 20 test cases for 100% coverage."""
-
-import pytest
-from datetime import datetime
-from quickagents.knowledge_graph.core.node_manager import NodeManager
-from quickagents.knowledge_graph.types import NodeType, KnowledgeNode
-from quickagents.knowledge_graph.exceptions import NodeNotFoundError, DuplicateNodeError
-
-
-class TestNodeManagerCreate:
-    """Tests for NodeManager.create_node - 4 test cases."""
+class TestSQLiteStorageQuery:
+    """Tests for query methods."""
     
     @pytest.fixture
-    def manager(self, tmp_path):
-        from quickagents.knowledge_graph.storage.sqlite_storage import SQLiteGraphStorage
-        storage = SQLiteGraphStorage(str(tmp_path / "test.db"))
+    def storage_with_data(self, tmp_path):
+        """Create storage with sample data."""
+        db_path = str(tmp_path / "test_kg.db")
+        storage = SQLiteGraphStorage(db_path)
         storage.initialize({})
-        return NodeManager(storage)
-    
-    def test_create_node_basic(self, manager):
-        """Test basic node creation."""
-        node = manager.create_node(
-            node_type=NodeType.REQUIREMENT,
-            title="Test Requirement",
-            content="Test content"
-        )
         
-        assert node.id.startswith("kn_")
-        assert node.node_type == NodeType.REQUIREMENT
-        assert node.title == "Test Requirement"
-    
-    def test_create_node_with_all_params(self, manager):
-        """Test node creation with all parameters."""
-        node = manager.create_node(
-            node_type=NodeType.DECISION,
-            title="Full Decision",
-            content="Detailed content",
-            source_type="doc",
-            source_uri="file://test.md",
-            confidence=0.95,
-            importance=0.9,
-            tags=["tag1", "tag2"],
-            metadata={"key": "value"},
-            project_name="TestProject",
-            feature_id="F001"
-        )
-        
-        assert node.confidence == 0.95
-        assert node.importance == 0.9
-        assert "tag1" in node.tags
-        assert node.metadata["key"] == "value"
-    
-    def test_create_node_with_invalid_type(self, manager):
-        """Test that invalid type is handled."""
-        with pytest.raises(Exception):
-            manager.create_node(
-                node_type="invalid_type",
-                title="Test",
-                content="Content"
+        # Create sample nodes
+        nodes = [
+            KnowledgeNode(
+                id=f"kn_{i:03d}",
+                node_type=NodeType.REQUIREMENT if i < 3 else NodeType.DECISION,
+                title=f"Node {i}",
+                content=f"Content {i}",
+                project_name="TestProject" if i < 4 else "OtherProject",
+                importance=0.5 + (i * 0.05),
+                created_at=datetime.now(),
+                updated_at=datetime.now()
             )
-    
-    def test_create_node_duplicate_title_detection(self, manager):
-        """Test duplicate title detection."""
-        manager.create_node(
-            node_type=NodeType.FACT,
-            title="Same Title",
-            content="Content 1"
-        )
+            for i in range(5)
+        ]
+        for node in nodes:
+            storage.create_node(node)
         
-        # Similar title should be detected
-        # (implementation may vary - exact match or similarity)
-        node2 = manager.create_node(
-            node_type=NodeType.FACT,
-            title="Same Title",
-            content="Content 2"
-        )
+        # Create sample edges
+        storage.create_edge(KnowledgeEdge(
+            id="ke_001", source_node_id="kn_000", target_node_id="kn_001",
+            edge_type=EdgeType.DEPENDS_ON,
+            created_at=datetime.now(), updated_at=datetime.now()
+        ))
+        storage.create_edge(KnowledgeEdge(
+            id="ke_002", source_node_id="kn_001", target_node_id="kn_002",
+            edge_type=EdgeType.MAPS_TO,
+            created_at=datetime.now(), updated_at=datetime.now()
+        ))
         
-        # Should still create, but may flag or return existing
-        assert node2 is not None
-
-
-class TestNodeManagerGet:
-    """Tests for NodeManager.get_node - 3 test cases."""
+        return storage
     
-    @pytest.fixture
-    def manager(self, tmp_path):
-        from quickagents.knowledge_graph.storage.sqlite_storage import SQLiteGraphStorage
-        storage = SQLiteGraphStorage(str(tmp_path / "test.db"))
-        storage.initialize({})
-        return NodeManager(storage)
-    
-    def test_get_node_existing(self, manager):
-        """Test getting existing node."""
-        created = manager.create_node(
-            node_type=NodeType.INSIGHT,
-            title="Test",
-            content="Content"
-        )
-        
-        retrieved = manager.get_node(created.id)
-        assert retrieved.id == created.id
-        assert retrieved.title == created.title
-    
-    def test_get_node_nonexistent(self, manager):
-        """Test getting non-existent node."""
-        result = manager.get_node("kn_nonexistent")
-        assert result is None
-    
-    def test_get_node_invalid_id_format(self, manager):
-        """Test with invalid ID format."""
-        result = manager.get_node("invalid_format")
-        assert result is None
-
-
-class TestNodeManagerUpdate:
-    """Tests for NodeManager.update_node - 4 test cases."""
-    
-    @pytest.fixture
-    def manager(self, tmp_path):
-        from quickagents.knowledge_graph.storage.sqlite_storage import SQLiteGraphStorage
-        storage = SQLiteGraphStorage(str(tmp_path / "test.db"))
-        storage.initialize({})
-        return NodeManager(storage)
-    
-    def test_update_node_title(self, manager):
-        """Test updating node title."""
-        node = manager.create_node(
-            node_type=NodeType.CONCEPT,
-            title="Original",
-            content="Content"
-        )
-        
-        updated = manager.update_node(node.id, title="Updated Title")
-        assert updated.title == "Updated Title"
-    
-    def test_update_node_multiple_fields(self, manager):
-        """Test updating multiple fields."""
-        node = manager.create_node(
-            node_type=NodeType.SOURCE,
-            title="Original",
-            content="Content"
-        )
-        
-        updated = manager.update_node(
-            node.id,
-            title="New Title",
-            content="New Content",
-            importance=0.8
-        )
-        
-        assert updated.title == "New Title"
-        assert updated.content == "New Content"
-        assert updated.importance == 0.8
-    
-    def test_update_node_nonexistent(self, manager):
-        """Test updating non-existent node."""
-        with pytest.raises(NodeNotFoundError):
-            manager.update_node("kn_nonexistent", title="New Title")
-    
-    def test_update_node_empty_update(self, manager):
-        """Test update with no fields."""
-        node = manager.create_node(
-            node_type=NodeType.FACT,
-            title="Test",
-            content="Content"
-        )
-        
-        # Empty update should still succeed
-        updated = manager.update_node(node.id)
-        assert updated.id == node.id
-
-
-class TestNodeManagerDelete:
-    """Tests for NodeManager.delete_node - 4 test cases."""
-    
-    @pytest.fixture
-    def manager(self, tmp_path):
-        from quickagents.knowledge_graph.storage.sqlite_storage import SQLiteGraphStorage
-        storage = SQLiteGraphStorage(str(tmp_path / "test.db"))
-        storage.initialize({})
-        return NodeManager(storage)
-    
-    def test_delete_node_basic(self, manager):
-        """Test basic node deletion."""
-        node = manager.create_node(
-            node_type=NodeType.REQUIREMENT,
-            title="To Delete",
-            content="Content"
-        )
-        
-        result = manager.delete_node(node.id)
-        assert result is True
-        assert manager.get_node(node.id) is None
-    
-    def test_delete_node_cascade_true(self, manager):
-        """Test cascade delete removes related edges."""
-        from quickagents.knowledge_graph.core.edge_manager import EdgeManager
-        
-        node1 = manager.create_node(NodeType.REQUIREMENT, "N1", "C1")
-        node2 = manager.create_node(NodeType.DECISION, "N2", "C2")
-        
-        edge_manager = EdgeManager(manager.storage)
-        edge = edge_manager.create_edge(node1.id, node2.id, EdgeType.DEPENDS_ON)
-        
-        # Cascade delete
-        manager.delete_node(node1.id, cascade=True)
-        
-        # Edge should be deleted
-        assert edge_manager.get_edge(edge.id) is None
-    
-    def test_delete_node_cascade_false(self, manager):
-        """Test non-cascade delete with edges."""
-        from quickagents.knowledge_graph.core.edge_manager import EdgeManager
-        from quickagents.knowledge_graph.types import EdgeType
-        
-        node1 = manager.create_node(NodeType.REQUIREMENT, "N1", "C1")
-        node2 = manager.create_node(NodeType.DECISION, "N2", "C2")
-        
-        edge_manager = EdgeManager(manager.storage)
-        edge_manager.create_edge(node1.id, node2.id, EdgeType.DEPENDS_ON)
-        
-        # Non-cascade delete should fail with edges
-        result = manager.delete_node(node1.id, cascade=False)
-        assert result is False
-        assert manager.get_node(node1.id) is not None
-    
-    def test_delete_node_nonexistent(self, manager):
-        """Test deleting non-existent node."""
-        result = manager.delete_node("kn_nonexistent")
-        assert result is False
-
-
-class TestNodeManagerList:
-    """Tests for NodeManager.list_nodes - 5 test cases."""
-    
-    @pytest.fixture
-    def manager(self, tmp_path):
-        from quickagents.knowledge_graph.storage.sqlite_storage import SQLiteGraphStorage
-        storage = SQLiteGraphStorage(str(tmp_path / "test.db"))
-        storage.initialize({})
-        return NodeManager(storage)
-    
-    def test_list_nodes_all(self, manager):
-        """Test listing all nodes."""
-        manager.create_node(NodeType.REQUIREMENT, "R1", "C1")
-        manager.create_node(NodeType.DECISION, "D1", "C2")
-        manager.create_node(NodeType.FACT, "F1", "C3")
-        
-        nodes = manager.list_nodes()
-        assert len(nodes) == 3
-    
-    def test_list_nodes_by_type(self, manager):
-        """Test filtering by node type."""
-        manager.create_node(NodeType.REQUIREMENT, "R1", "C1")
-        manager.create_node(NodeType.REQUIREMENT, "R2", "C2")
-        manager.create_node(NodeType.DECISION, "D1", "C3")
-        
-        nodes = manager.list_nodes(node_type=NodeType.REQUIREMENT)
-        assert len(nodes) == 2
-        assert all(n.node_type == NodeType.REQUIREMENT for n in nodes)
-    
-    def test_list_nodes_with_limit(self, manager):
-        """Test pagination with limit."""
-        for i in range(10):
-            manager.create_node(NodeType.FACT, f"F{i}", f"C{i}")
-        
-        nodes = manager.list_nodes(limit=5)
+    def test_query_nodes_no_filter(self, storage_with_data):
+        """Test query all nodes."""
+        nodes = storage_with_data.query_nodes({})
         assert len(nodes) == 5
     
-    def test_list_nodes_empty_db(self, manager):
-        """Test listing when database is empty."""
-        nodes = manager.list_nodes()
-        assert nodes == []
+    def test_query_nodes_by_type(self, storage_with_data):
+        """Test filter by node type."""
+        nodes = storage_with_data.query_nodes({'node_type': 'requirement'})
+        assert len(nodes) == 3
+        assert all(n.node_type == NodeType.REQUIREMENT for n in nodes)
     
-    def test_list_nodes_pagination(self, manager):
+    def test_query_nodes_by_project(self, storage_with_data):
+        """Test filter by project."""
+        nodes = storage_with_data.query_nodes({'project_name': 'TestProject'})
+        assert len(nodes) == 4
+    
+    def test_query_nodes_with_limit(self, storage_with_data):
+        """Test pagination with limit."""
+        nodes = storage_with_data.query_nodes({}, limit=2)
+        assert len(nodes) == 2
+    
+    def test_query_nodes_with_offset(self, storage_with_data):
         """Test pagination with offset."""
-        for i in range(10):
-            manager.create_node(NodeType.CONCEPT, f"C{i}", f"Content{i}")
+        page1 = storage_with_data.query_nodes({}, limit=2, offset=0)
+        page2 = storage_with_data.query_nodes({}, limit=2, offset=2)
+        assert len(page1) == 2
+        assert len(page2) == 2
+        assert page1[0].id != page2[0].id
+    
+    def test_query_edges_no_filter(self, storage_with_data):
+        """Test query all edges."""
+        edges = storage_with_data.query_edges({})
+        assert len(edges) == 2
+    
+    def test_query_edges_by_type(self, storage_with_data):
+        """Test filter edges by type."""
+        edges = storage_with_data.query_edges({'edge_type': 'depends_on'})
+        assert len(edges) == 1
+        assert edges[0].edge_type == EdgeType.DEPENDS_ON
+    
+    def test_query_edges_by_source(self, storage_with_data):
+        """Test filter edges by source node."""
+        edges = storage_with_data.query_edges({'source_node_id': 'kn_000'})
+        assert len(edges) == 1
+    
+    def test_get_stats(self, storage_with_data):
+        """Test get_stats returns correct counts."""
+        stats = storage_with_data.get_stats()
         
-        page1 = manager.list_nodes(limit=5, offset=0)
-        page2 = manager.list_nodes(limit=5, offset=5)
-        
-        # Pages should have different nodes
-        page1_ids = {n.id for n in page1}
-        page2_ids = {n.id for n in page2}
-        assert page1_ids.isdisjoint(page2_ids)
+        assert stats['total_nodes'] == 5
+        assert stats['total_edges'] == 2
+        assert 'by_type' in stats
+        assert stats['by_type']['requirement'] == 3
+        assert stats['by_type']['decision'] == 2
 ```
-
-(Note: Due to length, I'll continue with implementation in the plan document...)
-
----
 
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-pytest tests/knowledge_graph/test_node_manager.py -v
+pytest tests/knowledge_graph/test_sqlite_storage.py::TestSQLiteStorageQuery -v
 ```
-Expected: FAIL
+Expected: FAIL with NotImplementedError
 
-- [ ] **Step 3: Implement NodeManager**
+- [ ] **Step 3: Implement query methods**
 
-Create: `quickagents/knowledge_graph/core/node_manager.py`
+Add to `quickagents/knowledge_graph/storage/sqlite_storage.py`:
 
 ```python
-"""
-NodeManager - Minimal Unit
-
-Manages knowledge node CRUD operations.
-"""
-
-import uuid
-from typing import List, Optional, Dict, Any
-from datetime import datetime
-
-from ..interfaces import GraphStorageInterface
-from ..types import KnowledgeNode, NodeType
-from ..exceptions import NodeNotFoundError, InvalidNodeTypeError
-
-
-class NodeManager:
-    """
-    Node Manager - Minimal Unit
-    
-    Responsibilities:
-    - Create, read, update, delete knowledge nodes
-    - List nodes with filtering and pagination
-    """
-    
-    def __init__(self, storage: GraphStorageInterface):
-        """
-        Initialize NodeManager.
-        
-        Args:
-            storage: Graph storage backend
-        """
-        self.storage = storage
-    
-    def create_node(
+    def query_nodes(
         self,
-        node_type: NodeType,
-        title: str,
-        content: str,
-        source_type: Optional[str] = None,
-        source_uri: Optional[str] = None,
-        confidence: float = 1.0,
-        importance: float = 0.5,
-        tags: List[str] = None,
-        metadata: Dict[str, Any] = None,
-        project_name: Optional[str] = None,
-        feature_id: Optional[str] = None,
-        auto_discover_relations: bool = True
-    ) -> KnowledgeNode:
-        """
-        Create a knowledge node.
-        
-        Args:
-            node_type: Type of node
-            title: Short title
-            content: Detailed content
-            source_type: Source type (doc/paper/code/web/discussion)
-            source_uri: Source URI
-            confidence: Confidence score (0.0-1.0)
-            importance: Importance score (0.0-1.0)
-            tags: List of tags
-            metadata: Additional metadata
-            project_name: Project name
-            feature_id: Feature module ID
-            auto_discover_relations: Auto-discover relations after creation
-            
-        Returns:
-            Created node
-        """
-        # Validate node type
-        if isinstance(node_type, str):
-            try:
-                node_type = NodeType(node_type)
-            except ValueError:
-                raise InvalidNodeTypeError(node_type)
-        
-        # Generate ID
-        node_id = f"kn_{uuid.uuid4().hex[:12]}"
-        
-        # Create node object
-        node = KnowledgeNode(
-            id=node_id,
-            node_type=node_type,
-            title=title,
-            content=content,
-            source_type=source_type,
-            source_uri=source_uri,
-            confidence=confidence,
-            importance=importance,
-            tags=tags or [],
-            metadata=metadata or {},
-            project_name=project_name,
-            feature_id=feature_id,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        # Store in database
-        return self.storage.create_node(node)
-    
-    def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
-        """Get a node by ID."""
-        return self.storage.get_node(node_id)
-    
-    def update_node(self, node_id: str, **kwargs) -> KnowledgeNode:
-        """Update a node."""
-        return self.storage.update_node(node_id, kwargs)
-    
-    def delete_node(self, node_id: str, cascade: bool = True) -> bool:
-        """Delete a node."""
-        return self.storage.delete_node(node_id, cascade=cascade)
-    
-    def list_nodes(
-        self,
-        node_type: NodeType = None,
+        filters: Dict[str, Any],
         limit: int = 100,
         offset: int = 0
     ) -> List[KnowledgeNode]:
-        """List nodes with optional filtering."""
-        filters = {}
-        if node_type:
-            filters['node_type'] = node_type.value if isinstance(node_type, NodeType) else node_type
-        
-        return self.storage.query_nodes(filters, limit=limit, offset=offset)
+        """Query nodes with filters."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Build query
+            where_clauses = []
+            values = []
+            
+            for key, value in filters.items():
+                where_clauses.append(f"{key} = ?")
+                values.append(value)
+            
+            where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+            
+            cursor.execute(
+                f"SELECT * FROM knowledge_nodes WHERE {where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                values + [limit, offset]
+            )
+            
+            rows = cursor.fetchall()
+            return [self._row_to_node(row) for row in rows]
+    
+    def query_edges(
+        self,
+        filters: Dict[str, Any],
+        limit: int = 100
+    ) -> List[KnowledgeEdge]:
+        """Query edges with filters."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Build query
+            where_clauses = []
+            values = []
+            
+            for key, value in filters.items():
+                where_clauses.append(f"{key} = ?")
+                values.append(value)
+            
+            where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+            
+            cursor.execute(
+                f"SELECT * FROM knowledge_edges WHERE {where_sql} LIMIT ?",
+                values + [limit]
+            )
+            
+            rows = cursor.fetchall()
+            return [self._row_to_edge(row) for row in rows]
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get storage statistics."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Total nodes
+            cursor.execute("SELECT COUNT(*) FROM knowledge_nodes")
+            total_nodes = cursor.fetchone()[0]
+            
+            # Total edges
+            cursor.execute("SELECT COUNT(*) FROM knowledge_edges")
+            total_edges = cursor.fetchone()[0]
+            
+            # By type
+            cursor.execute(
+                "SELECT node_type, COUNT(*) as count FROM knowledge_nodes GROUP BY node_type"
+            )
+            by_type = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            # By edge type
+            cursor.execute(
+                "SELECT edge_type, COUNT(*) as count FROM knowledge_edges GROUP BY edge_type"
+            )
+            by_edge_type = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            return {
+                'total_nodes': total_nodes,
+                'total_edges': total_edges,
+                'by_type': by_type,
+                'by_edge_type': by_edge_type
+            }
 ```
 
-(Note: query_nodes needs to be implemented in SQLite storage first - this is Task 2.4)
-
-- [ ] **Step 4: Run test to verify it passes (after query_nodes is implemented)**
+- [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-pytest tests/knowledge_graph/test_node_manager.py -v
+pytest tests/knowledge_graph/test_sqlite_storage.py::TestSQLiteStorageQuery -v
 ```
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add quickagents/knowledge_graph/core/node_manager.py tests/knowledge_graph/test_node_manager.py
-git commit -m "feat(knowledge-graph): implement NodeManager minimal unit
+git add quickagents/knowledge_graph/storage/sqlite_storage.py tests/knowledge_graph/test_sqlite_storage.py
+git commit -m "feat(knowledge-graph): implement query methods and stats in SQLite storage
 
-- Add create_node with full parameter support
-- Add get_node, update_node, delete_node
-- Add list_nodes with type filtering and pagination
-- Add 20 comprehensive unit tests for 100% coverage"
+- Add query_nodes with filtering, limit, offset
+- Add query_edges with filtering
+- Add get_stats for storage statistics
+- Add 10 comprehensive query tests"
 ```
 
 ---
 
-## Summary of Remaining Tasks
+### Task 2.5: Implement find_path (BFS) in SQLite storage
 
-Due to length, the plan continues with the following structure:
+**Files:**
+- Modify: `quickagents/knowledge_graph/storage/sqlite_storage.py`
+- Test: `tests/knowledge_graph/test_sqlite_storage.py` (extend)
 
-### Phase 3 (continued):
+- [ ] **Step 1: Write failing tests for find_path**
+
+Add to `tests/knowledge_graph/test_sqlite_storage.py`:
+
+```python
+class TestSQLiteStorageFindPath:
+    """Tests for find_path method."""
+    
+    @pytest.fixture
+    def storage_with_graph(self, tmp_path):
+        """Create storage with a graph for path testing."""
+        db_path = str(tmp_path / "test_kg.db")
+        storage = SQLiteGraphStorage(db_path)
+        storage.initialize({})
+        
+        # Create nodes: A -> B -> C -> D, A -> D (direct)
+        nodes = ['A', 'B', 'C', 'D']
+        for n in nodes:
+            storage.create_node(KnowledgeNode(
+                id=f"kn_{n}", node_type=NodeType.FACT,
+                title=f"Node {n}", content=f"Content {n}",
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+        
+        # Create edges
+        edges = [
+            ('A', 'B', EdgeType.RELATED_TO),
+            ('B', 'C', EdgeType.RELATED_TO),
+            ('C', 'D', EdgeType.RELATED_TO),
+            ('A', 'D', EdgeType.RELATED_TO),  # Direct path
+        ]
+        for i, (src, tgt, etype) in enumerate(edges):
+            storage.create_edge(KnowledgeEdge(
+                id=f"ke_{i:02d}", source_node_id=f"kn_{src}", target_node_id=f"kn_{tgt}",
+                edge_type=etype,
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+        
+        return storage
+    
+    def test_find_path_direct(self, storage_with_graph):
+        """Test finding direct path A -> D."""
+        path = storage_with_graph.find_path("kn_A", "kn_D")
+        assert path is not None
+        assert path == ["kn_A", "kn_D"]  # Direct path preferred
+    
+    def test_find_path_multi_hop(self, storage_with_graph):
+        """Test finding multi-hop path A -> B -> C."""
+        # Remove direct edge first
+        storage_with_graph.delete_edge("ke_03")
+        
+        path = storage_with_graph.find_path("kn_A", "kn_C")
+        assert path is not None
+        assert path == ["kn_A", "kn_B", "kn_C"]
+    
+    def test_find_path_no_path(self, storage_with_graph):
+        """Test when no path exists."""
+        # Add isolated node
+        storage_with_graph.create_node(KnowledgeNode(
+            id="kn_X", node_type=NodeType.FACT,
+            title="Isolated", content="No connections",
+            created_at=datetime.now(), updated_at=datetime.now()
+        ))
+        
+        path = storage_with_graph.find_path("kn_A", "kn_X")
+        assert path is None
+    
+    def test_find_path_max_depth_exceeded(self, storage_with_graph):
+        """Test when path exceeds max depth."""
+        # Create a long chain
+        for i in range(5, 10):
+            storage_with_graph.create_node(KnowledgeNode(
+                id=f"kn_N{i}", node_type=NodeType.FACT,
+                title=f"Node {i}", content=f"Content {i}",
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+            storage_with_graph.create_edge(KnowledgeEdge(
+                id=f"ke_long_{i}", source_node_id=f"kn_N{i-1}" if i > 5 else "kn_D",
+                target_node_id=f"kn_N{i}",
+                edge_type=EdgeType.RELATED_TO,
+                created_at=datetime.now(), updated_at=datetime.now()
+            ))
+        
+        path = storage_with_graph.find_path("kn_A", "kn_N9", max_depth=2)
+        assert path is None  # Path too long
+    
+    def test_find_path_same_node(self, storage_with_graph):
+        """Test finding path to same node."""
+        path = storage_with_graph.find_path("kn_A", "kn_A")
+        assert path == ["kn_A"]
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+pytest tests/knowledge_graph/test_sqlite_storage.py::TestSQLiteStorageFindPath -v
+```
+Expected: FAIL with NotImplementedError
+
+- [ ] **Step 3: Implement find_path using BFS**
+
+Add to `quickagents/knowledge_graph/storage/sqlite_storage.py`:
+
+```python
+    def find_path(
+        self,
+        from_node: str,
+        to_node: str,
+        max_depth: int = 5
+    ) -> Optional[List[str]]:
+        """
+        Find shortest path between two nodes using BFS.
+        
+        Args:
+            from_node: Starting node ID
+            to_node: Target node ID
+            max_depth: Maximum search depth
+            
+        Returns:
+            List of node IDs forming the path, or None if no path found
+        """
+        if from_node == to_node:
+            return [from_node]
+        
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # BFS
+            from collections import deque
+            
+            visited = {from_node}
+            queue = deque([(from_node, [from_node])])
+            
+            while queue and len(queue[0][1]) <= max_depth:
+                current, path = queue.popleft()
+                
+                # Get neighbors
+                cursor.execute(
+                    "SELECT target_node_id FROM knowledge_edges WHERE source_node_id = ?",
+                    (current,)
+                )
+                neighbors = [row[0] for row in cursor.fetchall()]
+                
+                for neighbor in neighbors:
+                    if neighbor == to_node:
+                        return path + [neighbor]
+                    
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append((neighbor, path + [neighbor]))
+            
+            return None
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+pytest tests/knowledge_graph/test_sqlite_storage.py::TestSQLiteStorageFindPath -v
+```
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add quickagents/knowledge_graph/storage/sqlite_storage.py tests/knowledge_graph/test_sqlite_storage.py
+git commit -m "feat(knowledge-graph): implement find_path using BFS algorithm
+
+- Add BFS-based shortest path finding
+- Support max_depth parameter
+- Handle edge cases (same node, no path)
+- Add 5 comprehensive path finding tests"
+```
+
+---
+
+## Phase 1-2 Complete ✅
+
+**Deliverables:**
+- [x] types.py - NodeType, EdgeType, KnowledgeNode, KnowledgeEdge, SearchResult
+- [x] exceptions.py - 10 custom exception classes
+- [x] interfaces.py - GraphStorageInterface, VectorSearchInterface
+- [x] sqlite_storage.py - Full SQLite implementation with FTS5
+
+**Test Coverage:**
+- types: 6 test cases
+- exceptions: 10 test cases
+- interfaces: 4 test cases
+- schema: 8 test cases
+- node CRUD: 9 test cases
+- edge CRUD: 6 test cases
+- query methods: 10 test cases
+- find_path: 5 test cases
+- **Total: 58 test cases**
+
+---
+
+## Phase 3-5: See Next Plans
+
+### Part 2: Core Components
+See: `docs/superpowers/plans/2026-03-29-knowledge-graph-part2-core.md`
+
+**Tasks:**
+- Task 3.1: NodeManager (20 tests)
 - Task 3.2: EdgeManager (19 tests)
 - Task 3.3: KnowledgeExtractor (18 tests)
 - Task 3.4: RelationDiscovery (25 tests)
 - Task 3.5: KnowledgeSearcher (16 tests)
 - Task 3.6: MemorySync (12 tests)
 
-### Phase 4: Facade and Integration
+### Part 3: Integration & Testing
+See: `docs/superpowers/plans/2026-03-29-knowledge-graph-part3-integration.md`
+
+**Tasks:**
 - Task 4.1: KnowledgeGraph facade class
 - Task 4.2: UnifiedDB integration
 - Task 4.3: CLI commands
-
-### Phase 5: Testing and Documentation
 - Task 5.1: Integration tests
 - Task 5.2: Performance tests
 - Task 5.3: API documentation
 
 ---
 
-**Total Tasks: 18**
-**Total Test Cases: 110**
-**Estimated Time: 4 weeks**
-
----
-
-*Plan Version: 1.0.0*
+*Plan Version: 1.1.0 (Phased)*
 *Created: 2026-03-29*
+*Scope: Phase 1-2 (Foundation + Storage)*
