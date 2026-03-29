@@ -39,10 +39,47 @@ class SQLiteGraphStorage(GraphStorageInterface):
         """Get database connection with context manager."""
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
         try:
             yield conn
         finally:
             conn.close()
+    
+    def _row_to_node(self, row: sqlite3.Row) -> KnowledgeNode:
+        """Convert database row to KnowledgeNode."""
+        tags = json.loads(row["tags"]) if row["tags"] else []
+        metadata = json.loads(row["metadata"]) if row["metadata"] else {}
+        
+        created_at = None
+        if row["created_at"]:
+            created_at = datetime.fromisoformat(row["created_at"])
+        
+        updated_at = None
+        if row["updated_at"]:
+            updated_at = datetime.fromisoformat(row["updated_at"])
+        
+        last_accessed_at = None
+        if row["last_accessed_at"]:
+            last_accessed_at = datetime.fromisoformat(row["last_accessed_at"])
+        
+        return KnowledgeNode(
+            id=row["id"],
+            node_type=NodeType(row["node_type"]),
+            title=row["title"],
+            content=row["content"],
+            source_type=row["source_type"],
+            source_uri=row["source_uri"],
+            confidence=row["confidence"],
+            importance=row["importance"],
+            tags=tags,
+            metadata=metadata,
+            project_name=row["project_name"],
+            feature_id=row["feature_id"],
+            created_at=created_at,
+            updated_at=updated_at,
+            access_count=row["access_count"],
+            last_accessed_at=last_accessed_at
+        )
     
     def initialize(self, config: Dict[str, Any]) -> bool:
         """Initialize database schema."""
@@ -111,17 +148,15 @@ class SQLiteGraphStorage(GraphStorageInterface):
                     content,
                     tags,
                     source_uri,
-                    tokenize='porter unicode61',
-                    content='knowledge_nodes',
-                    content_rowid='rowid'
+                    tokenize='porter unicode61'
                 )
             ''')
             
             cursor.execute('''
                 CREATE TRIGGER IF NOT EXISTS idx_node_insert 
                 AFTER INSERT ON knowledge_nodes BEGIN
-                    INSERT INTO knowledge_index(rowid, node_id, title, content, tags, source_uri)
-                    VALUES (NEW.rowid, NEW.id, NEW.title, NEW.content, NEW.tags, NEW.source_uri);
+                    INSERT INTO knowledge_index(node_id, title, content, tags, source_uri)
+                    VALUES (NEW.id, NEW.title, NEW.content, NEW.tags, NEW.source_uri);
                 END
             ''')
             
@@ -130,14 +165,14 @@ class SQLiteGraphStorage(GraphStorageInterface):
                 AFTER UPDATE ON knowledge_nodes BEGIN
                     UPDATE knowledge_index 
                     SET title=NEW.title, content=NEW.content, tags=NEW.tags, source_uri=NEW.source_uri
-                    WHERE rowid=NEW.rowid;
+                    WHERE node_id=NEW.id;
                 END
             ''')
             
             cursor.execute('''
                 CREATE TRIGGER IF NOT EXISTS idx_node_delete 
                 AFTER DELETE ON knowledge_nodes BEGIN
-                    DELETE FROM knowledge_index WHERE rowid=OLD.rowid;
+                    DELETE FROM knowledge_index WHERE node_id=OLD.id;
                 END
             ''')
             
@@ -147,16 +182,115 @@ class SQLiteGraphStorage(GraphStorageInterface):
         return True
     
     def create_node(self, node: KnowledgeNode) -> KnowledgeNode:
-        raise NotImplementedError("Implemented in Task 2.2")
+        """Create a new knowledge node."""
+        now = datetime.now()
+        created_at = node.created_at or now
+        updated_at = node.updated_at or now
+        
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO knowledge_nodes (
+                    id, node_type, title, content, source_type, source_uri,
+                    confidence, importance, tags, metadata, project_name,
+                    feature_id, created_at, updated_at, access_count, last_accessed_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                node.id,
+                node.node_type.value,
+                node.title,
+                node.content,
+                node.source_type,
+                node.source_uri,
+                node.confidence,
+                node.importance,
+                json.dumps(node.tags) if node.tags else None,
+                json.dumps(node.metadata) if node.metadata else None,
+                node.project_name,
+                node.feature_id,
+                created_at.isoformat(),
+                updated_at.isoformat(),
+                node.access_count,
+                node.last_accessed_at.isoformat() if node.last_accessed_at else None
+            ))
+            conn.commit()
+        
+        return self.get_node(node.id)
     
     def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
-        raise NotImplementedError("Implemented in Task 2.2")
+        """Get a knowledge node by ID."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM knowledge_nodes WHERE id = ?",
+                (node_id,)
+            )
+            row = cursor.fetchone()
+            
+            if row is None:
+                return None
+            
+            return self._row_to_node(row)
     
     def update_node(self, node_id: str, updates: Dict[str, Any]) -> KnowledgeNode:
-        raise NotImplementedError("Implemented in Task 2.2")
+        """Update a knowledge node."""
+        if not updates:
+            return self.get_node(node_id)
+        
+        valid_fields = {
+            'node_type', 'title', 'content', 'source_type', 'source_uri',
+            'confidence', 'importance', 'tags', 'metadata', 'project_name',
+            'feature_id', 'access_count', 'last_accessed_at'
+        }
+        
+        filtered_updates = {k: v for k, v in updates.items() if k in valid_fields}
+        
+        if not filtered_updates:
+            return self.get_node(node_id)
+        
+        filtered_updates['updated_at'] = datetime.now()
+        
+        set_clauses = []
+        values = []
+        
+        for field, value in filtered_updates.items():
+            if field in ('tags', 'metadata'):
+                set_clauses.append(f"{field} = ?")
+                values.append(json.dumps(value) if value else None)
+            elif field == 'node_type':
+                set_clauses.append(f"{field} = ?")
+                values.append(value.value if hasattr(value, 'value') else value)
+            elif field in ('created_at', 'updated_at', 'last_accessed_at'):
+                set_clauses.append(f"{field} = ?")
+                values.append(value.isoformat() if value else None)
+            else:
+                set_clauses.append(f"{field} = ?")
+                values.append(value)
+        
+        values.append(node_id)
+        
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                f"UPDATE knowledge_nodes SET {', '.join(set_clauses)} WHERE id = ?",
+                values
+            )
+            conn.commit()
+            
+            if cursor.rowcount == 0:
+                raise NodeNotFoundError(node_id)
+        
+        return self.get_node(node_id)
     
     def delete_node(self, node_id: str, cascade: bool = True) -> bool:
-        raise NotImplementedError("Implemented in Task 2.2")
+        """Delete a knowledge node."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("DELETE FROM knowledge_nodes WHERE id = ?", (node_id,))
+            conn.commit()
+            
+            return cursor.rowcount > 0
     
     def create_edge(self, edge: KnowledgeEdge) -> KnowledgeEdge:
         raise NotImplementedError("Implemented in Task 2.3")
