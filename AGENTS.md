@@ -23,8 +23,60 @@
 
 - **交互语言**: 中文（简体）
 - **代码语言**: 英文（变量名、函数名、技术术语）
-- **代码注释**: 中文注释（推荐 ≥15% 代码覆盖率）
+- **代码注释**: 中文注释（推荐 >=15% 代码覆盖率）
 - **文档输出**: 中文文档
+
+---
+
+## 核心原则：Python API优先
+
+> **重要**: AI代理调用QuickAgents功能时，**必须使用Python API**，而非Bash命令。
+
+### 为什么使用Python API
+
+| 方面 | Python API | Bash命令 |
+|------|-----------|----------|
+| Token消耗 | 0 Token | 需要执行命令、读取输出 |
+| 执行效率 | 直接调用 | 需要启动子进程 |
+| 错误处理 | Python异常 | 需要解析输出 |
+| 数据传递 | 直接对象 | 需要序列化/反序列化 |
+
+### 正确的使用方式
+
+```python
+# 正确：AI代理使用Python API
+from quickagents import get_evolution, FeedbackType, MemoryType
+
+evolution = get_evolution()
+
+# 记录反馈
+evolution.db.add_feedback(FeedbackType.BUG, '描述', project_name='my-project')
+
+# 设置记忆
+evolution.db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
+
+# 任务完成
+evolution.on_task_complete({'task_id': 'T001', 'success': True})
+```
+
+### 错误的使用方式
+
+```bash
+# 错误：AI代理不应使用Bash命令
+qa feedback bug '描述'
+qa memory set project.name 'MyProject'
+```
+
+### 例外情况
+
+仅以下情况可以使用Bash命令：
+1. **Git操作** - `git add`, `git commit`, `git push`
+2. **npm/pip安装** - 包管理命令
+3. **用户明确要求** - 直接在终端执行
+
+### CLI命令的用途
+
+CLI命令（`qa xxx`）是给**终端用户**使用的，不是给AI代理使用的。
 
 ---
 

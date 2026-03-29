@@ -227,24 +227,48 @@ Git提交完成
 
 ## 使用示例
 
-### 手动记录Bug
+### Python API调用（AI代理推荐）
 
-```
-用户: /feedback bug lazy-discovery-skill未正确加载grep工具
+```python
+from quickagents import get_evolution, FeedbackType
 
-AI: 已记录到 ~/.quickagents/feedback/bugs.md
-    项目: my-project
-    时间: 2026-03-28 10:30
+evolution = get_evolution()
+
+# 方式1: 记录Bug
+evolution.db.add_feedback(
+    FeedbackType.BUG,
+    'lazy-discovery-skill未正确加载grep工具',
+    project_name='my-project'
+)
+
+# 方式2: 记录改进建议
+evolution.db.add_feedback(
+    FeedbackType.IMPROVEMENT,
+    '工具加载延迟约2秒，可优化',
+    project_name='my-project',
+    context='lazy-discovery-skill'
+)
+
+# 方式3: 任务完成时自动收集
+result = evolution.on_task_complete({
+    'task_id': 'T001',
+    'task_name': '实现认证',
+    'skills_used': ['tdd-workflow-skill'],
+    'success': True,
+    'duration_ms': 45000
+})
 ```
 
-### 任务完成后自动收集
+### CLI命令（终端用户使用）
 
+```bash
+qa feedback bug '描述'        # 记录Bug
+qa feedback improve '描述'    # 记录改进建议
+qa feedback best '描述'      # 记录最佳实践
+qa feedback view              # 查看收集的经验
 ```
-AI完成任务后:
-1. 分析: 本次任务使用了 lazy-discovery-skill
-2. 发现: 工具加载延迟约2秒，可优化
-3. 记录: improvements.md - "lazy-discovery-skill加载延迟可优化"
-```
+
+**注意**: AI代理应优先使用Python API，0 Token消耗。
 
 ---
 

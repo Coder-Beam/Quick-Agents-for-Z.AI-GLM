@@ -443,7 +443,7 @@ sync.sync_memory()
 stats = db.get_stats()
 ```
 
-## CLI Usage
+## CLI Usage (终端用户)
 
 ```bash
 # 记忆操作
@@ -457,6 +457,8 @@ qa sync
 # 查看统计
 qa stats
 ```
+
+**重要**: AI代理应使用Python API而非CLI命令，以实现0 Token消耗。
 
 ## Resources
 
