@@ -1717,9 +1717,37 @@ Docs.backup/YYYYMMDD_HHMMSS/
 
 `quickagents` 是一个Python包，将QuickAgents的核心功能本地化，大幅降低大模型Token消耗。
 
+**架构 (v2.2.0+)**:
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              quickagents 统一存储架构                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   .quickagents/unified.db (主存储 - SQLite)                        │
+│   ├── memory        (三维记忆)                                      │
+│   ├── progress      (进度追踪)                                      │
+│   ├── feedback      (经验收集)                                      │
+│   ├── tasks         (任务管理)                                      │
+│   ├── decisions     (决策日志)                                      │
+│   ├── notepads      (笔记本)                                        │
+│   ├── checkpoints   (检查点)                                        │
+│   ├── file_cache    (文件缓存)                                      │
+│   └── operation_history (操作历史)                                  │
+│                                                                     │
+│   ─────────────────────────────────────────────────────────────    │
+│                                                                     │
+│   Docs/ (辅助备份 - Markdown)                                       │
+│   ├── MEMORY.md     (从SQLite同步)                                  │
+│   ├── TASKS.md      (从SQLite同步)                                  │
+│   └── DECISIONS.md  (从SQLite同步)                                  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
 **核心优势**:
-- 文件操作哈希检测，Token节省90%+
-- SQLite缓存系统，零安装依赖
+- SQLite主存储，高效查询，Token节省60%+
+- Markdown辅助备份，人类可读，Git版本控制
+- 统一数据库管理，一次操作多处同步
 - 循环检测、事件提醒本地处理
 - CLI工具支持
 
@@ -1732,15 +1760,18 @@ pip install -e .
 
 # 或直接安装
 pip install quickagents
+
+# 完整安装（包含Windows功能）
+pip install quickagents[full]
 ```
 
 ### （三）核心模块
 
 | 模块 | 功能 | Token节省 |
 |------|------|-----------|
+| UnifiedDB | 统一数据库管理（记忆/任务/进度/反馈/决策） | 60%+ |
+| MarkdownSync | 自动同步到Markdown文件 | 100% |
 | FileManager | 智能文件读写（哈希检测） | 90%+ |
-| CacheDB | SQLite缓存管理 | 100% |
-| MemoryManager | 三维记忆管理 | 100% |
 | LoopDetector | 循环检测 | 100% |
 | Reminder | 事件提醒 | 100% |
 
@@ -1749,57 +1780,100 @@ pip install quickagents
 #### Python API
 
 ```python
-from quickagents import FileManager, CacheDB, LoopDetector
+from quickagents import UnifiedDB, MarkdownSync, MemoryType, TaskStatus, FeedbackType
 
-# 智能文件操作
-fm = FileManager()
-content, changed = fm.read_if_changed('Docs/MEMORY.md')
-if not changed:
-    print("使用缓存，节省Token！")
+# 统一数据库（主存储）
+db = UnifiedDB('.quickagents/unified.db')
 
-# 编辑文件（自动验证）
-result = fm.edit('file.py', 'old', 'new')
-if result['success'] and result['token_saved'] > 0:
-    print(f"节省Token: {result['token_saved']}")
+# 三维记忆
+db.set_memory('project.name', 'QuickAgents', MemoryType.FACTUAL)
+db.set_memory('lesson.001', '避免过度工程', MemoryType.EXPERIENTIAL, category='pitfalls')
+db.set_memory('current.task', '实现认证', MemoryType.WORKING)
 
-# 循环检测
-detector = LoopDetector(threshold=3)
-loop = detector.check('read', {'path': 'file.py'})
-if loop:
-    print(f"检测到循环: {loop['count']}次")
+# 获取记忆
+name = db.get_memory('project.name')
 
-# 查看统计
-db = CacheDB()
+# 搜索记忆
+results = db.search_memory('认证', MemoryType.EXPERIENTIAL)
+
+# 进度追踪
+db.init_progress('auth-system', total_tasks=8)
+db.update_progress('current_task', 'T004')
+progress = db.get_progress()
+
+# 任务管理
+db.add_task('T001', '实现认证', 'P0')
+db.update_task_status('T001', TaskStatus.COMPLETED)
+tasks = db.get_tasks(status=TaskStatus.PENDING)
+
+# 经验收集
+db.add_feedback(FeedbackType.BUG, '发现bug', '详细描述')
+
+# 笔记本
+db.add_notepad_entry('auth-system', 'learnings', 'JWT认证需要刷新机制')
+
+# 检查点
+db.create_checkpoint('auth-system', '完成基础认证', tasks_completed=['T001', 'T002'])
+
+# 同步到Markdown（辅助备份）
+sync = MarkdownSync(db)
+sync.sync_all()
+
+# 获取统计
 stats = db.get_stats()
 ```
 
 #### CLI工具
 
 ```bash
-# 文件操作
-qa read <file>           # 智能读取
-qa write <file> <content> # 写入
-qa edit <file> <old> <new> # 编辑
+# 统计信息
+qa stats                 # 数据库统计
 
-# 缓存管理
-qa cache stats           # 缓存统计
-qa cache list            # 缓存列表
-qa cache clear           # 清空缓存
+# 同步到Markdown
+qa sync                  # 同步所有表
+qa sync memory           # 仅同步记忆
 
-# 记忆管理
-qa memory get <key>      # 获取记忆
-qa memory set <key> <val> # 设置记忆
-qa memory search <keyword> # 搜索记忆
+# 记忆操作
+qa memory get project.name
+qa memory set project.tech_stack '["Python", "TypeScript"]'
+qa memory search 认证
+
+# 任务操作
+qa tasks list            # 任务列表
+qa tasks add T001 "任务名" --priority P0
+qa tasks status T001 completed
+
+# 进度查看
+qa progress              # 当前进度
 
 # 循环检测
 qa loop check            # 检查循环
 qa loop stats            # 统计信息
 
-# 整体统计
-qa stats                 # 查看统计
+# 缓存管理
+qa cache stats           # 缓存统计
+qa cache clear           # 清空缓存
 ```
 
-### （五）哈希检测原理
+### （五）同步策略
+
+```
+写入流程:
+1. AI调用 → 写入SQLite (主存储)
+2. 异步触发 → 同步到Markdown (辅助备份)
+3. Markdown → Git版本控制
+
+读取流程:
+1. AI调用 → 优先从SQLite读取（精确查询）
+2. SQLite损坏 → 从Markdown恢复
+
+恢复流程:
+1. 检测SQLite损坏
+2. 调用 MarkdownSync.restore_all_from_md()
+3. 从Markdown文件恢复数据
+```
+
+### （六）哈希检测原理
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1864,4 +1938,4 @@ stats             -- 统计数据
 
 ---
 
-*文档版本: v10.1 | 更新时间: 2026-03-29*
+*文档版本: v10.2 | 更新时间: 2026-03-29*

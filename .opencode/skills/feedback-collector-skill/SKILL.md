@@ -4,6 +4,10 @@ description: |
   收集QuickAgents使用过程中的经验、改进方向、最佳实践。
   自动触发：任务完成、Git提交后分析。
   手动触发：/feedback <类型> <描述>
+  
+  Architecture (v2.2.0+):
+  - SQLite主存储: unified.db/feedback表
+  - Markdown辅助备份: ~/.quickagents/feedback/*.md
 license: MIT
 allowed-tools:
   - read
@@ -13,12 +17,57 @@ allowed-tools:
 metadata:
   category: feedback
   priority: medium
-  version: 1.0.0
+  version: 2.0.0
+  localized: true
 ---
 
 # Feedback Collector Skill
 
 收集QuickAgents使用经验，为系统升级提供指导。
+
+## 架构 (v2.2.0+)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    经验收集架构                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   AI代理 ──► .quickagents/unified.db ◄── 主存储 (SQLite)           │
+│              │         feedback表                                   │
+│              │                                                      │
+│              ▼ (自动同步)                                           │
+│       ~/.quickagents/feedback/ ◄── Markdown备份                    │
+│       ├── bugs.md                                                   │
+│       ├── improvements.md                                           │
+│       ├── best-practices.md                                         │
+│       ├── skill-review.md                                           │
+│       └── agent-review.md                                           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+## Python API
+
+```python
+from quickagents import UnifiedDB, FeedbackType, MarkdownSync
+
+db = UnifiedDB('.quickagents/unified.db')
+sync = MarkdownSync(db)
+
+# 添加反馈
+db.add_feedback(
+    FeedbackType.BUG,
+    'lazy-discovery未正确加载',
+    description='grep工具未加载',
+    project_name='my-project'
+)
+
+# 查询反馈
+bugs = db.get_feedbacks(FeedbackType.BUG, limit=10)
+
+# 同步到Markdown
+sync.sync_feedback()
+```
 
 ## 存储位置
 

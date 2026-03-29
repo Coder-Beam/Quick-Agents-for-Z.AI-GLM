@@ -1,13 +1,46 @@
 ---
 name: boulder-tracking
 description: Boulder进度追踪系统 - 跨会话进度管理与恢复
-version: 1.0.0
+version: 2.0.0
+architecture: SQLite主存储 + JSON/Markdown辅助备份
 ---
 
 # Boulder Tracking Skill
 
 > 基于 Oh-My-OpenAgent 的 Boulder 进度追踪
 > QuickAgents 的跨会话进度管理系统
+
+---
+
+## 架构 (v2.0.0+)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Boulder进度追踪架构                               │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   AI代理 ──► .quickagents/unified.db ◄── 主存储 (SQLite)           │
+│              │         progress表                                   │
+│              │         notepads表                                   │
+│              │         checkpoints表                                │
+│              │                                                      │
+│              ▼ (自动同步)                                           │
+│       .quickagents/boulder.json ◄── 兼容旧格式                      │
+│              │                                                      │
+│              ▼                                                      │
+│       Docs/TASKS.md ◄── 人类可读备份                                │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 存储位置
+
+| 数据类型 | SQLite表 | 备份文件 |
+|----------|----------|----------|
+| 进度状态 | progress | boulder.json |
+| 笔记本 | notepads | - |
+| 检查点 | checkpoints | - |
+| 任务 | tasks | Docs/TASKS.md |
 
 ---
 
