@@ -92,7 +92,7 @@ related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
 | 2026-03-25 | Step 2核心架构 | 成功 | 创建fenghou-orchestrate + ultrawork命令 + Category系统 |
 | 2026-03-25 | Step 3核心功能 | 成功 | 创建Background Agents + Todo Enforcer + Boulder系统 + start-work命令 |
 | 2026-03-26 | 增强方案实施 | 成功 | 完成Hooks系统 + 多代理协调 + CLI工具开发 |
-| 2026-03-26 | CLI工具npm发布 | 成功 | https://www.npmjs.com/package/quickagents-cli |
+| 2026-03-26 | CLI工具PyPI发布 | 成功 | https://www.pypi.org/project/quickagents |
 | 2026-03-26 | v2.0.1版本发布 | 成功 | 统一触发词 + Agent合作图 + 配置引导 |
 
 ### 2.2 经验总结
@@ -198,7 +198,7 @@ related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
       - 实现init/start/status命令
       - 实现agent/skill/workflow命令
       - 实现config/metrics命令
-      - ✅ 已发布到npm (v1.0.0) - https://www.npmjs.com/package/quickagents-cli
+      - ✅ 已发布到npm (v1.0.0) - https://www.pypi.org/project/quickagents
 - 临时决策：
   - 多代理协调默认关闭，用户手动开启
   - 仅支持GLM系列模型，继承OpenCode配置

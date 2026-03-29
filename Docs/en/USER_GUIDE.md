@@ -30,7 +30,7 @@
 
 ```bash
 # Method 1: CLI
-npm install -g quickagents-cli
+pip install quickagents
 qa init
 
 # Method 2: One-line prompt (recommended)

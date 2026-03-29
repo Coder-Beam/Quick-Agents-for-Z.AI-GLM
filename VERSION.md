@@ -10,9 +10,24 @@
 |------|-----|
 | 版本号 | 2.1.1 |
 | Git标签 | v2.1.1 |
-| 发布日期 | 2026-03-28 |
+| 发布日期 | 2026-03-29 |
 | 最低兼容版本 | 2.0.0 |
 | 仓库地址 | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
+| PyPI包 | https://pypi.org/project/quickagents/ |
+
+---
+
+## 安装方式
+
+```bash
+# 从PyPI安装
+pip install quickagents
+
+# 使用CLI
+qa --help
+qa stats
+qa cache stats
+```
 
 ---
 
@@ -20,14 +35,20 @@
 
 **新增功能**:
 - `feedback-collector-skill` - 经验收集系统
-  - 5种经验类型收集（Bug/改进/最佳实践/Skill评估/Agent评估）
-  - 自动触发：任务完成+Git提交
-  - 手动命令：`/feedback <类型> <描述>`
-  - 存储位置：`~/.quickagents/feedback/`
+- `quickagents` Python包 - 本地化Skills，Token节省90%+
+  - FileManager: 哈希检测文件读写
+  - CacheDB: SQLite缓存系统
+  - MemoryManager: 三维记忆管理
+  - LoopDetector: 循环检测
+  - Reminder: 事件提醒
+  - FeedbackCollector: 经验收集
+  - TDDWorkflow: TDD工作流
+  - GitCommit: Git提交管理
 
 **更新内容**:
-- Skills总数: 18 → 19
-- AGENTS.md 新增「二一、经验收集规范」章节
+- Skills本地化: 8个Skills完全本地化
+- 移除npm包，统一使用PyPI
+- AGENTS.md 新增「二四、本地化Python包」章节
 
 ---
 

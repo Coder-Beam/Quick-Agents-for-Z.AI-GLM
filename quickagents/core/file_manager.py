@@ -15,7 +15,7 @@ Token节省:
 import os
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict
-from .hash_cache import HashCache, get_global_cache
+from ..utils.hash_cache import HashCache, get_global_cache
 
 
 class FileManager:

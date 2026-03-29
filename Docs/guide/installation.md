@@ -12,7 +12,7 @@ https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs
 **或者使用CLI一键安装**（需要Node.js）：
 
 ```bash
-npm install -g quickagents-cli
+pip install quickagents
 qa init
 ```
 

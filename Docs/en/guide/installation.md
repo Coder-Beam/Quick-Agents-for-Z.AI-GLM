@@ -27,7 +27,7 @@ https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs
 **Or use CLI for one-line installation:**
 
 ```bash
-npm install -g quickagents-cli
+pip install quickagents
 qa init
 ```
 

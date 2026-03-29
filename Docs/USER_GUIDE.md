@@ -30,7 +30,7 @@
 
 ```bash
 # 方式1：CLI安装
-npm install -g quickagents-cli
+pip install quickagents
 qa init
 
 # 方式2：一句话提示词（推荐）

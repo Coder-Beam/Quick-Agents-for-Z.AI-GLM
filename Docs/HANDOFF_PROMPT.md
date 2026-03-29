@@ -9,11 +9,11 @@
 | 项目 | 状态 |
 |------|------|
 | **项目名称** | QuickAgents - AI代理项目初始化系统 |
-| **当前版本** | v1.0.0 |
-| **完成日期** | 2026-03-26 |
+| **当前版本** | v2.1.1 |
+| **完成日期** | 2026-03-29 |
 | **完成率** | 100% (49/49任务) |
 | **GitHub** | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
-| **npm包** | https://www.npmjs.com/package/quickagents-cli |
+| **PyPI包** | https://pypi.org/project/quickagents/ |
 
 ---
 
@@ -49,11 +49,11 @@
 - 标签：v1.0.0, v8.0
 - 包含：完整源码 + 文档 + 配置文件
 
-### 2. npm包
-- 包名：quickagents-cli
-- 版本：1.0.0
-- 安装：`npm install -g quickagents-cli`
-- 命令：`qa`, `quickagents`
+### 2. PyPI包
+- 包名：quickagents
+- 版本：2.1.1
+- 安装：`pip install quickagents`
+- 命令：`qa`
 
 ---
 
@@ -64,7 +64,7 @@
 git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
 
 # 方式2：安装CLI工具
-npm install -g quickagents-cli
+pip install quickagents
 
 # 使用
 qa init        # 初始化项目
