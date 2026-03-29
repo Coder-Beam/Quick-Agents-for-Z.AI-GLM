@@ -13,7 +13,7 @@ HashCache - 哈希缓存系统 (SQLite后端)
 """
 
 from typing import Dict, Optional, Tuple
-from .cache_db import CacheDB, get_cache_db
+from ..core.cache_db import CacheDB, get_cache_db
 
 
 class HashCache:

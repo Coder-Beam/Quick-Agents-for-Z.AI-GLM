@@ -14,8 +14,9 @@ QuickAgents CLI - 命令行工具
     qa loop check            # 检查循环模式
     qa loop reset            # 重置循环检测
     qa stats                 # 查看整体统计
+    qa sync [table]          # 同步SQLite到Markdown
     
-    # 新增：Skills本地化命令
+    # Skills本地化命令
     qa feedback bug <desc>   # 记录Bug
     qa feedback improve <desc> # 记录改进建议
     qa feedback best <desc>  # 记录最佳实践
@@ -38,17 +39,16 @@ import os
 import argparse
 from pathlib import Path
 
-# 添加父目录到路径
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from core.file_manager import FileManager
-from core.memory import MemoryManager
-from core.loop_detector import LoopDetector
-from core.reminder import Reminder
-from core.cache_db import CacheDB
-from skills.feedback_collector import FeedbackCollector
-from skills.tdd_workflow import TDDWorkflow, TDDPhase
-from skills.git_commit import GitCommit
+from quickagents.core.file_manager import FileManager
+from quickagents.core.memory import MemoryManager
+from quickagents.core.loop_detector import LoopDetector
+from quickagents.core.reminder import Reminder
+from quickagents.core.cache_db import CacheDB
+from quickagents.core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType
+from quickagents.core.markdown_sync import MarkdownSync
+from quickagents.skills.feedback_collector import FeedbackCollector
+from quickagents.skills.tdd_workflow import TDDWorkflow, TDDPhase
+from quickagents.skills.git_commit import GitCommit
 
 
 def cmd_read(args):
@@ -66,7 +66,7 @@ def cmd_write(args):
     """写入文件命令"""
     fm = FileManager()
     fm.write(args.file, args.content)
-    print(f"✅ 已写入: {args.file}")
+    print(f"[OK] 已写入: {args.file}")
 
 
 def cmd_edit(args):
@@ -75,11 +75,11 @@ def cmd_edit(args):
     result = fm.edit(args.file, args.old, args.new)
     
     if result['success']:
-        print(f"✅ 编辑成功: {args.file}")
+        print(f"[OK] 编辑成功: {args.file}")
         if result['token_saved'] > 0:
-            print(f"💰 节省Token: ~{result['token_saved']}")
+            print(f"[Token] 节省: ~{result['token_saved']}")
     else:
-        print(f"❌ 编辑失败: {result['message']}")
+        print(f"[FAIL] 编辑失败: {result['message']}")
 
 
 def cmd_hash(args):
@@ -96,13 +96,13 @@ def cmd_cache(args):
     
     if args.action == 'stats':
         stats = db.get_stats()['file_cache']
-        print("📊 缓存统计")
+        print("[Cache] 缓存统计")
         print(f"  缓存文件数: {stats['count']}")
         print(f"  总大小: {stats['total_kb']} KB")
     
     elif args.action == 'clear':
         count = db.clear_file_cache()
-        print(f"✅ 已清空 {count} 个文件缓存")
+        print(f"[OK] 已清空 {count} 个文件缓存")
     
     elif args.action == 'list':
         with db._get_connection() as conn:
@@ -110,7 +110,7 @@ def cmd_cache(args):
             cursor.execute('SELECT path, content_hash, size, access_count FROM file_cache')
             rows = cursor.fetchall()
             
-            print("📁 缓存文件列表")
+            print("[Cache] 缓存文件列表")
             print("-" * 80)
             for row in rows:
                 print(f"  {row['path']}")
@@ -126,16 +126,16 @@ def cmd_memory(args):
         if value is not None:
             print(f"{args.key}: {value}")
         else:
-            print(f"❌ 未找到: {args.key}")
+            print(f"[FAIL] 未找到: {args.key}")
     
     elif args.action == 'set':
         memory.set_factual(args.key, args.value)
         memory.save()
-        print(f"✅ 已设置: {args.key} = {args.value}")
+        print(f"[OK] 已设置: {args.key} = {args.value}")
     
     elif args.action == 'search':
         results = memory.search(args.keyword)
-        print(f"🔍 搜索结果 ({len(results)} 条)")
+        print(f"[Search] 搜索结果 ({len(results)} 条)")
         print("-" * 50)
         for r in results:
             print(f"  [{r['type']}] {r.get('key', r.get('category', ''))}: {r.get('value', r.get('content', ''))}")
@@ -148,22 +148,22 @@ def cmd_loop(args):
     if args.action == 'check':
         patterns = detector.get_loop_patterns()
         if patterns:
-            print("⚠️ 检测到循环模式")
+            print("[WARN] 检测到循环模式")
             print("-" * 50)
             for p in patterns:
                 print(f"  {p['tool_name']}: {p['count']}次")
                 print(f"    首次: {p['first_seen']}")
                 print(f"    最后: {p['last_seen']}")
         else:
-            print("✅ 未检测到循环模式")
+            print("[OK] 未检测到循环模式")
     
     elif args.action == 'reset':
         detector.reset()
-        print("✅ 已重置循环检测")
+        print("[OK] 已重置循环检测")
     
     elif args.action == 'stats':
         stats = detector.get_stats()
-        print("📊 循环检测统计")
+        print("[Loop] 循环检测统计")
         print(f"  检测阈值: {stats['threshold']}")
         print(f"  窗口大小: {stats['window_size']}")
         print(f"  循环模式: {stats['total_patterns']}")
@@ -174,18 +174,56 @@ def cmd_stats(args):
     db = CacheDB()
     stats = db.get_stats()
     
-    print("📊 QuickAgents 统计")
+    print("[Stats] QuickAgents 统计")
     print("=" * 50)
     
-    print("\n📁 文件缓存")
+    print("\n[File] 文件缓存")
     print(f"  缓存文件: {stats['file_cache']['count']}")
     print(f"  总大小: {stats['file_cache']['total_kb']} KB")
     
-    print("\n🧠 记忆系统")
+    print("\n[Memory] 记忆系统")
     print(f"  记忆条目: {stats['memory']['count']}")
     
-    print("\n💰 Token节省")
+    print("\n[Token] 节省")
     print(f"  估算节省: {stats['tokens']['total_saved']} tokens")
+
+
+def cmd_sync(args):
+    """同步SQLite到Markdown"""
+    db_path = '.quickagents/unified.db'
+    
+    if not os.path.exists(db_path):
+        print(f"[FAIL] 数据库不存在: {db_path}")
+        print("  请先使用UnifiedDB创建数据库")
+        return
+    
+    db = UnifiedDB(db_path)
+    sync = MarkdownSync(db)
+    
+    table = args.table if hasattr(args, 'table') and args.table else None
+    
+    if table == 'memory' or table is None:
+        sync.sync_memory()
+        print("[OK] 已同步 memory -> Docs/MEMORY.md")
+    
+    if table == 'tasks' or table is None:
+        sync.sync_tasks()
+        print("[OK] 已同步 tasks -> Docs/TASKS.md")
+    
+    if table == 'decisions' or table is None:
+        sync.sync_decisions()
+        print("[OK] 已同步 decisions -> Docs/DECISIONS.md")
+    
+    if table == 'progress' or table is None:
+        sync.sync_progress()
+        print("[OK] 已同步 progress -> .quickagents/boulder.json")
+    
+    if table == 'feedback' or table is None:
+        sync.sync_feedback()
+        print("[OK] 已同步 feedback -> ~/.quickagents/feedback/")
+    
+    if table is None:
+        print("\n[Done] 所有表同步完成")
 
 
 def cmd_reminder(args):
@@ -195,23 +233,23 @@ def cmd_reminder(args):
     if args.action == 'check':
         alerts = reminder.check_alerts()
         if alerts:
-            print("⚠️ 活跃提醒")
+            print("[WARN] 活跃提醒")
             print("-" * 50)
             for a in alerts:
                 print(f"  [{a['level']}] {a['message']}")
         else:
-            print("✅ 无活跃提醒")
+            print("[OK] 无活跃提醒")
     
     elif args.action == 'stats':
         stats = reminder.get_stats()
-        print("📊 提醒系统统计")
+        print("[Reminder] 提醒系统统计")
         print(f"  工具调用: {stats['tool_calls']}")
         print(f"  错误次数: {stats['errors']}")
         print(f"  运行时间: {int(stats['elapsed_minutes'])} 分钟")
         print(f"  上下文使用: {stats['context_usage']}%")
 
 
-# ==================== 新增：Skills本地化命令 ====================
+# ==================== Skills本地化命令 ====================
 
 def cmd_feedback(args):
     """经验收集命令"""
@@ -220,29 +258,29 @@ def cmd_feedback(args):
     if args.action == 'bug':
         success = collector.record('bug', args.description, scenario=args.scenario)
         if success:
-            print(f"✅ 已记录Bug: {args.description}")
+            print(f"[OK] 已记录Bug: {args.description}")
         else:
-            print("ℹ️ 重复记录已忽略")
+            print("[INFO] 重复记录已忽略")
     
     elif args.action == 'improve':
         success = collector.record('improve', args.description, scenario=args.scenario)
         if success:
-            print(f"✅ 已记录改进建议: {args.description}")
+            print(f"[OK] 已记录改进建议: {args.description}")
         else:
-            print("ℹ️ 重复记录已忽略")
+            print("[INFO] 重复记录已忽略")
     
     elif args.action == 'best':
         success = collector.record('best', args.description, scenario=args.scenario)
         if success:
-            print(f"✅ 已记录最佳实践: {args.description}")
+            print(f"[OK] 已记录最佳实践: {args.description}")
         else:
-            print("ℹ️ 重复记录已忽略")
+            print("[INFO] 重复记录已忽略")
     
     elif args.action == 'view':
         feedback_type = args.type if hasattr(args, 'type') and args.type else None
         feedbacks = collector.get_feedback(feedback_type, limit=20)
         
-        print(f"📋 经验收集 ({len(feedbacks)} 条)")
+        print(f"[Feedback] 经验收集 ({len(feedbacks)} 条)")
         print("-" * 50)
         for fb in feedbacks:
             print(f"  [{fb['type']}] {fb['timestamp']}")
@@ -250,7 +288,7 @@ def cmd_feedback(args):
     
     elif args.action == 'stats':
         stats = collector.get_stats()
-        print("📊 经验收集统计")
+        print("[Feedback] 经验收集统计")
         print(f"  总计: {stats['total']} 条")
         for ftype, count in stats['by_type'].items():
             print(f"  {ftype}: {count} 条")
@@ -262,26 +300,26 @@ def cmd_tdd(args):
     
     if args.action == 'red':
         result = tdd.run_red(args.test_file)
-        print(f"🔴 RED阶段: {'测试失败 ✓' if not result['passed'] else '测试通过 ⚠️'}")
+        print(f"[RED] RED阶段: {'测试失败 [OK]' if not result['passed'] else '测试通过 [WARN]'}")
         print(f"  耗时: {result['duration_ms']}ms")
         if result['passed']:
-            print("  ⚠️ 测试已通过，需要先写失败的测试！")
+            print("  [WARN] 测试已通过，需要先写失败的测试！")
     
     elif args.action == 'green':
         result = tdd.run_green(args.test_file)
-        print(f"🟢 GREEN阶段: {'测试通过 ✓' if result['passed'] else '测试失败 ❌'}")
+        print(f"[GREEN] GREEN阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
         print(f"  耗时: {result['duration_ms']}ms")
         if result['passed']:
-            print("  ✅ 可以进入Refactor阶段")
+            print("  [OK] 可以进入Refactor阶段")
     
     elif args.action == 'refactor':
         result = tdd.run_refactor(args.test_file)
-        print(f"🔄 REFACTOR阶段: {'测试通过 ✓' if result['passed'] else '测试失败 ❌'}")
+        print(f"[REFACTOR] REFACTOR阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
         print(f"  耗时: {result['duration_ms']}ms")
     
     elif args.action == 'stats':
         stats = tdd.get_stats()
-        print("📊 TDD统计")
+        print("[TDD] TDD统计")
         print(f"  RED次数: {stats['red_count']}")
         print(f"  GREEN次数: {stats['green_count']}")
         print(f"  REFACTOR次数: {stats['refactor_count']}")
@@ -289,8 +327,8 @@ def cmd_tdd(args):
     
     elif args.action == 'coverage':
         result = tdd.check_coverage(threshold=80)
-        print(f"📈 测试覆盖率: {result['coverage']}%")
-        print(f"  达标: {'✅' if result['meets_threshold'] else '❌'}")
+        print(f"[Coverage] 测试覆盖率: {result['coverage']}%")
+        print(f"  达标: {'[OK]' if result['meets_threshold'] else '[FAIL]'}")
 
 
 def cmd_git(args):
@@ -299,52 +337,52 @@ def cmd_git(args):
     
     if args.action == 'status':
         status = git.get_status()
-        print(f"🌿 分支: {status['branch']}")
+        print(f"[Git] 分支: {status['branch']}")
         print(f"  领先: {status['ahead']}, 落后: {status['behind']}")
         
         if status['staged']:
-            print(f"\n✅ 已暂存 ({len(status['staged'])})")
+            print(f"\n[Staged] 已暂存 ({len(status['staged'])})")
             for f in status['staged'][:5]:
                 print(f"  {f}")
         
         if status['unstaged']:
-            print(f"\n📝 未暂存 ({len(status['unstaged'])})")
+            print(f"\n[Unstaged] 未暂存 ({len(status['unstaged'])})")
             for f in status['unstaged'][:5]:
                 print(f"  {f}")
         
         if status['untracked']:
-            print(f"\n❓ 未跟踪 ({len(status['untracked'])})")
+            print(f"\n[Untracked] 未跟踪 ({len(status['untracked'])})")
             for f in status['untracked'][:5]:
                 print(f"  {f}")
     
     elif args.action == 'check':
-        print("🔍 执行Pre-commit检查...")
+        print("[Git] 执行Pre-commit检查...")
         checks = git.run_pre_commit_checks()
         
-        print(f"\n{'✅' if checks['all_passed'] else '❌'} 检查结果")
+        print(f"\n{'[OK]' if checks['all_passed'] else '[FAIL]'} 检查结果")
         for check_name, result in checks['checks'].items():
-            status = '✅' if result['passed'] else ('⏭️' if result.get('skipped') else '❌')
+            status = '[OK]' if result['passed'] else ('[SKIP]' if result.get('skipped') else '[FAIL]')
             print(f"  {status} {check_name}")
     
     elif args.action == 'commit':
-        print("🔍 执行Pre-commit检查...")
+        print("[Git] 执行Pre-commit检查...")
         result = git.commit(
             args.type, args.scope, args.subject,
             run_checks=True
         )
         
         if result['success']:
-            print(f"✅ 提交成功: {result['commit_hash']}")
+            print(f"[OK] 提交成功: {result['commit_hash']}")
             print(f"   {result['message'].split(chr(10))[0]}")
         else:
-            print(f"❌ 提交失败: {result['message']}")
+            print(f"[FAIL] 提交失败: {result['message']}")
     
     elif args.action == 'push':
         result = git.push()
         if result['success']:
-            print("✅ 推送成功")
+            print("[OK] 推送成功")
         else:
-            print(f"❌ 推送失败: {result['message']}")
+            print(f"[FAIL] 推送失败: {result['message']}")
 
 
 def main():
@@ -395,6 +433,12 @@ def main():
     # stats 命令
     p_stats = subparsers.add_parser('stats', help='查看统计')
     p_stats.set_defaults(func=cmd_stats)
+    
+    # sync 命令
+    p_sync = subparsers.add_parser('sync', help='同步SQLite到Markdown')
+    p_sync.add_argument('table', nargs='?', choices=['memory', 'tasks', 'decisions', 'progress', 'feedback'], 
+                        help='要同步的表（默认全部）')
+    p_sync.set_defaults(func=cmd_sync)
     
     # reminder 命令
     p_reminder = subparsers.add_parser('reminder', help='提醒系统')
