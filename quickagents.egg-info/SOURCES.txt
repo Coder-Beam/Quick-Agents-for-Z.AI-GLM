@@ -5,6 +5,7 @@ quickagents.egg-info/PKG-INFO
 quickagents.egg-info/SOURCES.txt
 quickagents.egg-info/dependency_links.txt
 quickagents.egg-info/entry_points.txt
+quickagents.egg-info/requires.txt
 quickagents.egg-info/top_level.txt
 quickagents/cli/main.py
 quickagents/cli/qa.py
@@ -18,3 +19,4 @@ quickagents/skills/feedback_collector.py
 quickagents/skills/git_commit.py
 quickagents/skills/tdd_workflow.py
 quickagents/utils/hash_cache.py
+quickagents/utils/script_helper.py

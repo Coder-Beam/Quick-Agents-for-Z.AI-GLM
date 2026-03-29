@@ -6,7 +6,7 @@ Author: QuickAgents Team
 License: MIT
 Project-URL: Homepage, https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
 Project-URL: Documentation, https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM#readme
-Keywords: ai,agent,cache,memory,tdd
+Keywords: ai,agent,cache,memory,tdd,windows,automation
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: MIT License
@@ -15,15 +15,26 @@ Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: MacOS
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+Requires-Dist: psutil>=5.9.0
+Provides-Extra: windows
+Requires-Dist: pywin32>=305; extra == "windows"
+Requires-Dist: wmi>=1.5.1; extra == "windows"
+Provides-Extra: full
+Requires-Dist: pywin32>=305; extra == "full"
+Requires-Dist: wmi>=1.5.1; extra == "full"
+Requires-Dist: psutil>=5.9.0; extra == "full"
 
 # QuickAgents - AI Agent Project Initialization System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
 [![Version](https://img.shields.io/badge/Version-2.1.1-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
-[![npm](https://img.shields.io/badge/npm-quickagents--cli-red.svg)](https://www.npmjs.com/package/quickagents-cli)
+[![PyPI](https://img.shields.io/badge/PyPI-quickagents-blue.svg)](https://pypi.org/project/quickagents/)
 
 **[中文](#quickagents---ai-代理项目初始化系统)** | **English**
 
@@ -42,11 +53,11 @@ Install and configure QuickAgents by following the instructions here:
 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/en/guide/installation.md
 ```
 
-**Or use CLI for one-line installation:**
+**Or use pip for one-line installation:**
 
 ```bash
-npm install -g quickagents-cli
-qa init
+pip install quickagents
+qa --help
 ```
 
 ### For LLM Agents
@@ -137,7 +148,7 @@ Based on the paper "Memory in the Age of AI Agents":
 
 ```bash
 # Option 1: Use CLI
-npm install -g quickagents-cli
+pip install quickagents
 qa init
 
 # Option 2: Use one-line prompt (recommended)
@@ -297,7 +308,7 @@ https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs
 **或者使用CLI一键安装**：
 
 ```bash
-npm install -g quickagents-cli
+pip install quickagents
 qa init
 ```
 
@@ -389,7 +400,7 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 
 ```bash
 # 方式1：使用CLI
-npm install -g quickagents-cli
+pip install quickagents
 qa init
 
 # 方式2：使用一句话提示词（推荐）

@@ -64,6 +64,9 @@ from .skills import (
     GitCommit, get_git_commit
 )
 
+# Windows脚本替代工具（可选依赖）
+from .utils.script_helper import ScriptHelper
+
 __all__ = [
     # Core modules
     'FileManager',
@@ -80,6 +83,8 @@ __all__ = [
     'get_tdd_workflow',
     'GitCommit',
     'get_git_commit',
+    # Windows script helper (optional)
+    'ScriptHelper',
     # Version
     '__version__',
 ]

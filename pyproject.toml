@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [
     {name = "QuickAgents Team"}
 ]
-keywords = ["ai", "agent", "cache", "memory", "tdd"]
+keywords = ["ai", "agent", "cache", "memory", "tdd", "windows", "automation"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -22,6 +22,27 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+]
+
+# 核心依赖（跨平台）
+dependencies = [
+    "psutil>=5.9.0",
+]
+
+[project.optional-dependencies]
+# Windows特定功能
+windows = [
+    "pywin32>=305",
+    "wmi>=1.5.1",
+]
+# 完整安装（包含所有功能）
+full = [
+    "pywin32>=305",
+    "wmi>=1.5.1",
+    "psutil>=5.9.0",
 ]
 
 [project.scripts]
