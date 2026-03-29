@@ -77,6 +77,7 @@ from .skills import (
     TDDWorkflow, TDDPhase, get_tdd_workflow,
     GitCommit, get_git_commit
 )
+
 # Windows脚本替代工具（可选依赖）
 from .utils.script_helper import ScriptHelper
 
@@ -114,56 +115,14 @@ __all__ = [
     'get_tdd_workflow',
     'GitCommit',
     'get_git_commit',
-# Windows script helper (optional)
-from .utils.script_helper import ScriptHelper
-
-# Browser automation (mandatory - auto-installed)
-from .browser import (
-    Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest,
-    ensure_browser_installed, update_dependencies as update_browser_dependencies
-)
-
-__all__ = [
-    # Unified database (v2.2.0+)
-    'UnifiedDB',
-    'MemoryType',
-    'TaskStatus', 
-    'FeedbackType',
-    'get_unified_db',
-    # Skill Evolution (v2.3.0+)
-    'SkillEvolution',
-    'EvolutionTrigger',
-    'get_evolution',
-    # Git Hooks (v2.3.0+)
-    'GitHooks',
-    # Markdown sync
-    'MarkdownSync',
-    'get_markdown_sync',
-    # Core modules (legacy)
-    'FileManager',
-    'MemoryManager', 
-    'LoopDetector',
-    'Reminder',
-    'CacheDB',
-    'HashCache',
-    # Skills modules (100% localized)
-    'FeedbackCollector',
-    'get_feedback_collector',
-    'TDDWorkflow',
-    'TDDPhase',
-    'get_tdd_workflow',
-    'GitCommit',
-    'get_git_commit',
     # Windows script helper (optional)
     'ScriptHelper',
-    # Browser automation (mandatory)
+    # Browser automation
     'Browser',
     'BrowserBackend',
     'Page',
     'ConsoleLog',
     'NetworkRequest',
-    'ensure_browser_installed',
-    'update_browser_dependencies',
     # Version
     '__version__',
 ]
