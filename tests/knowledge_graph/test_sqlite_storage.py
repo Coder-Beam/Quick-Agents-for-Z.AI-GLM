@@ -5,7 +5,7 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime
 from quickagents.knowledge_graph.storage.sqlite_storage import SQLiteGraphStorage
-from quickagents.knowledge_graph.types import KnowledgeNode, NodeType
+from quickagents.knowledge_graph.types import KnowledgeNode, NodeType, KnowledgeEdge, EdgeType
 
 
 class TestSQLiteStorageSchema:
@@ -218,3 +218,108 @@ class TestSQLiteStorageNodeCRUD:
         assert result.source_type == "doc"
         assert result.confidence == 0.95
         assert "tag1" in result.tags
+
+
+class TestSQLiteStorageEdgeCRUD:
+    """Tests for edge CRUD operations."""
+    
+    @pytest.fixture
+    def storage(self, tmp_path):
+        """Create initialized storage with sample nodes."""
+        db_path = str(tmp_path / "test_kg.db")
+        storage = SQLiteGraphStorage(db_path)
+        storage.initialize({})
+        
+        self.node1 = KnowledgeNode(
+            id="kn_001", node_type=NodeType.REQUIREMENT,
+            title="Req 1", content="Content 1",
+            created_at=datetime.now(), updated_at=datetime.now()
+        )
+        self.node2 = KnowledgeNode(
+            id="kn_002", node_type=NodeType.DECISION,
+            title="Decision 1", content="Content 2",
+            created_at=datetime.now(), updated_at=datetime.now()
+        )
+        storage.create_node(self.node1)
+        storage.create_node(self.node2)
+        
+        return storage
+    
+    def test_create_edge_basic(self, storage):
+        """Test basic edge creation."""
+        edge = KnowledgeEdge(
+            id="ke_001",
+            source_node_id="kn_001",
+            target_node_id="kn_002",
+            edge_type=EdgeType.DEPENDS_ON,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        result = storage.create_edge(edge)
+        
+        assert result.id == edge.id
+        assert result.edge_type == EdgeType.DEPENDS_ON
+    
+    def test_get_edge_existing(self, storage):
+        """Test getting existing edge."""
+        edge = KnowledgeEdge(
+            id="ke_002", source_node_id="kn_001", target_node_id="kn_002",
+            edge_type=EdgeType.MAPS_TO,
+            created_at=datetime.now(), updated_at=datetime.now()
+        )
+        storage.create_edge(edge)
+        
+        result = storage.get_edge("ke_002")
+        assert result is not None
+        assert result.id == "ke_002"
+    
+    def test_get_edge_nonexistent(self, storage):
+        """Test getting non-existent edge."""
+        result = storage.get_edge("ke_nonexistent")
+        assert result is None
+    
+    def test_delete_edge_basic(self, storage):
+        """Test deleting edge."""
+        edge = KnowledgeEdge(
+            id="ke_003", source_node_id="kn_001", target_node_id="kn_002",
+            edge_type=EdgeType.CITES,
+            created_at=datetime.now(), updated_at=datetime.now()
+        )
+        storage.create_edge(edge)
+        
+        result = storage.delete_edge("ke_003")
+        assert result is True
+        assert storage.get_edge("ke_003") is None
+    
+    def test_create_duplicate_edge_fails(self, storage):
+        """Test that duplicate edge creation fails."""
+        edge1 = KnowledgeEdge(
+            id="ke_004", source_node_id="kn_001", target_node_id="kn_002",
+            edge_type=EdgeType.RELATED_TO,
+            created_at=datetime.now(), updated_at=datetime.now()
+        )
+        edge2 = KnowledgeEdge(
+            id="ke_005", source_node_id="kn_001", target_node_id="kn_002",
+            edge_type=EdgeType.RELATED_TO,
+            created_at=datetime.now(), updated_at=datetime.now()
+        )
+        
+        storage.create_edge(edge1)
+        
+        with pytest.raises(Exception):
+            storage.create_edge(edge2)
+    
+    def test_create_edge_with_evidence(self, storage):
+        """Test creating edge with evidence."""
+        edge = KnowledgeEdge(
+            id="ke_006", source_node_id="kn_001", target_node_id="kn_002",
+            edge_type=EdgeType.SUPPORTS,
+            evidence="This decision supports the requirement",
+            weight=0.9,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        
+        result = storage.create_edge(edge)
+        assert result.evidence == "This decision supports the requirement"
+        assert result.weight == 0.9

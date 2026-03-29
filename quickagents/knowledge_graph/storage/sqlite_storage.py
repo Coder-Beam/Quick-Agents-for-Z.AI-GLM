@@ -13,7 +13,7 @@ from contextlib import contextmanager
 
 from ..interfaces import GraphStorageInterface
 from ..types import KnowledgeNode, KnowledgeEdge, NodeType, EdgeType
-from ..exceptions import NodeNotFoundError, EdgeNotFoundError
+from ..exceptions import NodeNotFoundError, EdgeNotFoundError, DuplicateEdgeError
 
 
 class SQLiteGraphStorage(GraphStorageInterface):
@@ -79,6 +79,31 @@ class SQLiteGraphStorage(GraphStorageInterface):
             updated_at=updated_at,
             access_count=row["access_count"],
             last_accessed_at=last_accessed_at
+        )
+    
+    def _row_to_edge(self, row: sqlite3.Row) -> KnowledgeEdge:
+        """Convert database row to KnowledgeEdge."""
+        metadata = json.loads(row["metadata"]) if row["metadata"] else {}
+        
+        created_at = None
+        if row["created_at"]:
+            created_at = datetime.fromisoformat(row["created_at"])
+        
+        updated_at = None
+        if row["updated_at"]:
+            updated_at = datetime.fromisoformat(row["updated_at"])
+        
+        return KnowledgeEdge(
+            id=row["id"],
+            source_node_id=row["source_node_id"],
+            target_node_id=row["target_node_id"],
+            edge_type=EdgeType(row["edge_type"]),
+            weight=row["weight"],
+            evidence=row["evidence"],
+            metadata=metadata,
+            confidence=row["confidence"],
+            created_at=created_at,
+            updated_at=updated_at
         )
     
     def initialize(self, config: Dict[str, Any]) -> bool:
@@ -293,13 +318,68 @@ class SQLiteGraphStorage(GraphStorageInterface):
             return cursor.rowcount > 0
     
     def create_edge(self, edge: KnowledgeEdge) -> KnowledgeEdge:
-        raise NotImplementedError("Implemented in Task 2.3")
+        """Create a new knowledge edge."""
+        now = datetime.now()
+        created_at = edge.created_at or now
+        updated_at = edge.updated_at or now
+        
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO knowledge_edges (
+                        id, source_node_id, target_node_id, edge_type,
+                        weight, evidence, metadata, confidence,
+                        created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    edge.id,
+                    edge.source_node_id,
+                    edge.target_node_id,
+                    edge.edge_type.value,
+                    edge.weight,
+                    edge.evidence,
+                    json.dumps(edge.metadata) if edge.metadata else None,
+                    edge.confidence,
+                    created_at.isoformat(),
+                    updated_at.isoformat()
+                ))
+                conn.commit()
+        except sqlite3.IntegrityError as e:
+            if "UNIQUE constraint failed" in str(e):
+                raise DuplicateEdgeError(
+                    edge.source_node_id,
+                    edge.target_node_id,
+                    edge.edge_type.value
+                )
+            raise
+        
+        return self.get_edge(edge.id)
     
     def get_edge(self, edge_id: str) -> Optional[KnowledgeEdge]:
-        raise NotImplementedError("Implemented in Task 2.3")
+        """Get a knowledge edge by ID."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM knowledge_edges WHERE id = ?",
+                (edge_id,)
+            )
+            row = cursor.fetchone()
+            
+            if row is None:
+                return None
+            
+            return self._row_to_edge(row)
     
     def delete_edge(self, edge_id: str) -> bool:
-        raise NotImplementedError("Implemented in Task 2.3")
+        """Delete a knowledge edge."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("DELETE FROM knowledge_edges WHERE id = ?", (edge_id,))
+            conn.commit()
+            
+            return cursor.rowcount > 0
     
     def query_nodes(self, filters: Dict[str, Any], limit: int = 100, offset: int = 0) -> List[KnowledgeNode]:
         raise NotImplementedError("Implemented in Task 2.4")
