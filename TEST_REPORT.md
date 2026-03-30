@@ -1,7 +1,7 @@
 # QuickAgents 系统测试报告
 
-> 生成时间: 2026-03-30 22:00
-> Token使用率: 101040/200000 (50.5%)
+> 生成时间: 2026-03-30 22:05
+> Token使用率: 68000/200000 (34.0%)
 
 ---
 
@@ -11,7 +11,7 @@
 |------|------|-------|----------|
 | **UnifiedDB** | ✅ 完成 | 100% | 0 |
 | **FileManager** | ✅ 完成 | 100% | 1 (已修复) |
-| **MemoryManager** | ⏳ 待测试 | - | - |
+| **MemoryManager** | ✅ 完成 | 100% | 1 (已修复) |
 | **LoopDetector** | ⏳ 待测试 | - | - |
 | **KnowledgeGraph** | ⏳ 待测试 | - | - |
 | **SkillEvolution** | ⏳ 待测试 | - | - |
@@ -61,6 +61,28 @@
 
 ---
 
+### 3. MemoryManager 三维记忆测试
+
+**测试项目**: 10项
+**通过率**: 100%
+
+| 测试项 | 结果 | 说明 |
+|-------|------|------|
+| 初始化 | ✅ | MemoryManager 正确初始化 |
+| Factual Memory | ✅ | 事实记忆设置/获取正常 |
+| Working Memory | ✅ | 工作记忆设置/获取正常 |
+| Experiential Memory | ✅ | 经验记忆添加正常 |
+| 保存和加载 | ✅ | 文件持久化正常 |
+| 搜索功能 | ✅ | 关键词搜索正常 |
+| 清空工作记忆 | ✅ | clear_working() 正常 |
+| 默认值 | ✅ | get() 默认值正常 |
+| 特殊字符 | ✅ | 中文/emoji/数学符号保留 |
+| 不存在的文件 | ✅ | 正确处理新文件创建 |
+
+**测试脚本**: `test_memory_manager.py`
+
+---
+
 ## 🐛 发现并修复的问题
 
 ### 问题 1: HashCache 缺少 update 方法
@@ -97,17 +119,40 @@ collector.record('improvement', ...)
 
 ---
 
+### 问题 3: MemoryManager _parse 方法未重建嵌套结构
+**位置**: `quickagents/core/memory.py:181-207`
+**严重程度**: 高
+**影响**: 保存后加载，factual memory 无法正确读取嵌套键
+
+**原因分析**:
+- `_generate()` 使用 `_flatten()` 将嵌套字典扁平化（`project.name`）
+- `_parse()` 直接存储为字符串键，未使用 `_set_nested()` 重建嵌套结构
+- `_get_nested()` 期望嵌套字典结构，导致读取失败
+
+**修复方案**:
+```python
+# 修改前
+if current_section == 'factual':
+    self.factual[key] = value
+
+# 修复后
+if current_section == 'factual':
+    self._set_nested(self.factual, key, value)
+```
+**状态**: ✅ 已修复
+
+---
+
 ## ⏳ 待测试功能
 
 ### 高优先级
-1. **MemoryManager** - 三维记忆管理
-2. **LoopDetector** - 循环检测
-3. **CLI Commands** - 端到端测试
+1. **LoopDetector** - 循环检测
+2. **CLI Commands** - 端到端测试
 
 ### 中优先级
-4. **KnowledgeGraph** - 知识图谱
-5. **SkillEvolution** - 自我进化
-6. **GitHooks** - Git钩子
+3. **KnowledgeGraph** - 知识图谱
+4. **SkillEvolution** - 自我进化
+5. **GitHooks** - Git钩子
 
 ---
 
@@ -115,7 +160,7 @@ collector.record('improvement', ...)
 
 | 类型 | 覆盖情况 |
 |------|----------|
-| 核心功能 | 2/7 (28.6%) |
+| 核心功能 | 3/7 (42.9%) |
 | CLI命令 | 8/20 (40%) |
 | 集成测试 | 0/5 (0%) |
 
@@ -123,11 +168,11 @@ collector.record('improvement', ...)
 
 ## 🎯 下一步计划
 
-1. 继续测试 MemoryManager 功能
-2. 测试 LoopDetector 循环检测
-3. 完成所有CLI命令的端到端测试
+1. 测试 LoopDetector 循环检测功能
+2. 完成 CLI Commands 端到端测试
+3. 测试 KnowledgeGraph 知识图谱
 4. 生成完整的测试覆盖率报告
 
 ---
 
-*报告生成时间: 2026-03-30T22:00:00*
+*报告生成时间: 2026-03-30T22:05:00*

@@ -200,9 +200,11 @@ class MemoryManager:
                     key = key.strip().replace('**', '')
                     value = value.strip()
                     if current_section == 'factual':
-                        self.factual[key] = value
+                        # 使用 _set_nested 重建嵌套结构
+                        self._set_nested(self.factual, key, value)
                     elif current_section == 'working':
-                        self.working[key] = value
+                        # 使用 _set_nested 重建嵌套结构
+                        self._set_nested(self.working, key, value)
                     elif current_section == 'experiential':
                         self.experiential.append({'content': item})
     
