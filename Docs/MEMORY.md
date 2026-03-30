@@ -1,6 +1,6 @@
 # MEMORY.md
 
-> 更新时间: 2026-03-30 23:30
+> 更新时间: 2026-03-30 23:45
 
 ---
 
@@ -19,6 +19,7 @@
 - **Reminder**: 事件提醒
 - **SkillEvolution**: Skills自我进化（34项测试通过）
 - **KnowledgeGraph**: 知识图谱（204项测试通过）
+- **GitHooks**: Git钩子（14项测试通过）
 - **Browser**: 浏览器自动化
 - **Encoding**: 统一UTF-8编码（跨平台）
 - **状态**: 系统测试中
@@ -27,9 +28,9 @@
 - **支持模型**: GLM-5.1, GLM-5, GLM-4.7, GLM-4.7-FlashX, GLM-4.5-Air
 - **CLI命令**: `qa models show/list/check-updates/upgrade/strategy/lock/unlock`
 - **位置**: `quickagents/utils/encoding.py`
-- **测试进度**: 6/7 核心模块 (85.7%)
-- **已测试**: UnifiedDB, FileManager, MemoryManager, LoopDetector, KnowledgeGraph, SkillEvolution
-- **待测试**: GitHooks
+- **测试进度**: 7/7 核心模块 (100%)
+- **已测试**: UnifiedDB, FileManager, MemoryManager, LoopDetector, KnowledgeGraph, SkillEvolution, GitHooks
+- **待测试**: CLI Commands
 
 ## Experiential Memory (经验记忆)
 
@@ -41,9 +42,10 @@
 - **2026-03-30**: 完成KnowledgeGraph 204项测试（100%通过）
 - **2026-03-30**: 完成SkillEvolution 34项测试（100%通过）
 - **2026-03-30**: 修复SkillEvolution Markdown同步bug（None值格式化）
+- **2026-03-30**: 完成GitHooks 14项测试（100%通过）
 
 ## Working Memory (工作记忆)
 
 - **当前任务**: 系统测试
-- **下一步**: 测试 GitHooks Git钩子
+- **下一步**: 完成 CLI Commands 端到端测试
 
