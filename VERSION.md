@@ -332,6 +332,55 @@ pytest tests/ -v
 
 ---
 
+## Agent Alignment Requirements | Agent对齐要求
+
+> 每次版本更新时，所有Agent必须与当前版本的功能对齐
+
+### v2.6.8 Agent更新要求
+
+#### 必须包含的Python API
+
+| Agent | 必须包含的API |
+|-------|--------------|
+| yinglong-init | Python环境检测、UnifiedDB初始化 |
+| cangjie-doc | UnifiedDB、MarkdownSync、三向同步 |
+| fenghou-orchestrate | UnifiedDB进度追踪、Todo驱动 |
+| huodi-skill | SkillEvolution、使用统计 |
+| kuafu-debug | SystematicDebugging、UnifiedDB记录 |
+| lishou-test | TDD API、覆盖率检查 |
+| jianming-review | SkillEvolution反馈、质量门禁 |
+| mengzhang-security | 安全审计、UnifiedDB记录 |
+| gonggu-refactor | UnifiedDB重构记录 |
+| boyi-consult | KnowledgeGraph需求追踪 |
+| fenghou-plan | UnifiedDB计划存储 |
+| chisongzi-advise | 技术栈推荐、UnifiedDB |
+| huodi-deps | 依赖管理、UnifiedDB |
+| hengge-perf | 性能分析、UnifiedDB记录 |
+| hengge-cicd | CI/CD管理、UnifiedDB |
+
+#### 自动对齐检查
+
+使用 `version-alignment-skill` 进行自动检查：
+
+```bash
+# 检查所有组件对齐状态
+/qa-check-alignment
+
+# 自动修复对齐问题
+/qa-auto-align
+```
+
+#### 版本更新检查清单
+
+当QuickAgents版本更新时：
+1. [ ] 更新所有Agent的Python API使用说明
+2. [ ] 更新相关Skill的功能集成
+3. [ ] 更新AGENTS.md的API文档
+4. [ ] 运行对齐检查确保一致性
+5. [ ] 运行测试确保兼容性
+
+---
+
 ## Roadmap | 路线图
 
 ### v2.7.0 (Planned | 计划中)
