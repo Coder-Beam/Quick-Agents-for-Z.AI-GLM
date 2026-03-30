@@ -1,8 +1,8 @@
 Metadata-Version: 2.4
 Name: quickagents
-Version: 2.3.0
+Version: 2.6.8
 Summary: QuickAgents - AI Agent Enhancement Toolkit with Self-Evolution
-Author: QuickAgents Team
+Author: Coder-Beam
 License: MIT
 Project-URL: Homepage, https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
 Project-URL: Documentation, https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM#readme
@@ -31,519 +31,495 @@ Requires-Dist: wmi; extra == "full"
 Requires-Dist: psutil; extra == "full"
 Requires-Dist: playwright; extra == "full"
 
-# QuickAgents - AI Agent Project Initialization System
+# QuickAgents
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Version](https://img.shields.io/badge/Version-2.6.8-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
-[![Version](https://img.shields.io/badge/Version-2.2.0-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
-[![PyPI](https://img.shields.io/badge/PyPI-quickagents-blue.svg)](https://pypi.org/project/quickagents/)
 
-**[中文](#quickagents---ai-代理项目初始化系统)** | **English**
+**AI Agent Enhancement Toolkit with Self-Evolution** | **AI代理增强工具包，支持自我进化**
 
-> A complete AI agent project initialization system with out-of-the-box project setup, requirements clarification, multi-agent collaboration, and cross-session recovery capabilities.
+[中文文档](#quickagents-中文) | [English](#quickagents-english)
 
 ---
 
-## 🚀 One-Line Installation
+# QuickAgents (中文)
 
-### For Humans (Recommended)
+## 📖 项目简介
 
-Copy and paste this prompt into your AI agent (OpenCode CLI/Desktop, etc.):
+QuickAgents是一个强大的AI代理增强工具包，通过本地处理最大化效率，最小化Token消耗。支持自我进化、记忆管理、知识图谱、TDD工作流等核心功能。
 
+### 🎯 核心目标
+
+- **最大化本地处理**：减少API调用，节省Token消耗60-100%
+- **自我进化系统**：自动收集经验，持续优化Skills
+- **统一数据管理**：SQLite主存储 + Markdown辅助备份
+- **跨会话记忆**：三维记忆系统，支持项目上下文保持
+
+## ✨ 核心功能
+
+### 1. 统一数据库系统 (UnifiedDB)
+
+```python
+from quickagents import UnifiedDB, MemoryType, TaskStatus
+
+db = UnifiedDB('.quickagents/unified.db')
+
+# 设置记忆
+db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
+db.set_memory('current.task', '实现认证', MemoryType.WORKING)
+
+# 获取记忆
+name = db.get_memory('project.name')
+
+# 任务管理
+db.add_task('T001', '实现认证', 'P0')
+db.update_task_status('T001', TaskStatus.COMPLETED)
 ```
-Install and configure QuickAgents by following the instructions here:
-https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/en/guide/installation.md
+
+### 2. 自我进化系统 (SkillEvolution)
+
+```python
+from quickagents import get_evolution
+
+evolution = get_evolution()
+
+# 任务完成时自动触发
+evolution.on_task_complete({
+    'task_id': 'T001',
+    'task_name': '实现认证',
+    'skills_used': ['tdd-workflow-skill'],
+    'success': True
+})
+
+# Git提交时自动触发
+evolution.on_git_commit()
+
+# 检查定期优化
+if evolution.check_periodic_trigger():
+    evolution.run_periodic_optimization()
 ```
 
-**Or use pip for one-line installation:**
+### 3. 知识图谱系统 (KnowledgeGraph)
+
+```python
+from quickagents import KnowledgeGraph, NodeType, EdgeType
+
+kg = KnowledgeGraph()
+
+# 创建节点
+node = kg.create_node(
+    node_type=NodeType.REQUIREMENT,
+    title='用户认证需求',
+    content='实现JWT认证'
+)
+
+# 创建边
+kg.create_edge(
+    source_id=node.id,
+    target_id='T001',
+    edge_type=EdgeType.TRACES_TO
+)
+
+# 搜索
+results = kg.search('认证')
+
+# 需求追踪
+trace = kg.trace_requirement(node.id)
+```
+
+### 4. 浏览器自动化 (Browser)
+
+```python
+from quickagents import Browser
+
+browser = Browser()
+page = browser.new_page()
+
+# 获取控制台日志
+logs = page.get_console_logs()
+
+# 获取网络请求
+requests = page.get_network_requests()
+
+# 执行JavaScript
+result = page.evaluate('document.title')
+
+browser.close()
+```
+
+## 🚀 安装
+
+### 基础安装
 
 ```bash
 pip install quickagents
-qa --help
 ```
 
-### For LLM Agents
-
-Fetch the installation guide and follow it:
+### 完整安装（包含Windows功能）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/en/guide/installation.md
+pip install quickagents[full]
 ```
+
+### 开发模式
+
+```bash
+git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
+cd Quick-Agents-for-Z.AI-GLM
+pip install -e .
+```
+
+## 📋 CLI命令
+
+```bash
+# 统计信息
+qa stats
+
+# 同步到Markdown
+qa sync
+
+# 记忆操作
+qa memory get <key>
+qa memory set <key> <value>
+qa memory search <query>
+
+# 任务操作
+qa tasks list
+qa tasks add <id> <name> --priority P0
+qa tasks status <id> <status>
+
+# 进度查看
+qa progress
+
+# 进化系统
+qa evolution status
+qa evolution optimize
+
+# Git钩子
+qa hooks install
+qa hooks status
+
+# 知识图谱
+qa kg create-node --type requirement --title "需求标题"
+qa kg search <query>
+qa kg trace <node-id>
+```
+
+## 🏗️ 架构
+
+```
+.quickagents/
+├── unified.db           # SQLite主存储
+│   ├── memory           # 三维记忆
+│   ├── progress         # 进度追踪
+│   ├── feedback         # 经验收集
+│   ├── tasks            # 任务管理
+│   ├── decisions        # 决策日志
+│   └── knowledge_*      # 知识图谱
+│
+Docs/                    # Markdown辅助备份
+├── MEMORY.md           # 项目记忆
+├── TASKS.md            # 任务管理
+└── DECISIONS.md        # 决策日志
+```
+
+### 三维记忆系统
+
+| 记忆类型 | 用途 | 示例 |
+|---------|------|------|
+| Factual | 静态事实信息 | 项目名称、技术栈、架构决策 |
+| Experiential | 动态经验信息 | 踩坑记录、最佳实践、用户反馈 |
+| Working | 当前工作状态 | 当前任务、进度、阻塞点 |
+
+## 📦 模块说明
+
+| 模块 | 功能 | Token节省 |
+|------|------|-----------|
+| UnifiedDB | 统一数据库管理 | 60%+ |
+| MarkdownSync | 自动同步到Markdown | 100% |
+| FileManager | 智能文件读写（哈希检测） | 90%+ |
+| LoopDetector | 循环检测 | 100% |
+| Reminder | 事件提醒 | 100% |
+| SkillEvolution | Skills自我进化 | 0 |
+| KnowledgeGraph | 知识图谱 | 80%+ |
+| Browser | 浏览器自动化 | 50%+ |
+
+## 🧪 测试
+
+```bash
+# 运行所有测试
+pytest tests/
+
+# 运行特定测试
+pytest tests/knowledge_graph/
+
+# 覆盖率报告
+pytest --cov=quickagents tests/
+```
+
+## 📚 文档
+
+- [API文档](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/api)
+- [架构设计](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs)
+- [使用指南](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/guides)
+
+## 🤝 贡献
+
+欢迎贡献！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详情。
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
 ---
 
-## Core Features
+# QuickAgents (English)
 
-### 🚀 Standardized Startup Process
+## 📖 Overview
 
-**Trigger Words** (case-insensitive):
-- `启动QuickAgent` (Recommended)
-- `启动QuickAgents`
-- `启动QA`
-- `Start QA`
+QuickAgents is a powerful AI agent enhancement toolkit that maximizes efficiency through local processing and minimizes token consumption by 60-100%. It features self-evolution, memory management, knowledge graphs, TDD workflows, and more.
 
-> 💡 **Tip**: `启动QuickAgent` is recommended for clarity and brevity.
+### 🎯 Core Goals
 
-### 🧠 Three-Dimensional Memory System
+- **Maximize Local Processing**: Reduce API calls, save 60-100% tokens
+- **Self-Evolution System**: Automatically collect experiences, continuously optimize skills
+- **Unified Data Management**: SQLite primary storage + Markdown backup
+- **Cross-Session Memory**: Three-dimensional memory system for project context preservation
 
-Based on the paper "Memory in the Age of AI Agents":
+## ✨ Core Features
 
-| Memory Type | Purpose | Examples |
-|-------------|---------|----------|
-| **Factual Memory** | Static facts | Project metadata, technical decisions, business rules |
-| **Experiential Memory** | Dynamic experiences | Operation history, lessons learned, user feedback |
-| **Working Memory** | Active state | Current task, active context, pending decisions |
+### 1. Unified Database System (UnifiedDB)
 
-### 🤖 17 Professional Agents
+```python
+from quickagents import UnifiedDB, MemoryType, TaskStatus
 
-| Category | Agents |
-|----------|--------|
-| **Core** | yinglong-init, boyi-consult, chisongzi-advise, cangjie-doc, huodi-skill, fenghou-orchestrate |
-| **Quality** | jianming-review, lishou-test, mengzhang-security, hengge-perf |
-| **Tools** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
-| **Planning** | fenghou-plan, boyi-consult, jianming-review |
+db = UnifiedDB('.quickagents/unified.db')
 
-### 📦 20 Specialized Skills
+# Set memory
+db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
+db.set_memory('current.task', 'Implement Auth', MemoryType.WORKING)
 
-#### Core Skills (12)
-| Skill | Purpose |
-|-------|---------|
-| project-memory-skill | Three-dimensional memory management |
-| boulder-tracking-skill | Cross-session progress tracking |
-| category-system-skill | Semantic task classification |
-| inquiry-skill | 7-layer requirements inquiry |
-| tdd-workflow-skill | Test-driven development workflow |
-| code-review-skill | Code quality review |
-| git-commit-skill | Git commit standardization |
-| multi-model-skill | Multi-model support |
-| lsp-ast-skill | LSP/AST code analysis |
-| project-detector-skill | Project type detection |
-| background-agents-skill | Parallel agent execution |
-| skill-integration-skill | Skill integration management |
+# Get memory
+name = db.get_memory('project.name')
 
-#### Research-Based Skills (6) - v2.1.0
-| Skill | Purpose | Source |
-|-------|---------|--------|
-| lazy-discovery-skill | Lazy tool loading, 50%+ context reduction | OpenDev |
-| event-reminder-skill | Event-driven reminders, anti-instruction-fade | OpenDev |
-| doom-loop-skill | Loop detection, prevent repeated calls | OpenDev |
-| adaptive-compression-skill | Adaptive compression, 54% peak reduction | VeRO |
-| vero-evaluation-skill | Versioned evaluation (V-E-R-O) | VeRO |
-| aci-design-skill | ACI design principles | SWE-agent |
+# Task management
+db.add_task('T001', 'Implement Auth', 'P0')
+db.update_task_status('T001', TaskStatus.COMPLETED)
+```
 
-#### Feedback Skills (1) - v2.1.1
-| Skill | Purpose |
-|-------|---------|
-| feedback-collector-skill | Collect usage experience for system improvement |
+### 2. Self-Evolution System (SkillEvolution)
 
-#### Methodology Skills (1) - v2.2.0
-| Skill | Purpose |
-|-------|---------|
-| si-hybrid-skill | Stage-Iteration hybrid methodology (Waterfall + Agile + TDD) |
+```python
+from quickagents import get_evolution
 
-### 📚 Complete Documentation System
+evolution = get_evolution()
 
-- **Hybrid Structure**: Project-level + features/ + modules/
-- **Bidirectional Sync**: Docs/ ↔ .opencode/memory/
-- **Knowledge Graph**: INDEX.md provides complete document navigation
+# Trigger on task completion
+evolution.on_task_complete({
+    'task_id': 'T001',
+    'task_name': 'Implement Auth',
+    'skills_used': ['tdd-workflow-skill'],
+    'success': True
+})
 
----
+# Trigger on git commit
+evolution.on_git_commit()
 
-## Quick Start
+# Check periodic optimization
+if evolution.check_periodic_trigger():
+    evolution.run_periodic_optimization()
+```
 
-### 1. Install QuickAgents
+### 3. Knowledge Graph System (KnowledgeGraph)
+
+```python
+from quickagents import KnowledgeGraph, NodeType, EdgeType
+
+kg = KnowledgeGraph()
+
+# Create node
+node = kg.create_node(
+    node_type=NodeType.REQUIREMENT,
+    title='User Authentication',
+    content='Implement JWT authentication'
+)
+
+# Create edge
+kg.create_edge(
+    source_id=node.id,
+    target_id='T001',
+    edge_type=EdgeType.TRACES_TO
+)
+
+# Search
+results = kg.search('authentication')
+
+# Trace requirement
+trace = kg.trace_requirement(node.id)
+```
+
+### 4. Browser Automation (Browser)
+
+```python
+from quickagents import Browser
+
+browser = Browser()
+page = browser.new_page()
+
+# Get console logs
+logs = page.get_console_logs()
+
+# Get network requests
+requests = page.get_network_requests()
+
+# Execute JavaScript
+result = page.evaluate('document.title')
+
+browser.close()
+```
+
+## 🚀 Installation
+
+### Basic Installation
 
 ```bash
-# Option 1: Use CLI
 pip install quickagents
-qa init
-
-# Option 2: Use one-line prompt (recommended)
-# Paste into your AI agent:
-# Install and configure QuickAgents by following the instructions here:
-# https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/en/guide/installation.md
 ```
 
-### 2. Start Initialization
+### Full Installation (with Windows features)
 
-In OpenCode or compatible AI coding agent, send:
-
-```
-启动QuickAgent
+```bash
+pip install quickagents[full]
 ```
 
-### 3. First-Time Configuration
+### Development Mode
 
-On first use, the system will automatically guide you through:
-- **models.json**: AI model configuration
-- **lsp-config.json**: LSP server configuration
+```bash
+git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
+cd Quick-Agents-for-Z.AI-GLM
+pip install -e .
+```
 
-### 4. Answer Inquiry Cards
+## 📋 CLI Commands
 
-AI will collect requirements through interactive inquiry cards using the 7-layer model:
+```bash
+# Statistics
+qa stats
 
-1. **L1 Business Essence**: Why? Core pain points?
-2. **L2 User Profile**: Who uses? Use cases?
-3. **L3 Core Flow**: Complete process? Exception handling?
-4. **L4 Feature List**: What to build? Feature boundaries?
-5. **L5 Data Model**: Data structures? Relationships?
-6. **L6 Tech Stack**: Frameworks? Database? Deployment?
-7. **L7 Delivery Standards**: Acceptance criteria? Timeline?
+# Sync to Markdown
+qa sync
 
----
+# Memory operations
+qa memory get <key>
+qa memory set <key> <value>
+qa memory search <query>
 
-## Agent Usage Guide
+# Task operations
+qa tasks list
+qa tasks add <id> <name> --priority P0
+qa tasks status <id> <status>
 
-### By Scenario
+# Progress view
+qa progress
 
-| Scenario | Recommended Approach | Description |
-|----------|---------------------|-------------|
-| **First Use** | `启动QuickAgent` | Auto-invokes yinglong-init |
-| **Daily Development** | Direct conversation | AI intelligently dispatches fenghou-orchestrate |
-| **Making Plans** | `@boyi-consult` or `@fenghou-plan` | Enter Plan Mode |
-| **Actual Development** | `@fenghou-orchestrate` or `/ultrawork` | Efficient execution |
+# Evolution system
+qa evolution status
+qa evolution optimize
 
-### Core Commands
+# Git hooks
+qa hooks install
+qa hooks status
 
-| Command | Description |
-|---------|-------------|
-| `/start-work` | Cross-session recovery |
-| `/ultrawork <task>` | Ultra-efficient task execution |
-| `/run-workflow` | Run workflow |
-| `/enable-coordination` | Enable agent coordination |
-| `/disable-coordination` | Disable agent coordination |
+# Knowledge graph
+qa kg create-node --type requirement --title "Requirement Title"
+qa kg search <query>
+qa kg trace <node-id>
+```
 
-> 📖 **Detailed Guide**: See [Docs/en/AGENT_GUIDE.md](Docs/en/AGENT_GUIDE.md) for complete agent usage and collaboration diagrams.
-
----
-
-## Project Structure
+## 🏗️ Architecture
 
 ```
-your-project/
-├── AGENTS.md              # Development specification
-├── Docs/                  # Project documentation
-│   ├── MEMORY.md          # Three-dimensional memory
-│   ├── TASKS.md           # Task management
-│   ├── DESIGN.md          # Design documents
-│   ├── INDEX.md           # Knowledge graph
-│   ├── AGENT_GUIDE.md     # Agent usage guide
-│   ├── USER_GUIDE.md      # User guide
-│   ├── ARCHITECTURE.md    # Architecture docs
-│   ├── en/                # English documentation
-│   └── guide/             # Installation guides
-│       └── installation.md
+.quickagents/
+├── unified.db           # SQLite primary storage
+│   ├── memory           # Three-dimensional memory
+│   ├── progress         # Progress tracking
+│   ├── feedback         # Experience collection
+│   ├── tasks            # Task management
+│   ├── decisions        # Decision log
+│   └── knowledge_*      # Knowledge graph
 │
-├── .opencode/             # OpenCode configuration
-│   ├── agents/            # 17 professional agents
-│   ├── skills/            # 19 specialized skills
-│   ├── commands/          # 6 core commands
-│   ├── hooks/             # Automation hooks
-│   ├── config/            # Configuration files
-│   │   ├── quickagents.json
-│   │   ├── categories.json
-│   │   └── lsp-config.json
-│   └── memory/            # Project memory
-│
-└── .quickagents/          # QuickAgents data
-    └── boulder.json       # Progress tracking
+Docs/                    # Markdown backup
+├── MEMORY.md           # Project memory
+├── TASKS.md            # Task management
+└── DECISIONS.md        # Decision log
 ```
 
----
+### Three-Dimensional Memory System
 
-## Documentation
+| Memory Type | Purpose | Example |
+|-------------|---------|---------|
+| Factual | Static factual information | Project name, tech stack, architecture decisions |
+| Experiential | Dynamic experiential information | Pitfalls, best practices, user feedback |
+| Working | Current working state | Current task, progress, blockers |
 
-| Document | Description | Language |
-|----------|-------------|----------|
-| [README.md](README.md) | Project overview | EN/CN |
-| [AGENT_GUIDE.md](Docs/en/AGENT_GUIDE.md) | Agent usage guide | EN |
-| [USER_GUIDE.md](Docs/en/USER_GUIDE.md) | User guide | EN |
-| [ARCHITECTURE.md](Docs/en/ARCHITECTURE.md) | System architecture | EN |
-| [Installation Guide](Docs/en/guide/installation.md) | Installation instructions | EN |
-| [中文文档](Docs/README.md) | 中文文档索引 | CN |
+## 📦 Module Description
 
----
+| Module | Function | Token Savings |
+|--------|----------|---------------|
+| UnifiedDB | Unified database management | 60%+ |
+| MarkdownSync | Auto-sync to Markdown | 100% |
+| FileManager | Smart file read/write (hash detection) | 90%+ |
+| LoopDetector | Loop detection | 100% |
+| Reminder | Event reminders | 100% |
+| SkillEvolution | Skills self-evolution | 0 |
+| KnowledgeGraph | Knowledge graph | 80%+ |
+| Browser | Browser automation | 50%+ |
 
-## Contributing
+## 🧪 Testing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+```bash
+# Run all tests
+pytest tests/
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+# Run specific tests
+pytest tests/knowledge_graph/
 
----
+# Coverage report
+pytest --cov=quickagents tests/
+```
 
-## License
+## 📚 Documentation
+
+- [API Documentation](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/api)
+- [Architecture Design](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs)
+- [User Guide](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/guides)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please check [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## Acknowledgments
+## 📊 Project Stats
 
-- Inspired by [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent)
-- Built for [OpenCode](https://opencode.ai)
+- **Version**: 2.6.8
+- **Python Support**: 3.8+
+- **Test Coverage**: 254 tests passing
+- **License**: MIT
+- **Author**: Coder-Beam
 
----
+## 🔗 Links
 
-*Version: 2.2.0 | Last Updated: 2026-03-29*
-
----
-
-# QuickAgents - AI 代理项目初始化系统
-
-**中文** | **[English](#quickagents---ai-agent-project-initialization-system)**
-
-> 一套完整的AI代理项目初始化系统，提供开箱即用的项目初始化、需求澄清、多代理协作和跨会话恢复能力
+- **GitHub**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
+- **PyPI**: https://pypi.org/project/quickagents/
+- **Documentation**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs
 
 ---
 
-## 🚀 一键安装
-
-### For Humans（推荐）
-
-复制以下提示词，粘贴到你的AI代理（OpenCode CLI/Desktop等）：
-
-```
-Install and configure QuickAgents by following the instructions here:
-https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md
-```
-
-**或者使用CLI一键安装**：
-
-```bash
-pip install quickagents
-qa init
-```
-
-### For LLM Agents
-
-获取安装指南并执行：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md
-```
-
----
-
-## 核心特性
-
-### 🚀 标准化启动流程
-
-**触发词**（大小写不敏感）：
-- 「启动QuickAgent」（推荐）
-- 「启动QuickAgents」
-- 「启动QA」
-- 「Start QA」
-
-> 💡 **提示**：推荐使用「启动QuickAgent」，简洁且语义明确
-
-### 🧠 三维记忆系统
-
-基于论文《Memory in the Age of AI Agents》设计：
-
-| 记忆类型 | 用途 | 示例 |
-|---------|------|------|
-| **Factual Memory** | 事实记忆 | 项目元信息、技术决策、业务规则 |
-| **Experiential Memory** | 经验记忆 | 操作历史、经验总结、用户反馈 |
-| **Working Memory** | 工作记忆 | 当前状态、活跃上下文、待决策项 |
-
-### 🤖 17个专业代理
-
-| 分类 | 代理 |
-|------|------|
-| **核心** | yinglong-init, boyi-consult, chisongzi-advise, cangjie-doc, huodi-skill, fenghou-orchestrate |
-| **质量** | jianming-review, lishou-test, mengzhang-security, hengge-perf |
-| **工具** | kuafu-debug, gonggu-refactor, huodi-deps, hengge-cicd |
-| **规划** | fenghou-plan, boyi-consult, jianming-review |
-
-### 📦 20个专项技能
-
-#### 核心技能 (12个)
-| 技能 | 用途 |
-|------|------|
-| project-memory-skill | 三维记忆管理 |
-| boulder-tracking-skill | 跨会话进度追踪 |
-| category-system-skill | 语义化任务分类 |
-| inquiry-skill | 7层需求问询 |
-| tdd-workflow-skill | 测试驱动开发工作流 |
-| code-review-skill | 代码质量审查 |
-| git-commit-skill | Git提交标准化 |
-| multi-model-skill | 多模型支持 |
-| lsp-ast-skill | LSP/AST代码分析 |
-| project-detector-skill | 项目类型检测 |
-| background-agents-skill | 并行代理执行 |
-| skill-integration-skill | Skill整合管理 |
-
-#### 研究论文技能 (6个) - v2.1.0新增
-| 技能 | 用途 | 来源 |
-|------|------|------|
-| lazy-discovery-skill | 工具懒加载，减少上下文50%+ | OpenDev |
-| event-reminder-skill | 事件驱动提醒，对抗指令遗忘 | OpenDev |
-| doom-loop-skill | 循环检测，防止重复调用 | OpenDev |
-| adaptive-compression-skill | 自适应压缩，峰值减少54% | VeRO |
-| vero-evaluation-skill | 版本化评估(V-E-R-O) | VeRO |
-| aci-design-skill | ACI设计原则 | SWE-agent |
-
-#### 经验收集技能 (1个) - v2.1.1新增
-| 技能 | 用途 |
-|------|------|
-| feedback-collector-skill | 收集使用经验，助力系统进化 |
-
-#### 方法论技能 (1个) - v2.2.0新增
-| 技能 | 用途 |
-|------|------|
-| si-hybrid-skill | 阶段-迭代混合模型（瀑布+敏捷+TDD） |
-
-### 📚 完整文档体系
-
-- **混合结构**：项目级 + features/ + modules/
-- **双向同步**：Docs/ ↔ .opencode/memory/
-- **知识图谱**：INDEX.md 提供完整的文档导航
-
----
-
-## 快速开始
-
-### 1. 安装QuickAgents
-
-```bash
-# 方式1：使用CLI
-pip install quickagents
-qa init
-
-# 方式2：使用一句话提示词（推荐）
-# 粘贴到AI代理中：
-# Install and configure QuickAgents by following the instructions here:
-# https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md
-```
-
-### 2. 启动初始化
-
-在 OpenCode 或兼容的 AI 编码代理中，发送：
-
-```
-启动QuickAgent
-```
-
-### 3. 首次配置引导
-
-首次使用时，系统会自动引导你完成：
-- **models.json**：AI模型配置
-- **lsp-config.json**：LSP服务器配置
-
-### 4. 回答询问卡
-
-AI 会通过互动询问卡收集需求，按照7层扩展模型逐层澄清：
-
-1. **L1 业务本质**：为什么做？核心痛点？
-2. **L2 用户画像**：谁使用？使用场景？
-3. **L3 核心流程**：完整流程？异常处理？
-4. **L4 功能清单**：做什么？功能边界？
-5. **L5 数据模型**：数据结构？关系？
-6. **L6 技术栈**：框架？数据库？部署？
-7. **L7 交付标准**：验收标准？时间节点？
-
----
-
-## Agent使用指南
-
-### 按场景使用代理
-
-| 场景 | 推荐方式 | 说明 |
-|------|---------|------|
-| **首次使用** | `启动QuickAgent` | 自动调用 yinglong-init |
-| **日常开发** | 直接对话 | AI智能调度 fenghou-orchestrate |
-| **制定计划** | `@boyi-consult` 或 `@fenghou-plan` | 进入Plan Mode |
-| **实际开发** | `@fenghou-orchestrate` 或 `/ultrawork` | 高效执行 |
-
-### 核心命令
-
-| 命令 | 说明 |
-|------|------|
-| `/start-work` | 跨会话恢复 |
-| `/ultrawork <任务>` | 超高效执行任务 |
-| `/run-workflow` | 运行工作流 |
-| `/enable-coordination` | 启用代理协调 |
-| `/disable-coordination` | 禁用代理协调 |
-
-> 📖 **详细指南**：查看 [Docs/AGENT_GUIDE.md](Docs/AGENT_GUIDE.md) 了解完整的Agent调用和合作关系图
-
----
-
-## 项目结构
-
-```
-your-project/
-├── AGENTS.md              # 开发规范
-├── Docs/                  # 项目文档
-│   ├── MEMORY.md          # 三维记忆
-│   ├── TASKS.md           # 任务管理
-│   ├── DESIGN.md          # 设计文档
-│   ├── INDEX.md           # 知识图谱
-│   ├── AGENT_GUIDE.md     # Agent使用指南
-│   ├── USER_GUIDE.md      # 用户指南
-│   ├── ARCHITECTURE.md    # 架构文档
-│   ├── en/                # 英文文档
-│   └── guide/             # 安装指南
-│       └── installation.md
-│
-├── .opencode/             # OpenCode配置
-│   ├── agents/            # 17个专业代理
-│   ├── skills/            # 19个专项技能
-│   ├── commands/          # 6个核心命令
-│   ├── hooks/             # 自动化钩子
-│   ├── config/            # 配置文件
-│   │   ├── quickagents.json
-│   │   ├── categories.json
-│   │   └── lsp-config.json
-│   └── memory/            # 项目记忆
-│
-└── .quickagents/          # QuickAgents数据
-    └── boulder.json       # 进度追踪
-```
-
----
-
-## 文档导航
-
-| 文档 | 描述 | 语言 |
-|------|------|------|
-| [README.md](README.md) | 项目概览 | CN/EN |
-| [AGENT_GUIDE.md](Docs/AGENT_GUIDE.md) | Agent使用指南 | CN |
-| [USER_GUIDE.md](Docs/USER_GUIDE.md) | 用户指南 | CN |
-| [ARCHITECTURE.md](Docs/ARCHITECTURE.md) | 系统架构 | CN |
-| [安装指南](Docs/guide/installation.md) | 安装说明 | CN |
-| [English Docs](Docs/en/README.md) | English documentation | EN |
-
----
-
-## 贡献指南
-
-欢迎贡献！提交PR前请阅读贡献指南。
-
-1. Fork 仓库
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'feat: add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
-
----
-
-## 许可证
-
-本项目采用 MIT 许可证 - 详情请查看 [LICENSE](LICENSE) 文件。
-
----
-
-## 致谢
-
-- 灵感来源于 [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent)
-- 为 [OpenCode](https://opencode.ai) 构建
-
----
-
-*版本: 2.1.1 | 更新时间: 2026-03-27*
+Made with ❤️ by Coder-Beam
