@@ -89,7 +89,21 @@ class UnifiedDB:
         """
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._knowledge_graph = None
         self._init_tables()
+    
+    @property
+    def knowledge(self) -> 'KnowledgeGraph':
+        """
+        Get knowledge graph manager (lazy-loaded).
+        
+        Returns:
+            KnowledgeGraph instance for this database
+        """
+        if self._knowledge_graph is None:
+            from quickagents.knowledge_graph import KnowledgeGraph
+            self._knowledge_graph = KnowledgeGraph(str(self.db_path))
+        return self._knowledge_graph
     
     @contextmanager
     def _get_connection(self):

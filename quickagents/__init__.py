@@ -78,6 +78,26 @@ from .skills import (
     GitCommit, get_git_commit
 )
 
+from .knowledge_graph import (
+    KnowledgeGraph,
+    NodeType,
+    EdgeType,
+    KnowledgeNode,
+    KnowledgeEdge,
+    SearchResult,
+    KnowledgeGraphError,
+    NodeNotFoundError,
+    EdgeNotFoundError,
+    DuplicateNodeError,
+    DuplicateEdgeError,
+    InvalidNodeTypeError,
+    InvalidEdgeTypeError,
+    CircularDependencyError,
+    DatabaseIntegrityError,
+    ExtractionError,
+    SyncError,
+)
+
 # Windows脚本替代工具（可选依赖）
 from .utils.script_helper import ScriptHelper
 
@@ -123,6 +143,24 @@ __all__ = [
     'Page',
     'ConsoleLog',
     'NetworkRequest',
+    # Knowledge Graph (v2.4.0+)
+    'KnowledgeGraph',
+    'NodeType',
+    'EdgeType',
+    'KnowledgeNode',
+    'KnowledgeEdge',
+    'SearchResult',
+    'KnowledgeGraphError',
+    'NodeNotFoundError',
+    'EdgeNotFoundError',
+    'DuplicateNodeError',
+    'DuplicateEdgeError',
+    'InvalidNodeTypeError',
+    'InvalidEdgeTypeError',
+    'CircularDependencyError',
+    'DatabaseIntegrityError',
+    'ExtractionError',
+    'SyncError',
     # Version
     '__version__',
 ]
