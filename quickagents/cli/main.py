@@ -16,6 +16,12 @@ QuickAgents CLI - 命令行工具
     qa stats                 # 查看整体统计
     qa sync [table]          # 同步SQLite到Markdown
     
+    # 模型配置命令
+    qa models status         # 查看当前模型配置
+    qa models check          # 检查GLM版本更新
+    qa models upgrade [version] # 升级GLM模型
+    qa models rollback       # 回滚到上一版本
+    
     # 自我进化系统命令
     qa evolution status      # 进化系统状态
     qa evolution stats [skill] # Skills使用统计
@@ -535,6 +541,217 @@ def cmd_hooks(args):
             print("  存在备份: 是")
 
 
+# ==================== 模型管理命令 ====================
+
+def cmd_models(args):
+    """模型管理命令"""
+    import json
+    from pathlib import Path
+    
+    models_json_path = Path('.opencode/config/models.json')
+    
+    if not models_json_path.exists():
+        print(f"[FAIL] 配置文件不存在: {models_json_path}")
+        return
+    
+    with open(models_json_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    
+    if args.action == 'show' or args.action == 'status':
+        print("[Models] 当前模型配置")
+        print("=" * 50)
+        print(f"  版本: {config.get('version', 'unknown')}")
+        print(f"  策略: {config.get('strategy', 'unknown')}")
+        print(f"  主模型: {config.get('default', {}).get('primary', 'unknown')}")
+        print(f"  备用模型: {config.get('default', {}).get('fallback', 'unknown')}")
+        
+        # 显示 Coding Plan 信息
+        if 'codingPlanConfig' in config:
+            print("\n[Coding Plan]")
+            mapping = config['codingPlanConfig'].get('claudeCodeMapping', {})
+            print(f"  Claude Opus -> {mapping.get('opus', 'N/A')}")
+            print(f"  Claude Sonnet -> {mapping.get('sonnet', 'N/A')}")
+            print(f"  Claude Haiku -> {mapping.get('haiku', 'N/A')}")
+        
+        # 显示 Agent 映射
+        if args.agent:
+            agent_map = config.get('agentMapping', {})
+            categories = config.get('categories', {})
+            
+            if args.agent in agent_map:
+                category = agent_map[args.agent]
+                model = categories.get(category, 'unknown')
+                print(f"\n[Agent] {args.agent}")
+                print(f"  类别: {category}")
+                print(f"  模型: {model}")
+            else:
+                print(f"\n[FAIL] Agent '{args.agent}' 未找到")
+    
+    elif args.action == 'list':
+        print("[Models] 可用模型列表")
+        print("=" * 50)
+        
+        providers = config.get('providers', {})
+        for provider_name, provider in providers.items():
+            print(f"\n[{provider.get('displayName', provider_name)}]")
+            models = provider.get('models', {})
+            for model_id, model_info in models.items():
+                recommended = ' (推荐)' if model_info.get('recommended') else ''
+                reasoning = ' [推理]' if model_info.get('reasoning') else ''
+                print(f"  - {model_id}{recommended}{reasoning}")
+                if model_info.get('description'):
+                    print(f"    {model_info['description']}")
+    
+    elif args.action == 'check-updates':
+        print("[Models] 检查 GLM 模型更新...")
+        print("=" * 50)
+        
+        version_config = config.get('versionUpgrade', {})
+        check_url = version_config.get('checkUrl', 'https://docs.bigmodel.cn/llms.txt')
+        upgrade_path = version_config.get('upgradePath', {})
+        
+        print(f"  检查地址: {check_url}")
+        print(f"  自动检测: {'开启' if version_config.get('autoDetect') else '关闭'}")
+        
+        # 显示升级路径
+        if upgrade_path:
+            print("\n[升级路径]")
+            for old_ver, new_ver in upgrade_path.items():
+                print(f"  {old_ver} -> {new_ver}")
+        
+        # 尝试获取远程信息
+        try:
+            import urllib.request
+            with urllib.request.urlopen(check_url, timeout=10) as response:
+                content = response.read().decode('utf-8')
+                print(f"\n[OK] 成功获取远程模型信息 ({len(content)} bytes)")
+        except Exception as e:
+            print(f"\n[WARN] 无法获取远程信息: {e}")
+            print("  请手动访问 https://docs.bigmodel.cn/llms.txt 查看")
+    
+    elif args.action == 'upgrade':
+        print("[Models] 模型升级")
+        print("=" * 50)
+        
+        version_config = config.get('versionUpgrade', {})
+        upgrade_path = version_config.get('upgradePath', {})
+        
+        current_primary = config.get('default', {}).get('primary', '')
+        
+        if args.to:
+            target = args.to
+        else:
+            target = upgrade_path.get(current_primary, '')
+        
+        if not target:
+            print(f"[FAIL] 未找到 {current_primary} 的升级路径")
+            print("  使用: qa models upgrade --to GLM-5.1")
+            return
+        
+        print(f"  当前: {current_primary}")
+        print(f"  目标: {target}")
+        
+        if args.dry_run:
+            print("\n[DRY-RUN] 预览变更:")
+            print(f"  - default.primary: {current_primary} -> {target}")
+            
+            categories = config.get('categories', {})
+            for cat, model in categories.items():
+                if model == current_primary:
+                    print(f"  - categories.{cat}: {model} -> {target}")
+            
+            print("\n  使用 --force 执行实际升级")
+        else:
+            if not args.force:
+                print("\n[WARN] 需要确认")
+                print("  使用 --force 执行升级")
+                return
+            
+            # 创建备份
+            import shutil
+            from datetime import datetime
+            backup_path = Path(f'.quickagents/backups/models_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(models_json_path, backup_path)
+            print(f"\n[OK] 备份已创建: {backup_path}")
+            
+            # 执行升级
+            if config['default']['primary'] == current_primary:
+                config['default']['primary'] = target
+            
+            for cat, model in config.get('categories', {}).items():
+                if model == current_primary:
+                    config['categories'][cat] = target
+            
+            with open(models_json_path, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            
+            print(f"[OK] 升级完成: {current_primary} -> {target}")
+    
+    elif args.action == 'strategy':
+        print("[Models] 切换模型策略")
+        print("=" * 50)
+        
+        strategy = args.strategy_name
+        print(f"  目标策略: {strategy}")
+        
+        if strategy not in ['coding-plan', 'single-model', 'hybrid']:
+            print(f"[FAIL] 无效策略: {strategy}")
+            print("  可用: coding-plan, single-model, hybrid")
+            return
+        
+        if args.dry_run:
+            print(f"\n[DRY-RUN] 将切换到: {strategy}")
+            return
+        
+        if not args.force:
+            print("\n[WARN] 需要确认")
+            print("  使用 --force 执行切换")
+            return
+        
+        config['strategy'] = strategy
+        
+        if strategy == 'single-model' and args.model:
+            config['lockModel'] = args.model
+            config['default']['primary'] = args.model
+        
+        with open(models_json_path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        
+        print(f"[OK] 策略已切换: {strategy}")
+    
+    elif args.action == 'lock':
+        model = args.model_name
+        print(f"[Models] 锁定模型: {model}")
+        
+        if args.dry_run:
+            print(f"\n[DRY-RUN] 将锁定所有 Agent 使用: {model}")
+            return
+        
+        if not args.force:
+            print("\n[WARN] 需要确认")
+            print("  使用 --force 执行锁定")
+            return
+        
+        config['lockModel'] = model
+        config['default']['primary'] = model
+        
+        with open(models_json_path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        
+        print(f"[OK] 已锁定模型: {model}")
+    
+    elif args.action == 'unlock':
+        print("[Models] 解除模型锁定")
+        
+        config['lockModel'] = None
+        
+        with open(models_json_path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        
+        print("[OK] 已解除锁定")
+
+
 def main():
     parser = argparse.ArgumentParser(description='QuickAgents CLI')
     subparsers = parser.add_subparsers(dest='command', help='命令')
@@ -631,6 +848,20 @@ def main():
     p_hooks = subparsers.add_parser('hooks', help='Git钩子管理')
     p_hooks.add_argument('action', choices=['install', 'uninstall', 'status'], help='操作')
     p_hooks.set_defaults(func=cmd_hooks)
+    
+    # ==================== 模型管理命令 ====================
+    
+    # models 命令
+    p_models = subparsers.add_parser('models', help='模型配置管理')
+    p_models.add_argument('action', choices=['show', 'status', 'list', 'check-updates', 'upgrade', 'strategy', 'lock', 'unlock'], help='操作')
+    p_models.add_argument('--agent', '-a', help='查看特定Agent的模型')
+    p_models.add_argument('--to', '-t', help='升级目标版本')
+    p_models.add_argument('--dry-run', '-d', action='store_true', help='预览变更')
+    p_models.add_argument('--force', '-f', action='store_true', help='强制执行')
+    p_models.add_argument('--strategy-name', '-s', help='策略名称')
+    p_models.add_argument('--model', '-m', help='模型名称')
+    p_models.add_argument('model_name', nargs='?', help='模型名称')
+    p_models.set_defaults(func=cmd_models)
     
     args = parser.parse_args()
     
