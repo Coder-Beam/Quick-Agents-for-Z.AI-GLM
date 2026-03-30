@@ -1,6 +1,6 @@
 # MEMORY.md
 
-> 更新时间: 2026-03-30 23:15
+> 更新时间: 2026-03-30 23:30
 
 ---
 
@@ -17,7 +17,7 @@
 - **FileManager**: 智能文件读写（哈希检测）
 - **LoopDetector**: 循环检测
 - **Reminder**: 事件提醒
-- **SkillEvolution**: Skills自我进化
+- **SkillEvolution**: Skills自我进化（34项测试通过）
 - **KnowledgeGraph**: 知识图谱（204项测试通过）
 - **Browser**: 浏览器自动化
 - **Encoding**: 统一UTF-8编码（跨平台）
@@ -27,9 +27,9 @@
 - **支持模型**: GLM-5.1, GLM-5, GLM-4.7, GLM-4.7-FlashX, GLM-4.5-Air
 - **CLI命令**: `qa models show/list/check-updates/upgrade/strategy/lock/unlock`
 - **位置**: `quickagents/utils/encoding.py`
-- **测试进度**: 5/7 核心模块 (71.4%)
-- **已测试**: UnifiedDB, FileManager, MemoryManager, LoopDetector, KnowledgeGraph
-- **待测试**: SkillEvolution, GitHooks
+- **测试进度**: 6/7 核心模块 (85.7%)
+- **已测试**: UnifiedDB, FileManager, MemoryManager, LoopDetector, KnowledgeGraph, SkillEvolution
+- **待测试**: GitHooks
 
 ## Experiential Memory (经验记忆)
 
@@ -39,9 +39,11 @@
 - **2026-03-30**: 更新文档（README.md, model-configuration.md）
 - **2026-03-30**: 完成LoopDetector 12项测试（100%通过）
 - **2026-03-30**: 完成KnowledgeGraph 204项测试（100%通过）
+- **2026-03-30**: 完成SkillEvolution 34项测试（100%通过）
+- **2026-03-30**: 修复SkillEvolution Markdown同步bug（None值格式化）
 
 ## Working Memory (工作记忆)
 
 - **当前任务**: 系统测试
-- **下一步**: 测试 SkillEvolution 自我进化
+- **下一步**: 测试 GitHooks Git钩子
 

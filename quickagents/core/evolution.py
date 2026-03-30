@@ -750,6 +750,10 @@ class SkillEvolution:
     def _generate_skill_md(self, skill_name: str, history: List[Dict], 
                           stats: Dict) -> str:
         """生成Skill的Markdown文档"""
+        # Handle None values with proper defaults
+        avg_duration = stats.get("avg_duration_ms") or 0
+        success_rate = stats.get("success_rate") or 0
+        
         lines = [
             f'# {skill_name} 进化记录',
             '',
@@ -758,8 +762,8 @@ class SkillEvolution:
             f'- 总使用次数: {stats.get("total_usage", 0)}',
             f'- 成功次数: {stats.get("success_count", 0)}',
             f'- 失败次数: {stats.get("failure_count", 0)}',
-            f'- 成功率: {stats.get("success_rate", 0):.1%}',
-            f'- 平均耗时: {stats.get("avg_duration_ms", 0):.0f}ms',
+            f'- 成功率: {success_rate:.1%}',
+            f'- 平均耗时: {avg_duration:.0f}ms',
             '',
             '## 进化历史',
             ''

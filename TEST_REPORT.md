@@ -1,7 +1,7 @@
 # QuickAgents 系统测试报告
 
-> 生成时间: 2026-03-30 23:15
-> Token使用率: 92000/200000 (46%)
+> 生成时间: 2026-03-30 23:30
+> Token使用率: 101000/200000 (50.5%)
 
 ---
 
@@ -14,7 +14,7 @@
 | **MemoryManager** | ✅ 完成 | 100% | 1 (已修复) |
 | **LoopDetector** | ✅ 完成 | 100% | 0 |
 | **KnowledgeGraph** | ✅ 完成 | 100% | 0 |
-| **SkillEvolution** | ⏳ 待测试 | - | - |
+| **SkillEvolution** | ✅ 完成 | 100% | 1 (已修复) |
 | **GitHooks** | ⏳ 待测试 | - | - |
 | **CLI Commands** | ⏳ 待测试 | - | - |
 
@@ -131,7 +131,34 @@
 
 ---
 
+### 6. SkillEvolution 自我进化测试
+
+**测试项目**: 34项
+**通过率**: 100%
+
+| 测试模块 | 测试数 | 说明 |
+|---------|-------|------|
+| 初始化 | 3 | 表创建/索引创建/项目名称 |
+| 任务完成触发 | 5 | 技能使用记录/失败分析/模式提取/任务计数/定期优化检查 |
+| Git提交触发 | 4 | 自动获取提交/分析提交/重构检测/Bug修复检测 |
+| 错误检测触发 | 3 | 错误日志/技能使用记录/修复建议 |
+| 定期优化 | 5 | 任务计数触发/时间触发/Skill评估/任务计数重置/时间更新 |
+| Skill管理 | 8 | 创建/更新/归档/历史/统计/全局统计 |
+| Markdown同步 | 3 | 文件创建/统计信息/默认目录 |
+| 全局实例 | 3 | 实例获取/单例模式/项目名称 |
+
+**测试脚本**: `tests/evolution/test_skill_evolution.py`
+
+---
+
 ## 🐛 发现并修复的问题
+
+| 问题ID | 模块 | 严重程度 | 状态 |
+|--------|------|----------|------|
+| BUG-001 | FileManager | 高 | ✅ 已修复 |
+| BUG-002 | CLI Commands | 中 | ✅ 已修复 |
+| BUG-003 | MemoryManager | 高 | ✅ 已修复 |
+| BUG-004 | SkillEvolution | 中 | ✅ 已修复 |
 
 ### 问题 1: HashCache 缺少 update 方法
 **位置**: `quickagents/core/file_manager.py:123`
@@ -191,6 +218,28 @@ if current_section == 'factual':
 
 ---
 
+### 问题 4: SkillEvolution _generate_skill_md 方法 None 值格式化错误
+**位置**: `quickagents/core/evolution.py:762`
+**严重程度**: 中
+**影响**: 当 avg_duration_ms 为 None 时，Markdown 同步失败
+
+**原因分析**:
+- `stats.get("avg_duration_ms", 0)` 当值为 None 时不使用默认值
+- Python 的 dict.get() 方法在值为 None 时会返回 None，而不是默认值
+
+**修复方案**:
+```python
+# 修改前
+f'- 平均耗时: {stats.get("avg_duration_ms", 0):.0f}ms',
+
+# 修复后
+avg_duration = stats.get("avg_duration_ms") or 0
+f'- 平均耗时: {avg_duration:.0f}ms',
+```
+**状态**: ✅ 已修复
+
+---
+
 ## ⏳ 待测试功能
 
 ### 高优先级
@@ -206,7 +255,7 @@ if current_section == 'factual':
 
 | 类型 | 覆盖情况 |
 |------|----------|
-| 核心功能 | 5/7 (71.4%) |
+| 核心功能 | 6/7 (85.7%) |
 | CLI命令 | 8/20 (40%) |
 | 集成测试 | 0/5 (0%) |
 
@@ -214,11 +263,11 @@ if current_section == 'factual':
 
 ## 🎯 下一步计划
 
-1. 测试 SkillEvolution 自我进化
+1. ✅ ~~测试 SkillEvolution 自我进化~~ (已完成)
 2. 测试 GitHooks Git钩子
 3. 完成 CLI Commands 端到端测试
 4. 生成完整的测试覆盖率报告
 
 ---
 
-*报告生成时间: 2026-03-30T23:15:00*
+*报告生成时间: 2026-03-30T23:30:00*
