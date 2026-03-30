@@ -1,7 +1,7 @@
 # QuickAgents 系统测试报告
 
-> 生成时间: 2026-03-30 22:35
-> Token使用率: 75000/200000 (37.5%)
+> 生成时间: 2026-03-30 23:15
+> Token使用率: 92000/200000 (46%)
 
 ---
 
@@ -13,7 +13,7 @@
 | **FileManager** | ✅ 完成 | 100% | 1 (已修复) |
 | **MemoryManager** | ✅ 完成 | 100% | 1 (已修复) |
 | **LoopDetector** | ✅ 完成 | 100% | 0 |
-| **KnowledgeGraph** | ⏳ 待测试 | - | - |
+| **KnowledgeGraph** | ✅ 完成 | 100% | 0 |
 | **SkillEvolution** | ⏳ 待测试 | - | - |
 | **GitHooks** | ⏳ 待测试 | - | - |
 | **CLI Commands** | ⏳ 待测试 | - | - |
@@ -107,6 +107,30 @@
 
 ---
 
+### 5. KnowledgeGraph 知识图谱测试
+
+**测试项目**: 204项
+**通过率**: 100%
+
+| 测试模块 | 测试数 | 说明 |
+|---------|-------|------|
+| Facade 统一接口 | 17 | KnowledgeGraph 门面类测试 |
+| UnifiedDB 集成 | 15 | UnifiedDB.knowledge 属性集成测试 |
+| Discovery 发现 | 26 | 关系发现（直接/语义/结构/传递） |
+| Edge Manager 边管理 | 24 | 边的创建/查询/删除 |
+| Exceptions 异常 | 10 | 自定义异常类测试 |
+| Extractor 提取器 | 19 | 文本/文件知识提取 |
+| Interfaces 接口 | 4 | 抽象接口定义测试 |
+| Memory Sync 记忆同步 | 11 | 知识同步到 MEMORY.md |
+| Node Manager 节点管理 | 24 | 节点的创建/查询/更新/删除 |
+| Searcher 搜索器 | 16 | 知识搜索/标签搜索/日期范围 |
+| SQLite Storage 存储 | 36 | SQLite 数据库 CRUD |
+| Types 类型 | 4 | NodeType/EdgeType 枚举测试 |
+
+**测试脚本**: `tests/knowledge_graph/`
+
+---
+
 ## 🐛 发现并修复的问题
 
 ### 问题 1: HashCache 缺少 update 方法
@@ -170,12 +194,11 @@ if current_section == 'factual':
 ## ⏳ 待测试功能
 
 ### 高优先级
-1. **KnowledgeGraph** - 知识图谱
-2. **CLI Commands** - 端到端测试
+1. **SkillEvolution** - 自我进化
+2. **GitHooks** - Git钩子
 
 ### 中优先级
-3. **SkillEvolution** - 自我进化
-4. **GitHooks** - Git钩子
+3. **CLI Commands** - 端到端测试
 
 ---
 
@@ -183,7 +206,7 @@ if current_section == 'factual':
 
 | 类型 | 覆盖情况 |
 |------|----------|
-| 核心功能 | 4/7 (57.1%) |
+| 核心功能 | 5/7 (71.4%) |
 | CLI命令 | 8/20 (40%) |
 | 集成测试 | 0/5 (0%) |
 
@@ -191,11 +214,11 @@ if current_section == 'factual':
 
 ## 🎯 下一步计划
 
-1. 测试 KnowledgeGraph 知识图谱
-2. 测试 SkillEvolution 自我进化
+1. 测试 SkillEvolution 自我进化
+2. 测试 GitHooks Git钩子
 3. 完成 CLI Commands 端到端测试
 4. 生成完整的测试覆盖率报告
 
 ---
 
-*报告生成时间: 2026-03-30T22:05:00*
+*报告生成时间: 2026-03-30T23:15:00*
