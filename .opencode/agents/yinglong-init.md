@@ -195,27 +195,65 @@ sudo pacman -S python python-pip
 
 欢迎使用QuickAgents！检测到以下配置需要补充：
 
-### 1️⃣ 模型配置（models.json）
+### 1️⃣ 模型方案选择（重要）
 
-**Q1**: 您主要使用哪个AI模型？
-- [ ] GLM-5（推荐，默认）
-- [ ] GLM-5-Flash（快速响应）
-- [ ] GPT-4o（需自行配置API Key）
-- [ ] Gemini 2.0 Flash（需自行配置API Key）
-- [ ] Claude 4.5（需自行配置API Key）
-- [ ] 其他（请手动配置）
+**Q1**: 请选择您的模型使用方案：
 
-**Q2**: 是否需要多模型协同？
-- [ ] 否，仅使用单一模型（推荐新手）
-- [ ] 是，需要智能路由和fallback（高级功能）
+| 方案 | 描述 | 适用场景 | 推荐度 |
+|------|------|----------|--------|
+| **[A] Coding Plan** | 使用智谱AI专门针对编程优化的模型组合包 | 编程开发、代码生成、架构设计 | ⭐⭐⭐⭐⭐ 推荐 |
+| **[B] 单一大模型** | 所有任务使用同一个模型 | 简单项目、新手用户、API成本控制 | ⭐⭐⭐⭐ |
+| **[C] 混合大模型** | 不同任务类型使用不同模型（如GLM规划+Claude审查） | 复杂项目、追求最优效果、多API Key | ⭐⭐⭐ |
 
-💡 **说明**：多模型协同可根据任务类型自动选择最合适的模型，但需要配置多个API Key。
+💡 **方案说明**：
+- **Coding Plan**: 智谱AI官方针对编程场景深度优化的模型，代码生成更精准，理解更深入
+- **单一大模型**: 配置简单，一个API Key即可，适合快速上手
+- **混合大模型**: 根据任务智能路由，如规划用GLM-5，代码审查用Claude，需要多个API Key
 
 ---
 
-### 2️⃣ LSP配置（lsp-config.json）
+### 2️⃣ 模型配置（根据方案不同）
 
-**Q3**: 您的主要开发语言？（可多选）
+#### 如果选择 [A] Coding Plan：
+
+**Q2**: 选择Coding Plan版本：
+- [ ] GLM-5 Coding Plan（推荐，最新一代，编程深度优化）
+- [ ] GLM-4-Plus Coding Plan（稳定版本）
+
+**Q3**: 是否启用快速响应模型？
+- [ ] 是，简单任务使用Flash版本（节省Token，响应更快）
+- [ ] 否，所有任务使用同一模型
+
+#### 如果选择 [B] 单一大模型：
+
+**Q2**: 选择您要使用的模型：
+- [ ] GLM-5（推荐，智谱AI最新模型）
+- [ ] GLM-5-Flash（快速响应，适合简单任务）
+- [ ] Claude 4.5（需配置Anthropic API Key）
+- [ ] GPT-4o（需配置OpenAI API Key）
+- [ ] Gemini 2.0 Flash（需配置Google API Key）
+- [ ] 其他（请手动配置）
+
+#### 如果选择 [C] 混合大模型：
+
+**Q2**: 配置任务类型模型映射：
+
+| 任务类型 | 推荐模型 | 您的选择 |
+|----------|----------|----------|
+| 规划 (planning) | GLM-5 | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
+| 编码 (coding) | GLM-5 | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
+| 调试 (debug) | Claude Sonnet | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
+| 审查 (review) | Claude Opus | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
+| 测试 (testing) | GLM-5-Flash | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
+| 文档 (docs) | GLM-5 | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
+
+💡 **说明**：混合方案需要配置多个API Key，系统会根据任务类型自动选择最合适的模型。
+
+---
+
+### 3️⃣ LSP配置（lsp-config.json）
+
+**Q4**: 您的主要开发语言？（可多选）
 - [ ] TypeScript/JavaScript
 - [ ] Python
 - [ ] Rust
@@ -224,7 +262,7 @@ sudo pacman -S python python-pip
 - [ ] C/C++
 - [ ] 其他（请手动配置）
 
-**Q4**: 是否启用AST-Grep支持？
+**Q5**: 是否启用AST-Grep支持？
 - [ ] 是（推荐，支持25种语言的代码搜索和重写）
 - [ ] 否
 
@@ -236,19 +274,99 @@ sudo pacman -S python python-pip
 
 根据您的选择，将生成以下配置：
 
+#### 方案 A: Coding Plan
+
 **models.json**:
 ```json
 {
-  "primary": "glm-5",
+  "strategy": "coding-plan",
+  "default": {
+    "primary": "glm-5",
+    "fallback": null
+  },
+  "providers": {
+    "zhipuai": {
+      "plans": {
+        "coding-plan": {
+          "prefix": "zhipuai-coding-plan",
+          "models": {
+            "glm-5": "zhipuai-coding-plan/glm-5"
+          }
+        }
+      }
+    }
+  },
   "categories": {
-    "quick": "glm-5-flash",
     "planning": "glm-5",
-    "coding": "glm-5"
+    "coding": "glm-5",
+    "debug": "glm-5",
+    "review": "glm-5",
+    "testing": "glm-5-flash",
+    "docs": "glm-5"
   }
 }
 ```
 
-**lsp-config.json**:
+#### 方案 B: 单一大模型
+
+**models.json**:
+```json
+{
+  "strategy": "single-model",
+  "lockModel": "glm-5",
+  "default": {
+    "primary": "glm-5",
+    "fallback": null
+  },
+  "categories": {
+    "planning": "glm-5",
+    "coding": "glm-5",
+    "debug": "glm-5",
+    "review": "glm-5",
+    "testing": "glm-5",
+    "docs": "glm-5"
+  }
+}
+```
+
+#### 方案 C: 混合大模型
+
+**models.json**:
+```json
+{
+  "strategy": "hybrid",
+  "default": {
+    "primary": "glm-5",
+    "fallback": "claude-sonnet-4-5"
+  },
+  "providers": {
+    "zhipuai": {
+      "prefix": "zhipuai-coding-plan",
+      "models": {
+        "glm-5": "zhipuai-coding-plan/glm-5",
+        "glm-5-flash": "zhipuai/glm-5-flash"
+      }
+    },
+    "anthropic": {
+      "prefix": "anthropic",
+      "models": {
+        "claude-sonnet-4-5": "anthropic/claude-sonnet-4-5",
+        "claude-3-opus": "anthropic/claude-3-opus"
+      }
+    }
+  },
+  "categories": {
+    "planning": "glm-5",
+    "coding": "glm-5",
+    "debug": "claude-sonnet-4-5",
+    "review": "claude-3-opus",
+    "testing": "glm-5-flash",
+    "docs": "glm-5"
+  }
+}
+```
+
+**lsp-config.json** (所有方案相同):
 ```json
 {
   "languages": ["typescript", "python"],
@@ -276,11 +394,53 @@ sudo pacman -S python python-pip
 
 #### models.json 生成规则
 
-| 用户选择 | 生成配置 |
-|---------|---------|
-| 仅GLM-5 | `{"primary": "glm-5", "categories": {...}}` |
-| 多模型协同 | `{"primary": "glm-5", "fallback": [...], "categories": {...}}` |
-| 自定义 | 生成基础模板，提示用户手动填充 |
+| 用户选择方案 | strategy | 说明 |
+|-------------|----------|------|
+| **[A] Coding Plan** | `"coding-plan"` | 使用智谱AI编程优化模型包 |
+| **[B] 单一大模型** | `"single-model"` | 所有任务使用同一模型，lockModel生效 |
+| **[C] 混合大模型** | `"hybrid"` | 不同任务类型使用不同模型 |
+
+**方案A (Coding Plan) 默认配置**：
+```json
+{
+  "strategy": "coding-plan",
+  "default": { "primary": "glm-5", "fallback": null },
+  "providers": {
+    "zhipuai": {
+      "plans": {
+        "coding-plan": {
+          "prefix": "zhipuai-coding-plan",
+          "models": { "glm-5": "zhipuai-coding-plan/glm-5" }
+        }
+      }
+    }
+  },
+  "categories": {
+    "planning": "glm-5", "coding": "glm-5", "debug": "glm-5",
+    "review": "glm-5", "testing": "glm-5-flash", "docs": "glm-5"
+  }
+}
+```
+
+**方案B (单一大模型) 默认配置**：
+```json
+{
+  "strategy": "single-model",
+  "lockModel": "glm-5",
+  "default": { "primary": "glm-5", "fallback": null },
+  "categories": { /* 所有类别都是 glm-5 */ }
+}
+```
+
+**方案C (混合大模型) 默认配置**：
+```json
+{
+  "strategy": "hybrid",
+  "default": { "primary": "glm-5", "fallback": "claude-sonnet-4-5" },
+  "providers": { /* 多个提供商 */ },
+  "categories": { /* 不同任务使用不同模型 */ }
+}
+```
 
 #### lsp-config.json 生成规则
 
@@ -302,6 +462,80 @@ qa config edit lsp-config.json
 # .opencode/config/models.json
 # .opencode/config/lsp-config.json
 ```
+
+### 模型版本自动升级
+
+当智谱AI发布新版本（如GLM-5.1、GLM-5.2）时，QuickAgents支持自动检测和升级：
+
+#### 自动检测
+
+```bash
+# 检查是否有新版本模型可用
+qa models check-updates
+
+# 输出示例：
+# 🔍 检测到新版本：
+# • GLM-5 → GLM-5.1 (可用)
+# • GLM-5-Flash → GLM-5.1-Flash (可用)
+```
+
+#### 升级命令
+
+```bash
+# 交互式升级（推荐）
+qa models upgrade
+
+# 直接升级到指定版本
+qa models upgrade --to glm-5.1
+
+# 仅升级Coding Plan版本
+qa models upgrade --plan coding-plan --to glm-5.1
+
+# 预览升级变更（不实际执行）
+qa models upgrade --dry-run
+```
+
+#### 版本升级配置
+
+在 `models.json` 中的 `versionUpgrade` 配置：
+
+```json
+{
+  "versionUpgrade": {
+    "autoDetect": true,
+    "upgradePath": {
+      "glm-4": "glm-5",
+      "glm-4-plus": "glm-5",
+      "glm-5": "glm-5.1",
+      "claude-3-opus": "claude-sonnet-4-5"
+    },
+    "notifications": true
+  }
+}
+```
+
+#### 升级策略
+
+| 策略 | autoDetect | 行为 |
+|------|------------|------|
+| **自动检测** | true | 启动时检查新版本，提示用户 |
+| **手动检查** | false | 仅在用户运行 `qa models check-updates` 时检查 |
+| **锁定版本** | lockModel设置 | 忽略新版本提示 |
+
+#### 升级影响范围
+
+升级模型版本会影响：
+1. `default.primary` - 默认主模型
+2. `categories` - 各任务类型的模型分配
+3. `agentOverrides` - 单个Agent的模型覆盖
+4. Coding Plan前缀（如 `zhipuai-coding-plan/glm-5` → `zhipuai-coding-plan/glm-5.1`）
+
+#### 注意事项
+
+1. **API兼容性**：升级前确认新版本API兼容
+2. **成本变化**：新版本可能有不同的定价
+3. **功能变化**：阅读新版本的更新说明
+4. **回滚能力**：升级后可通过 `qa models rollback` 回滚
 
 ## 工作流程
 

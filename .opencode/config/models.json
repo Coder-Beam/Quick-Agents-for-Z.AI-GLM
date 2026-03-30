@@ -3,6 +3,8 @@
   "version": "2.6.8",
   "description": "QuickAgents centralized model configuration",
   
+  "strategy": "coding-plan",
+  
   "lockModel": null,
   
   "default": {
@@ -12,40 +14,194 @@
   
   "providers": {
     "zhipuai": {
-      "prefix": "zhipuai-coding-plan",
-      "models": {
-        "glm-5": "zhipuai-coding-plan/glm-5",
-        "glm-4-plus": "zhipuai/glm-4-plus",
-        "glm-4": "zhipuai/glm-4"
+      "displayName": "智谱AI (ZhipuAI)",
+      "description": "中国领先的AI大模型提供商",
+      "plans": {
+        "coding-plan": {
+          "name": "Coding Plan",
+          "description": "针对编程场景优化的模型组合包，提供更精准的代码生成和理解能力",
+          "prefix": "zhipuai-coding-plan",
+          "models": {
+            "glm-5": {
+              "id": "zhipuai-coding-plan/glm-5",
+              "displayName": "GLM-5 Coding Plan",
+              "description": "最新一代编程优化模型，支持复杂代码生成和架构设计",
+              "contextWindow": 128000,
+              "recommended": true
+            },
+            "glm-5-flash": {
+              "id": "zhipuai-coding-plan/glm-5-flash",
+              "displayName": "GLM-5 Flash Coding Plan",
+              "description": "快速响应版本，适合简单任务和快速迭代",
+              "contextWindow": 32000
+            },
+            "glm-4-plus": {
+              "id": "zhipuai-coding-plan/glm-4-plus",
+              "displayName": "GLM-4 Plus Coding Plan",
+              "description": "稳定版本，适合生产环境",
+              "contextWindow": 128000
+            }
+          }
+        },
+        "standard": {
+          "name": "标准版",
+          "description": "通用大模型，适合对话、写作等非编程场景",
+          "prefix": "zhipuai",
+          "models": {
+            "glm-5": {
+              "id": "zhipuai/glm-5",
+              "displayName": "GLM-5",
+              "description": "通用大模型，多场景适用",
+              "contextWindow": 128000
+            },
+            "glm-4-plus": {
+              "id": "zhipuai/glm-4-plus",
+              "displayName": "GLM-4 Plus",
+              "description": "稳定版本",
+              "contextWindow": 128000
+            },
+            "glm-4": {
+              "id": "zhipuai/glm-4",
+              "displayName": "GLM-4",
+              "description": "基础版本",
+              "contextWindow": 128000
+            }
+          }
+        }
       },
-      "default": "glm-5"
+      "defaultPlan": "coding-plan",
+      "defaultModel": "glm-5"
     },
     "anthropic": {
-      "prefix": "anthropic",
-      "models": {
-        "claude-sonnet-4-5": "anthropic/claude-sonnet-4-5",
-        "claude-3-opus": "anthropic/claude-3-opus",
-        "claude-3-sonnet": "anthropic/claude-3-sonnet"
+      "displayName": "Anthropic",
+      "description": "Claude系列大模型",
+      "plans": {
+        "standard": {
+          "name": "标准版",
+          "description": "Claude系列模型",
+          "prefix": "anthropic",
+          "models": {
+            "claude-sonnet-4-5": {
+              "id": "anthropic/claude-sonnet-4-5",
+              "displayName": "Claude Sonnet 4.5",
+              "description": "平衡性能与速度",
+              "contextWindow": 200000
+            },
+            "claude-3-opus": {
+              "id": "anthropic/claude-3-opus",
+              "displayName": "Claude 3 Opus",
+              "description": "最强推理能力",
+              "contextWindow": 200000
+            },
+            "claude-3-sonnet": {
+              "id": "anthropic/claude-3-sonnet",
+              "displayName": "Claude 3 Sonnet",
+              "description": "性价比之选",
+              "contextWindow": 200000
+            }
+          }
+        }
       },
-      "default": "claude-sonnet-4-5"
+      "defaultPlan": "standard",
+      "defaultModel": "claude-sonnet-4-5"
+    },
+    "openai": {
+      "displayName": "OpenAI",
+      "description": "GPT系列大模型",
+      "plans": {
+        "standard": {
+          "name": "标准版",
+          "description": "GPT系列模型",
+          "prefix": "openai",
+          "models": {
+            "gpt-4o": {
+              "id": "openai/gpt-4o",
+              "displayName": "GPT-4o",
+              "description": "最新多模态模型",
+              "contextWindow": 128000
+            },
+            "gpt-4-turbo": {
+              "id": "openai/gpt-4-turbo",
+              "displayName": "GPT-4 Turbo",
+              "description": "快速响应版本",
+              "contextWindow": 128000
+            }
+          }
+        }
+      },
+      "defaultPlan": "standard",
+      "defaultModel": "gpt-4o"
+    }
+  },
+  
+  "strategies": {
+    "single-model": {
+      "name": "单一大模型",
+      "description": "所有任务使用同一个模型，简单稳定",
+      "useCase": "新手用户、简单项目、稳定优先",
+      "config": {
+        "lockModel": true,
+        "categories": {}
+      }
+    },
+    "hybrid": {
+      "name": "混合大模型",
+      "description": "不同任务类型使用不同模型，发挥各模型优势",
+      "useCase": "高级用户、复杂项目、性能优先",
+      "config": {
+        "lockModel": false,
+        "categories": {
+          "planning": "glm-5",
+          "coding": "glm-5",
+          "debug": "claude-sonnet-4-5",
+          "review": "claude-3-opus",
+          "testing": "claude-sonnet-4-5"
+        }
+      }
+    },
+    "coding-plan": {
+      "name": "Coding Plan方案",
+      "description": "使用厂商推出的编程优化模型组合包，针对代码场景深度优化",
+      "useCase": "编程项目、代码生成、架构设计",
+      "config": {
+        "lockModel": false,
+        "provider": "zhipuai",
+        "plan": "coding-plan",
+        "categories": {
+          "planning": "glm-5",
+          "coding": "glm-5",
+          "debug": "glm-5",
+          "review": "glm-5",
+          "testing": "glm-5-flash",
+          "docs": "glm-5",
+          "security": "glm-5",
+          "refactor": "glm-5",
+          "orchestration": "glm-5",
+          "consulting": "glm-5",
+          "skill": "glm-5",
+          "deps": "glm-5-flash",
+          "perf": "glm-5",
+          "cicd": "glm-5-flash"
+        }
+      }
     }
   },
   
   "categories": {
     "planning": "glm-5",
-    "coding": "glm-5", 
+    "coding": "glm-5",
     "consulting": "glm-5",
     "orchestration": "glm-5",
-    "debug": "claude-sonnet-4-5",
-    "review": "claude-3-opus",
-    "testing": "claude-sonnet-4-5",
-    "security": "claude-sonnet-4-5",
-    "refactor": "claude-sonnet-4-5",
+    "debug": "glm-5",
+    "review": "glm-5",
+    "testing": "glm-5-flash",
+    "security": "glm-5",
+    "refactor": "glm-5",
     "docs": "glm-5",
     "skill": "glm-5",
-    "deps": "glm-5",
+    "deps": "glm-5-flash",
     "perf": "glm-5",
-    "cicd": "glm-5"
+    "cicd": "glm-5-flash"
   },
   
   "agentMapping": {
@@ -66,5 +222,17 @@
     "hengge-cicd": "cicd"
   },
   
-  "agentOverrides": {}
+  "agentOverrides": {},
+  
+  "versionUpgrade": {
+    "autoDetect": true,
+    "upgradePath": {
+      "glm-4": "glm-5",
+      "glm-4-plus": "glm-5",
+      "glm-5": "glm-5.1",
+      "claude-3-opus": "claude-sonnet-4-5",
+      "claude-3-sonnet": "claude-sonnet-4-5"
+    },
+    "notifications": true
+  }
 }
