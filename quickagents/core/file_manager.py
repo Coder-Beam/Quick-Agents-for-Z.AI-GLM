@@ -125,7 +125,10 @@ class FileManager:
         return True
     
     def edit(self, file_path: str, old_str: str, new_str: str, 
-             validate_cache: bool = True) -> Dict:
+             validate_cache: bool = True,
+             use_smart: bool = True,
+             ignore_whitespace: bool = True,
+             ignore_line_endings: bool = True) -> Dict:
         """
         安全编辑文件
         
@@ -134,13 +137,18 @@ class FileManager:
             old_str: 要替换的内容
             new_str: 替换后的内容
             validate_cache: 是否验证缓存
+            use_smart: 是否使用智能编辑（处理空白差异）
+            ignore_whitespace: 是否忽略空白差异
+            ignore_line_endings: 是否忽略行尾差异
             
         Returns:
             {
                 'success': bool,
                 'message': str,
-                'token_saved': int,  # 估算节省的Token
-                'lines_changed': int
+                'token_saved': int,
+                'lines_changed': int,
+                'diagnosis': str,  # 失败时的诊断
+                'suggestion': str   # 修复建议
             }
         """
         file_path = self._normalize_path(file_path)
@@ -148,24 +156,37 @@ class FileManager:
             'success': False,
             'message': '',
             'token_saved': 0,
-            'lines_changed': 0
+            'lines_changed': 0,
+            'diagnosis': '',
+            'suggestion': ''
         }
         
-        # 验证缓存
+        # 使用智能编辑
+        if use_smart:
+            from ..utils.smart_editor import smart_edit
+            smart_result = smart_edit(
+                file_path, old_str, new_str,
+                ignore_whitespace=ignore_whitespace,
+                ignore_line_endings=ignore_line_endings
+            )
+            result.update(smart_result)
+            return result
+        
+        # 传统编辑模式
         if validate_cache:
             content, changed = self.cache.read_if_changed(file_path)
             if changed:
                 result['message'] = '文件已变化，已重新读取'
-                # 需要重新读取，但这已经在read_if_changed中完成
             else:
                 result['message'] = '使用缓存内容'
-                result['token_saved'] = len(content.split('\n'))  # 估算节省的Token
+                result['token_saved'] = len(content.split('\n'))
         else:
             content = self._read_file(file_path)
         
         # 检查old_str是否存在
         if old_str not in content:
             result['message'] = f'oldString not found in {file_path}'
+            result['diagnosis'] = f'请使用 use_smart=True 进行智能匹配'
             return result
         
         # 执行替换
@@ -180,6 +201,38 @@ class FileManager:
         result['message'] = '编辑成功'
         
         return result
+    
+    def smart_edit(self, file_path: str, old_str: str, new_str: str,
+                   threshold: float = 0.8) -> Dict:
+        """
+        模糊编辑（允许一定差异）
+        
+        Args:
+            file_path: 文件路径
+            old_str: 要替换的内容
+            new_str: 替换后的内容
+            threshold: 相似度阈值（0.0-1.0）
+            
+        Returns:
+            编辑结果
+        """
+        from ..utils.smart_editor import SmartEditor
+        editor = SmartEditor()
+        return editor.fuzzy_edit(file_path, old_str, new_str, threshold)
+    
+    def diagnose_edit_failure(self, file_path: str, old_str: str) -> str:
+        """
+        诊断编辑失败原因
+        
+        Args:
+            file_path: 文件路径
+            old_str: 查找的内容
+            
+        Returns:
+            诊断报告
+        """
+        from ..utils.smart_editor import diagnose_edit
+        return diagnose_edit(file_path, old_str)
     
     def batch_read(self, file_paths: List[str]) -> Dict[str, str]:
         """

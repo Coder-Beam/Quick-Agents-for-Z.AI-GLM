@@ -110,6 +110,12 @@ from .utils.memory_helper import (
     sync_all_memory
 )
 
+# 智能编辑工具（v2.6.9+）
+from .utils.smart_editor import (
+    smart_edit,
+    diagnose_edit
+)
+
 # 浏览器自动化（可选依赖）
 from .browser import Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest
 
