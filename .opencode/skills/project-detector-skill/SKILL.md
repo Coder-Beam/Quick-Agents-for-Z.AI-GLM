@@ -1,3 +1,19 @@
+---
+name: project-detector-skill
+description: |
+  Project detection skill for intelligent analysis of project directories,
+  identifying project type, programming language, tech stack, and project stage.
+license: MIT
+allowed-tools:
+  - read
+  - glob
+  - grep
+metadata:
+  category: analysis
+  priority: high
+  version: 1.0.0
+---
+
 # Project Detector Skill
 
 ## 技能描述
@@ -358,4 +374,4 @@ def detect_tech_stack(directory):
 
 - **版本号**：1.0.0
 - **创建时间**：2026-03-25
-- **作者**：QuickAgents Team
+- **作者**：Coder-Beam

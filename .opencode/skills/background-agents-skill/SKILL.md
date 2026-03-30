@@ -310,7 +310,7 @@ for (let i = 0; i < 20; i++) {
   task({ run_in_background: true, ... });
 }
 
-// ✅ 好 - 适度并发（3-5个）
+// ✅ 好 - 适度并发（最多3个）
 const tasks = items.slice(0, 3).map(item =>
   task({ run_in_background: true, ... })
 );

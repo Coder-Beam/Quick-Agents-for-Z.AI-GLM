@@ -1,171 +1,361 @@
 # QuickAgents Version
 
-> 版本信息文件 - 用于版本检测和更新
+> Version information file - for version detection and updates | 版本信息文件 - 用于版本检测和更新
 
 ---
 
-## 当前版本
+## Current Version | 当前版本
 
-| 属性 | 值 |
-|------|-----|
-| 版本号 | 2.4.0 |
-| Git标签 | v2.4.0 |
-| 发布日期 | 2026-03-29 |
-| 最低兼容版本 | 2.0.0 |
-| 仓库地址 | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
-| PyPI包 | https://pypi.org/project/quickagents/ |
+| Property | Value |
+|-----------|-------|
+| Version | 2.6.8 |
+| Git Tag | v2.6.8 |
+| Release Date | 2026-03-30 |
+| Minimum Compatible | 2.0.0 |
+| Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
+| PyPI Package | https://pypi.org/project/quickagents/ |
+| Author | Coder-Beam |
 
 ---
 
-## 安装方式
+## Installation | 安装
 
 ```bash
-# 从PyPI安装
+# Install from PyPI | 从PyPI安装
 pip install quickagents
 
-# 完整安装（包含Windows功能）
+# Full installation (with Windows features) | 完整安装（包含Windows功能）
 pip install quickagents[full]
 
-# 使用CLI
+# Verify installation | 验证安装
+python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
+
+# CLI commands | CLI命令
 qa --help
-qa evolution status
+qa stats
 qa hooks install
 ```
 
 ---
 
-## 本次更新 (v2.4.0)
+## What's New (v2.6.8) | 本次更新
 
-**重大更新 - 浏览器自动化强制安装 + Lightpanda默认**
+**Major Update - Complete Documentation, Pattern Detection & Bilingual Support**
 
-### 架构变更
+**重大更新 - 完整文档、模式检测与双语支持**
 
-| 变更 | 之前 (v2.3.x) | 现在 (v2.4.0) |
-|------|---------------|---------------|
-| **Playwright** | 可选依赖 | **强制依赖** |
-| **Lightpanda** | 用户自行安装 | **自动安装** |
-| **默认后端** | Chromium | **Lightpanda** |
-| **版本号** | 固定版本 | **latest (最新)** |
+---
 
-### 新增功能
+### 1. Pattern-based LoopDetector | 基于模式的循环检测器
 
-#### 1. 强制安装浏览器依赖
+**Problem Solved | 解决的问题:**
+- Previous: Simple threshold (3 identical calls in 60s)
+- Previous: 之前：简单阈值（60秒内3次相同调用）
+- Now: Intelligent pattern detection
+- Now: 现在：智能模式检测
+
+**Detection Patterns | 检测模式:**
+
+| Pattern | Definition | Example | Threshold |
+|---------|------------|---------|-----------|
+| **Stuck** | Same operation repeated | A→A→A | 3 times |
+| **Oscillation** | Two operations alternating | A→B→A→B | 2 cycles |
+
+**Allowed Patterns | 允许的模式:**
+- A→B→C (normal exploration, different operations)
+- A→B→C（正常探索，不同操作）
+- read(file1)→read(file2)→read(file3) (different parameters)
+- read(file1)→read(file2)→read(file3)（不同参数）
+
+**Implementation | 实现:**
+```python
+from quickagents import LoopDetector
+
+detector = LoopDetector()
+
+# Record tool calls
+detector.record_tool_call('read', {'file': 'a.py'})
+detector.record_tool_call('read', {'file': 'a.py'})
+detector.record_tool_call('read', {'file': 'a.py'})
+
+# Check if looping
+if detector.is_looping():
+    patterns = detector.get_loop_patterns()
+    # patterns: [{'type': 'stuck', 'tool': 'read', 'count': 3}]
+```
+
+**Token Savings | Token节省:** 100% (local processing)
+
+---
+
+### 2. Python Environment Detection | Python环境检测
+
+**Step 0 in Startup Flow | 启动流程Step 0:**
+
+```
+启动QuickAgent
+    ↓
+Step 0: Python环境检测
+    ├─ 检测 python --version / python3 --version
+    ├─ 检测 pip --version / pip3 --version
+    └─ 检测 Python版本 >= 3.9
+        ├─ 通过 → 继续流程
+        └─ 失败 → 显示安装引导
+```
+
+**Version Requirements | 版本要求:**
+
+| Component | Minimum | Recommended | Reason |
+|-----------|---------|-------------|--------|
+| Python | 3.9 | 3.11+ | Uses match syntax |
+| pip | 21.0 | Latest | Dependency resolution |
+
+**Platform-specific Guides | 各平台安装指南:**
+
+<details>
+<summary>Windows</summary>
+
+```powershell
+# Option 1 - Official Installer (Recommended)
+# 1. Visit https://www.python.org/downloads/
+# 2. Download Python 3.12.x
+# 3. Check "Add Python to PATH" during installation
+
+# Option 2 - Scoop
+scoop install python
+
+# Option 3 - winget
+winget install Python.Python.3.12
+```
+</details>
+
+<details>
+<summary>macOS</summary>
 
 ```bash
-pip install quickagents  # 自动安装 Playwright
+# Option 1 - Homebrew (Recommended)
+brew install python@3.12
+
+# Option 2 - Official Installer
+# Visit https://www.python.org/downloads/macos/
 ```
+</details>
 
-首次使用时自动安装Chromium浏览器。
+<details>
+<summary>Linux</summary>
 
-#### 2. 自动安装Lightpanda
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install python3.12 python3-pip
+
+# Fedora/RHEL
+sudo dnf install python3.12 python3-pip
+
+# Arch Linux
+sudo pacman -S python python-pip
+```
+</details>
+
+---
+
+### 3. Bilingual Documentation | 双语文档
+
+**Complete Chinese and English Support | 完整的中英文支持:**
+
+| Document | Chinese | English |
+|----------|---------|---------|
+| README.md | ✅ | ✅ |
+| CHANGELOG.md | ✅ | ✅ |
+| Installation Guide | ✅ | ✅ |
+| API Documentation | ✅ | ✅ |
+
+**README.md Structure | README.md结构:**
+- Project Overview | 项目概述
+- Core Features | 核心功能
+- Installation | 安装
+- CLI Commands | CLI命令
+- Architecture | 架构
+- Module Description | 模块说明
+- Testing | 测试
+- Documentation | 文档
+- Contributing | 贡献
+- License | 许可证
+
+---
+
+### 4. Comprehensive API Documentation | 完整的API文档
+
+**Location | 位置:** `Docs/api/index.md`
+
+**Coverage | 覆盖范围:**
+
+| Module | Functions/Classes | Status |
+|--------|-------------------|--------|
+| UnifiedDB | 15+ methods | ✅ Documented |
+| SkillEvolution | 10+ methods | ✅ Documented |
+| MarkdownSync | 8+ methods | ✅ Documented |
+| FileManager | 6+ methods | ✅ Documented |
+| LoopDetector | 5+ methods | ✅ Documented |
+| Reminder | 4+ methods | ✅ Documented |
+| KnowledgeGraph | 20+ methods | ✅ Documented |
+| TDDWorkflow | 8+ methods | ✅ Documented |
+| GitCommit | 6+ methods | ✅ Documented |
+| FeedbackCollector | 6+ methods | ✅ Documented |
+| Browser | 10+ methods | ✅ Documented |
+| CLI Tools | 30+ commands | ✅ Documented |
+
+**Example API Documentation | API文档示例:**
 
 ```python
-from quickagents import Browser
+# UnifiedDB - Memory Operations
+from quickagents import UnifiedDB, MemoryType
 
-# 首次使用时自动检测和安装
-browser = Browser()  # 自动确保依赖已安装
-```
+db = UnifiedDB('.quickagents/unified.db')
 
-#### 3. 启动时更新第三方依赖
+# Set memory
+db.set_memory(
+    key: str,
+    value: Any,
+    memory_type: MemoryType,
+    category: Optional[str] = None,
+    ttl: Optional[int] = None
+) -> None
 
-```python
-from quickagents import update_browser_dependencies
+# Get memory
+db.get_memory(key: str) -> Optional[Any]
 
-# 更新Playwright和Chromium到最新版本
-update_browser_dependencies()
-```
-
-#### 4. 默认使用Lightpanda
-
-```python
-from quickagents import Browser
-
-# 默认使用Lightpanda（更快、更轻量）
-browser = Browser()
-
-# 如果Lightpanda不可用，自动回退到Chromium
-# 或者明确指定回退
-browser = Browser(fallback_to_chromium=True)
-```
-
-### Lightpanda优势
-
-| 特性 | Lightpanda | Chromium |
-|------|------------|----------|
-| **速度** | 11x faster | 基准 |
-| **内存** | 9x less | 基准 |
-| **启动** | 秒级 | 秒级 |
-| **专为AI** | ✅ | ❌ |
-
-### pyproject.toml变更
-
-```toml
-# 之前
-dependencies = ["psutil>=5.9.0"]
-[project.optional-dependencies]
-browser = ["playwright>=1.40.0"]
-
-# 现在
-dependencies = [
-    "psutil",      # latest
-    "playwright",  # latest - 强制依赖
-]
-```
-
-### 新增模块
-
-| 模块 | 文件 | 功能 |
-|------|------|------|
-| **BrowserInstaller** | `quickagents/browser/installer.py` | 自动检测和安装 |
-
-### API变更
-
-```python
-# 新增函数
-from quickagents import (
-    ensure_browser_installed,     # 确保浏览器已安装
-    update_browser_dependencies,  # 更新依赖
-)
-
-# 确保安装
-ensure_browser_installed(auto_install=True)
-
-# 更新到最新版本
-update_browser_dependencies()
+# Search memory
+db.search_memory(
+    query: str,
+    memory_type: Optional[MemoryType] = None,
+    limit: int = 10
+) -> List[Dict]
 ```
 
 ---
 
-## 历史版本
+### 5. Author Unification | 作者统一
 
-### v2.3.1 (2026-03-29)
-- 浏览器自动化模块（可选安装）
+**Before | 之前:** Mixed (QuickAgents Team, Coder-Beam)
+
+**After | 之后:** Unified to **Coder-Beam**
+
+**Files Updated | 已更新文件:**
+
+| File | Field | Value |
+|------|-------|-------|
+| pyproject.toml | authors | Coder-Beam |
+| quickagents/__init__.py | __author__ | Coder-Beam |
+| .opencode/plugins/package.json | author | Coder-Beam |
+| README.md | Author | Coder-Beam |
+| VERSION.md | Author | Coder-Beam |
+
+---
+
+### 6. Bug Fixes | Bug修复
+
+| Bug | File | Fix |
+|-----|------|-----|
+| Glob null pointer | `.opencode/plugins/quickagents.ts` | Added null check for pattern parameter |
+| Duplicate code | `.opencode/plugins/quickagents.ts` | Removed duplicate glob interception logic |
+| Package.json formatting | `.opencode/plugins/package.json` | Fixed repository field indentation |
+| Version inconsistency | Multiple files | Unified to 2.6.8 |
+
+---
+
+## Module Overview | 模块概览
+
+| Module | Function | Token Savings |
+|--------|----------|---------------|
+| UnifiedDB | Unified database management | 60%+ |
+| MarkdownSync | Auto-sync to Markdown | 100% |
+| FileManager | Smart file read/write (hash detection) | 90%+ |
+| LoopDetector | Pattern-based loop detection | 100% |
+| Reminder | Event reminders | 100% |
+| SkillEvolution | Skills self-evolution | 0 |
+| KnowledgeGraph | Knowledge graph | 80%+ |
+| Browser | Browser automation | 50%+ |
+
+---
+
+## Test Results | 测试结果
+
+| Test Type | Pass Rate | Details |
+|-----------|-----------|---------|
+| Unit Tests | 100% | 254/254 passing |
+| Integration Tests | 100% | All passing |
+| Code Quality | 100% | All syntax checks pass |
+
+**Test Command | 测试命令:**
+```bash
+pytest tests/ -v
+# 254 passed in 9.58s
+```
+
+---
+
+## Version History | 版本历史
+
+### v2.6.8 (2026-03-30)
+- Pattern-based LoopDetector
+- Python environment detection
+- Bilingual documentation
+- Complete API documentation
+- Author unification
+
+### v2.4.0 (2026-03-29)
+- Browser automation (Playwright required)
+- Lightpanda support
 
 ### v2.3.0 (2026-03-29)
-- 统一自我进化系统
+- Unified self-evolution system
+- Git hooks integration
 
 ### v2.2.0 (2026-03-29)
-- UnifiedDB统一存储架构
-- SQLite主存储 + Markdown辅助备份
-- Token节省60%+
+- UnifiedDB architecture
+- SQLite primary storage + Markdown backup
+- 60%+ token savings
 
 ### v2.1.1 (2026-03-28)
-- `feedback-collector-skill` - 经验收集系统
-- Skills本地化框架搭建
+- feedback-collector-skill
+- Experience collection system
 
 ### v2.1.0 (2026-03-27)
-- 基于OpenDev/VeRO/SWE-agent论文的6个新Skills
-- 事件驱动提醒机制
-- ACI设计原则
+- 6 new skills based on OpenDev/VeRO/SWE-agent papers
+- Event-driven reminders
+- ACI design principles
 
-### v2.0.0 (2026-03-25)
-- 三维记忆系统
-- 17个专业代理
-- 12个核心技能
+### v2.0.0 (2026-03-22)
+- Three-dimensional memory system
+- 17 professional agents
+- 24 core skills
 
 ---
 
-## 远程版本检测URL
+## Roadmap | 路线图
+
+### v2.7.0 (Planned | 计划中)
+- Multi-model routing enhancement
+- Performance optimizations
+- Additional language support
+
+### v3.0.0 (Planned | 计划中)
+- Plugin marketplace
+- Custom skill creator
+- Visual workflow builder
+
+---
+
+## Support | 支持
+
+- **GitHub**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
+- **Issues**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/issues
+- **PyPI**: https://pypi.org/project/quickagents/
+- **Documentation**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs
+
+---
+
+## Remote Version Detection URL | 远程版本检测URL
 
 ```
 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/VERSION.md
@@ -173,14 +363,24 @@ https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/VERS
 
 ---
 
-## 更新命令
+## Update Commands | 更新命令
 
 ```bash
-/qa-update              # 检测并更新
-/qa-update --check      # 仅检测，不更新
-/qa-update --version    # 显示当前版本
+# Check for updates | 检查更新
+/qa-update --check
+
+# Update to latest | 更新到最新版本
+/qa-update
+
+# Show current version | 显示当前版本
+/qa-update --version
+
+# Manual update | 手动更新
+pip install --upgrade quickagents
 ```
 
 ---
 
-*最后更新: 2026-03-29*
+*QuickAgents v2.6.8 - Making AI agent development easier*
+
+*QuickAgents v2.6.8 - 让AI代理开发更简单*

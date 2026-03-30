@@ -1,8 +1,20 @@
-# Adaptive Compression Skill
+---
+name: adaptive-compression-skill
+description: |
+  Adaptive context compression skill based on OpenDev paper.
+  Reduces peak context consumption by 54% through progressive compression,
+  protecting key files while preserving reasoning chains.
+license: MIT
+allowed-tools:
+  - read
+  - skill
+metadata:
+  category: optimization
+  priority: medium
+  version: 1.0.0
+---
 
-> **来源**: OpenDev 论文 (arXiv:2603.05344v2)
-> **核心目标**: 峰值上下文消耗减少54%，通过自适应压缩策略优化上下文管理
-> **适用场景**: 长会话、复杂任务、上下文压力较大时
+# Adaptive Compression Skill
 
 ---
 

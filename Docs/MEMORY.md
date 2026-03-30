@@ -2,9 +2,9 @@
 # YAML Front Matter - 元数据区
 memory_type: project
 created_at: 2026-03-22T10:00:00Z
-updated_at: 2026-03-26T06:30:00Z
-version: 2.1.1
-tags: [project, initialization, quickagent, documentation, i18n]
+updated_at: 2026-03-30T08:00:00Z
+version: 2.6.8
+tags: [project, initialization, quickagent, documentation, i18n, plugin]
 related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
 ---
 
@@ -24,7 +24,7 @@ related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
 | 项目路径 | D:\Projects\QuickAgents |
 | 技术栈 | TypeScript (核心引擎) + 方法论框架 |
 | 启动时间 | 2026-03-22 |
-| 当前版本 | `v2.1.1` (增强版) |
+| 当前版本 | `v2.2.0` (Pattern-based LoopDetector) |
 | 项目类型 | 完整系统（方法论 + 核心引擎 + 平台集成） |
 
 ### 1.2 技术决策
@@ -94,6 +94,9 @@ related_files: [AGENTS.md, TASKS.md, DESIGN.md, README.md]
 | 2026-03-26 | 增强方案实施 | 成功 | 完成Hooks系统 + 多代理协调 + CLI工具开发 |
 | 2026-03-26 | CLI工具PyPI发布 | 成功 | https://www.pypi.org/project/quickagents |
 | 2026-03-26 | v2.0.1版本发布 | 成功 | 统一触发词 + Agent合作图 + 配置引导 |
+| 2026-03-29 | Plugin统一架构 | 成功 | 整合Superpowers功能到QuickAgents统一插件 |
+| 2026-03-29 | Glob bug修复 | 成功 | LocalExecutor.glob添加null检查 |
+| 2026-03-30 | Pattern-based LoopDetector | 成功 | 实现Stuck/Oscillation模式检测，替代简单阈值 |
 
 ### 2.2 经验总结
 

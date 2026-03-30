@@ -1,8 +1,21 @@
-# ACI Design Skill
+---
+name: aci-design-skill
+description: |
+  ACI (Agent-Computer Interface) design skill based on SWE-agent paper.
+  Optimizes AI agent-computer interaction with simplified command space,
+  strict formatting, and enhanced feedback.
+license: MIT
+allowed-tools:
+  - read
+  - write
+  - edit
+metadata:
+  category: design
+  priority: medium
+  version: 1.0.0
+---
 
-> **来源**: SWE-agent 论文 - Agent-Computer Interface 设计原则
-> **优先级**: P2 - 中期可实施
-> **版本**: v1.0 | **创建日期**: 2026-03-27
+# ACI Design Skill
 
 ---
 

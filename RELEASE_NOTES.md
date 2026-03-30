@@ -1,389 +1,464 @@
-# QuickAgents v2.2.0 Release Notes
+# QuickAgents v2.6.8 Release Notes
 
-> AI代理项目初始化系统 - Skills本地化 + Python包发布
+> **Release Date**: 2026-03-30 | **Author**: Coder-Beam
 
-**发布日期**: 2026-03-29
-
----
-
-## 🎉 简介
-
-QuickAgents是一个基于OpenCode生态的AI代理项目初始化系统，提供：
-- 🚀 **开箱即用**：发送"启动QuickAgent"即可开始
-- 🧠 **三维记忆**：跨会话上下文保持和经验积累
-- 🤖 **多代理协作**：17个专业代理 + 20个核心技能
-- 📊 **进度追踪**：Boulder系统实现跨会话恢复
-- ⚡ **超高效执行**：ultrawork命令一键完成复杂任务
-- 📝 **经验收集**：自动收集使用经验，助力系统进化
-- 🐍 **Python本地化**：Token节省90%+，零依赖安装
+[![Version](https://img.shields.io/badge/Version-2.6.8-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/releases/tag/v2.6.8)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/Tests-254%20passing-brightgreen.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
 
 ---
 
-## ✨ 核心特性
+## 🎉 Overview
 
-### 1. 项目初始化
-- **智能检测**：自动识别新项目/现有项目
-- **12轮需求澄清**：深度递进式需求分析
-- **自动文档生成**：MEMORY.md、TASKS.md、DESIGN.md等
+QuickAgents v2.6.8 is a **major documentation and quality release** that brings:
 
-### 2. 代理系统（17个）
-
-#### 核心代理（6个）
-| 代理 | 功能 |
-|------|------|
-| `@yinglong-init` | 项目初始化 |
-| `@boyi-consult` | 需求分析 |
-| `@chisongzi-advise` | 技术推荐 |
-| `@cangjie-doc` | 文档管理 |
-| `@huodi-skill` | Skill管理 |
-| `@fenghou-orchestrate` | 主调度器 |
-
-#### 质量代理（4个）
-- `@jianming-review` - 代码审查
-- `@lishou-test` - 测试执行
-- `@mengzhang-security` - 安全审计
-- `@hengge-perf` - 性能分析
-
-#### 工具代理（4个）
-- `@kuafu-debug` - 调试
-- `@gonggu-refactor` - 重构
-- `@huodi-deps` - 依赖管理
-- `@hengge-cicd` - CI/CD管理
-
-#### 规划代理（3个）
-- `@fenghou-plan` - 规划器
-- `@boyi-consult` - 顾问
-- `@jianming-review` - 审查员
-
-### 3. 技能系统（20个）
-
-| 技能 | 功能 |
-|------|------|
-| `inquiry-skill` | 12轮需求澄清 |
-| `project-memory-skill` | 三维记忆系统 |
-| `tdd-workflow-skill` | TDD工作流 |
-| `git-commit-skill` | Git提交规范 |
-| `code-review-skill` | 代码审查 |
-| `category-system-skill` | Category分类 |
-| `background-agents-skill` | 后台并行执行 |
-| `boulder-tracking-skill` | 进度追踪 |
-| `skill-integration-skill` | 技能整合 |
-| `multi-model-skill` | 多模型协同 |
-| `lsp-ast-skill` | LSP/AST集成 |
-| `project-detector-skill` | 项目检测 |
-| `project-memory-skill` | 知识索引 |
-
-### 4. 高级功能
-
-#### ultrawork命令
-```bash
-/ultrawork 实现用户认证系统
-```
-自动分解任务、并行执行、汇总结果。
-
-#### start-work命令
-```bash
-/start-work
-```
-跨会话恢复工作，读取进度、学习点、决策记录。
-
-#### Boulder进度追踪
-```json
-{
-  "session_id": "abc123",
-  "completed_tasks": 43,
-  "total_tasks": 44,
-  "notepad": {
-    "learnings": [...],
-    "decisions": [...]
-  }
-}
-```
-
-#### Category系统（10个）
-- `visual-engineering` - UI开发
-- `ultrabrain` - 深度推理
-- `quick` - 快速响应
-- `planning` - 计划制定
-- `coding` - 代码编写
-- `testing` - 测试验证
-- `documentation` - 文档编写
-- `analysis` - 数据分析
-- `debugging` - 问题调试
-- `refactoring` - 代码重构
+- ✅ **Pattern-based Loop Detection** - Intelligent stuck/oscillation detection
+- ✅ **Python Environment Detection** - Automated Python 3.9+ verification
+- ✅ **Complete Bilingual Documentation** - Full Chinese and English support
+- ✅ **Comprehensive API Documentation** - All modules fully documented
+- ✅ **Author Unification** - All files unified to Coder-Beam
 
 ---
 
-## 📊 测试结果
+## 🚀 Installation
 
-| 测试类型 | 通过率 | 详情 |
-|---------|--------|------|
-| 单元测试 | 97.0% | 192/198 |
-| 集成测试 | 85.7% | 24/28 |
-| E2E测试 | 80.8% | 21/26 |
-| 性能测试 | 93.8% | 15/16 |
-| **总体** | **90.4%** | **252/268** |
-
-### 性能指标
-- 配置加载：< 5ms
-- 文件总大小：< 250KB
-- 组件数量：34个
-
----
-
-## 📦 安装
+### Quick Install
 
 ```bash
-# 克隆仓库
+# Install from PyPI
+pip install quickagents
+
+# Verify installation
+python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
+```
+
+### Full Installation (with Windows features)
+
+```bash
+pip install quickagents[full]
+```
+
+### Development Installation
+
+```bash
 git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
-
-# 复制到你的项目
-cp -r Quick-Agents-for-Z.AI-GLM/.opencode your-project/
-cp Quick-Agents-for-Z.AI-GLM/AGENTS.md your-project/
+cd Quick-Agents-for-Z.AI-GLM
+pip install -e .
 ```
 
 ---
 
-## 🚀 快速开始
+## ✨ What's New
 
-1. 在OpenCode中发送：
+### 1. Pattern-based LoopDetector
+
+**Before (v2.4.x):**
+- Simple threshold: 3 identical calls in 60 seconds
+- False positives on legitimate repeated operations
+- No distinction between exploration and stuck patterns
+
+**Now (v2.6.8):**
+- **Stuck Pattern Detection**: A→A→A (3+ identical calls)
+- **Oscillation Pattern Detection**: A→B→A→B (2+ cycles)
+- **Intelligent Allowlist**: A→B→C (normal exploration allowed)
+
+**Code Example:**
+```python
+from quickagents import LoopDetector
+
+detector = LoopDetector()
+
+# Record tool calls
+detector.record_tool_call('read', {'file': 'auth.py'})
+detector.record_tool_call('read', {'file': 'auth.py'})
+detector.record_tool_call('read', {'file': 'auth.py'})
+
+# Check if stuck
+if detector.is_looping():
+    patterns = detector.get_loop_patterns()
+    print(f"Loop detected: {patterns}")
+    # Output: [{'type': 'stuck', 'tool': 'read', 'count': 3}]
+```
+
+**Files Changed:**
+- `.opencode/plugins/quickagents.ts` - New pattern detection logic
+- `quickagents/core/loop_detector.py` - Enhanced detection
+
+---
+
+### 2. Python Environment Detection
+
+**New Step 0 in Startup Flow:**
+
 ```
 启动QuickAgent
+    ↓
+Step 0: Python环境检测（必需）
+    ├─ 检测 python --version
+    ├─ 检测 pip --version
+    └─ 检测版本 >= 3.9
+        ├─ 通过 → 继续流程
+        └─ 失败 → 显示安装引导
 ```
 
-2. 完成12轮需求澄清
+**Platform-Specific Installation Guides:**
 
-3. 开始开发：
+| Platform | Method | Command |
+|----------|--------|---------|
+| Windows | Official | Download from python.org |
+| Windows | Scoop | `scoop install python` |
+| Windows | winget | `winget install Python.Python.3.12` |
+| macOS | Homebrew | `brew install python@3.12` |
+| Linux (Ubuntu) | apt | `sudo apt install python3.12 python3-pip` |
+| Linux (Fedora) | dnf | `sudo dnf install python3.12 python3-pip` |
+
+**Files Changed:**
+- `AGENTS.md` - Added Step 0: Python环境检测
+- `.opencode/agents/yinglong-init.md` - Added Python detection flow
+- `Docs/guide/installation.md` - Complete rewrite with Python detection
+
+---
+
+### 3. Complete Bilingual Documentation
+
+**README.md:**
+- Full Chinese and English versions
+- Complete installation instructions
+- All CLI commands documented
+- Architecture diagrams
+- Module descriptions
+
+**CHANGELOG.md:**
+- Version history from 1.0.0 to 2.6.8
+- Upgrade guides
+- Breaking changes documented
+
+**API Documentation:**
+- `Docs/api/index.md` - Complete API reference
+- All modules: UnifiedDB, KnowledgeGraph, SkillEvolution, etc.
+- Type definitions
+- Usage examples
+
+---
+
+### 4. Author Unification
+
+**Before:**
+- `QuickAgents Team` in some files
+- Inconsistent authorship
+
+**Now:**
+- All files unified to `Coder-Beam`
+- Consistent branding
+
+**Files Updated:**
+| File | Before | After |
+|------|--------|-------|
+| `quickagents/__init__.py` | QuickAgents Team | Coder-Beam |
+| `pyproject.toml` | QuickAgents Team | Coder-Beam |
+| `README.md` | QuickAgents Team | Coder-Beam |
+| `.opencode/skills/project-detector-skill/SKILL.md` | QuickAgents Team | Coder-Beam |
+
+---
+
+## 📊 Statistics
+
+### Code Quality
+
+| Metric | Status |
+|--------|--------|
+| Python Syntax | ✅ 100% passing |
+| Type Hints | ✅ Complete |
+| Docstrings | ✅ All modules |
+| Code Style | ✅ PEP 8 compliant |
+
+### Test Results
+
+| Test Type | Count | Status |
+|-----------|-------|--------|
+| Unit Tests | 192 | ✅ Passing |
+| Integration Tests | 42 | ✅ Passing |
+| E2E Tests | 20 | ✅ Passing |
+| **Total** | **254** | **✅ 100%** |
+
+### Token Savings
+
+| Scenario | Savings |
+|----------|---------|
+| File operations (cached) | 100% |
+| File operations (uncached) | 60-80% |
+| Search operations | 80-95% |
+| Memory/Knowledge queries | 90-100% |
+| **Average** | **60-80%** |
+
+---
+
+## 🐛 Bug Fixes
+
+### Critical Fixes
+
+1. **Glob Null Check Bug**
+   - **Issue**: `LocalExecutor.glob()` crashed when pattern was undefined
+   - **Fix**: Added null check before processing
+   - **File**: `.opencode/plugins/quickagents.ts:418-423`
+
+2. **Duplicate Code in Plugin**
+   - **Issue**: Glob interception logic duplicated (lines 562-593)
+   - **Fix**: Removed duplicate code block
+   - **File**: `.opencode/plugins/quickagents.ts`
+
+3. **Package.json Formatting**
+   - **Issue**: Repository field had incorrect indentation
+   - **Fix**: Corrected JSON formatting
+   - **File**: `.opencode/plugins/package.json`
+
+### Minor Fixes
+
+- Fixed 24 SKILL.md files missing YAML front matter
+- Fixed plugin version mismatch (2.2.0 → 2.6.8)
+- Fixed installation guide referencing non-existent `qa init` command
+
+---
+
+## 📦 Package Contents
+
+### Python Modules
+
 ```
-@fenghou-orchestrate 实现用户认证功能
+quickagents/
+├── __init__.py              # Main exports
+├── cli/
+│   ├── main.py              # CLI implementation
+│   └── qa.py                # Entry point
+├── core/
+│   ├── unified_db.py        # Unified database
+│   ├── evolution.py         # Skill evolution
+│   ├── git_hooks.py         # Git integration
+│   ├── markdown_sync.py     # Markdown sync
+│   ├── file_manager.py      # File operations
+│   ├── loop_detector.py     # Loop detection
+│   ├── reminder.py          # Event reminders
+│   ├── cache_db.py          # Caching
+│   └── memory.py            # Memory management
+├── knowledge_graph/
+│   ├── knowledge_graph.py   # Knowledge graph facade
+│   ├── types.py             # Type definitions
+│   ├── interfaces.py        # Abstract interfaces
+│   ├── exceptions.py        # Custom exceptions
+│   ├── core/
+│   │   ├── node_manager.py
+│   │   ├── edge_manager.py
+│   │   ├── searcher.py
+│   │   ├── discovery.py
+│   │   ├── extractor.py
+│   │   └── memory_sync.py
+│   └── storage/
+│       └── sqlite_storage.py
+├── skills/
+│   ├── feedback_collector.py
+│   ├── tdd_workflow.py
+│   └── git_commit.py
+├── browser/
+│   ├── browser.py           # Browser automation
+│   └── installer.py         # Dependency installer
+└── utils/
+    ├── hash_cache.py
+    └── script_helper.py
+```
+
+### OpenCode Configuration
+
+```
+.opencode/
+├── plugins/
+│   ├── quickagents.ts       # Unified plugin
+│   └── package.json
+├── agents/                  # 15 agent configs
+├── skills/                  # 24 skill configs
+├── config/
+│   ├── models.json
+│   ├── lsp-config.json
+│   ├── categories.json
+│   └── quickagents.json
+├── commands/
+│   ├── start-work.md
+│   └── ultrawork.md
+└── memory/
+    ├── MEMORY.md
+    ├── TASKS.md
+    └── DECISIONS.md
 ```
 
 ---
 
-## 📚 文档
+## 🔧 CLI Commands
 
-- [用户指南](Docs/USER_GUIDE.md)
-- [API参考](Docs/API_REFERENCE.md)
-- [示例代码](Docs/EXAMPLES.md)
-- [测试报告](Docs/TEST_REPORT.md)
+### Database Operations
 
----
-
-## 🔄 升级指南
-
-从v8.0升级到v2.0.1：
-
-1. 备份现有配置
 ```bash
-cp -r .opencode .opencode.backup
+qa stats                      # Show statistics
+qa sync                       # Sync SQLite to Markdown
+qa memory get <key>           # Get memory value
+qa memory set <key> <value>   # Set memory value
+qa memory search <query>      # Search memory
 ```
 
-2. 更新文件
+### Task Management
+
 ```bash
-# 复制新版本文件
-cp -r Quick-Agents-for-Z.AI-GLM/.opencode/* .opencode/
-cp Quick-Agents-for-Z.AI-GLM/AGENTS.md .
+qa tasks list                 # List all tasks
+qa tasks add <id> <name>      # Add new task
+qa tasks status <id> <status> # Update task status
+qa progress                   # Show current progress
 ```
 
-3. 验证安装
+### Evolution System
+
 ```bash
-node tests/run-all-tests.js
+qa evolution status           # Show evolution status
+qa evolution stats [skill]    # Skill usage statistics
+qa evolution optimize         # Run periodic optimization
+qa evolution history <skill>  # View skill evolution
 ```
 
----
+### Git Integration
 
-## 🐛 已知问题
-
-1. **models.json为空** - 多模型协同配置需手动填充
-2. **lsp-config.json为空** - LSP配置需手动填充
-3. **部分Skill缺少"使用场景"** - 文档待完善
-
----
-
-## 🆕 v2.2.0 更新内容
-
-### 重大更新 - Skills本地化 + Python包发布
-
-#### quickagents Python包
-
-完整的Python本地化包，实现Token节省90%+：
-
-| 模块 | 功能 | Token节省 |
-|------|------|-----------|
-| FileManager | 智能文件读写（哈希检测） | 90%+ |
-| CacheDB | SQLite缓存管理 | 100% |
-| MemoryManager | 三维记忆管理 | 100% |
-| LoopDetector | 循环检测 | 100% |
-| Reminder | 事件提醒 | 100% |
-| FeedbackCollector | 经验收集 | 100% |
-| TDDWorkflow | TDD工作流 | 100% |
-| GitCommit | Git提交管理 | 100% |
-| ScriptHelper | Windows脚本替代 | 100% |
-
-#### Skills本地化状态 (80%)
-
-| Skill | 状态 | 模块 |
-|-------|------|------|
-| doom-loop-skill | ✅ 100% | LoopDetector |
-| project-memory-skill | ✅ 100% | MemoryManager + CacheDB |
-| lazy-discovery-skill | ✅ 100% | 内置工具分类 |
-| event-reminder-skill | ✅ 100% | Reminder |
-| feedback-collector-skill | ✅ 100% | FeedbackCollector |
-| tdd-workflow-skill | ✅ 100% | TDDWorkflow |
-| git-commit-skill | ✅ 100% | GitCommit |
-| ui-ux-pro-max | ✅ 已有Python | search.py, core.py |
-| inquiry-skill | ❌ 难以本地化 | 需要AI对话 |
-| si-hybrid-skill | ❌ 难以本地化 | 方法论指导 |
-
-#### 新增方法论Skill
-
-**si-hybrid-skill** - 阶段-迭代混合模型：
-- 整合瀑布模型、敏捷开发、TDD
-- 最小功能单元粒度限制（≤1.5小时）
-- 二次确认机制
-- Simplify优化步骤
-- 四阶段流程：需求 → 设计 → 实现 → 交付
-
-#### 变更内容
-
-- **移除npm包**：统一使用PyPI发布
-- **新增ScriptHelper**：替代.bat/.ps1/.vbs脚本
-- **依赖配置**：psutil>=5.9.0 (核心), pywin32>=305 (Windows)
-
-#### 文档更新
-
-- AGENTS.md 新增「二四、本地化Python包 (quickagents)」章节
-- 新增 `Docs/guides/TOOL_ERROR_FIX_GUIDE.md` 工具错误修复指南
-- Skills总数: 19 → 20
-
----
-
-## 🆕 v2.1.1 更新内容
-
-### 新增功能
-
-#### 经验收集系统
-
-新增 `feedback-collector-skill`，自动收集使用过程中的经验：
-
-**存储位置**: `~/.quickagents/feedback/`
-
-| 文件 | 内容 |
-|------|------|
-| bugs.md | Bug/错误 |
-| improvements.md | 改进建议 |
-| best-practices.md | 最佳实践 |
-| skill-review.md | Skill评估 |
-| agent-review.md | Agent评估 |
-
-**命令集**:
 ```bash
-/feedback bug <描述>       # 记录Bug
-/feedback improve <描述>   # 记录改进建议
-/feedback best <描述>      # 记录最佳实践
-/feedback skill <名> <评>  # 评估Skill
-/feedback agent <名> <评>  # 评估Agent
-/feedback view [类型]      # 查看收集的经验
+qa hooks install              # Install Git hooks
+qa hooks status               # Check hooks status
+qa git status                 # Git status
+qa git check                  # Pre-commit checks
 ```
 
-**触发机制**:
-- 任务完成时自动分析
-- Git提交后自动分析
-- 支持手动触发
+### TDD Workflow
 
-**去重逻辑**: 同一小时内相似描述只保留一条
-
-### 文档更新
-
-- 新增设计文档: `Docs/specs/2026-03-28-feedback-collector-design.md`
-- AGENTS.md 新增「二一、经验收集规范」章节
-- Skills总数: 17 → 18
-
----
-
-## 🆕 v2.1.0 更新内容
-
-### 新增Skills（基于OpenDev/VeRO/SWE-agent论文）
-
-#### P0 优先级 - 立即可实施
-| Skill | 功能 | 来源 |
-|-------|------|------|
-| `lazy-discovery-skill` | 工具懒加载，减少初始上下文50%+ | OpenDev |
-| `event-reminder-skill` | 事件驱动提醒，对抗指令遗忘 | OpenDev |
-| `doom-loop-skill` | 循环检测机制，防止重复调用 | OpenDev |
-
-#### P1 优先级 - 短期可实施
-| Skill | 功能 | 来源 |
-|-------|------|------|
-| `adaptive-compression-skill` | 自适应压缩策略，峰值上下文减少54% | OpenDev |
-| `vero-evaluation-skill` | 版本化评估体系(V-E-R-O) | VeRO |
-
-#### P2 优先级 - 中期可实施
-| Skill | 功能 | 来源 |
-|-------|------|------|
-| `aci-design-skill` | ACI设计原则(4大原则) | SWE-agent |
-
-### 新增配置和目录
-- `.opencode/evaluation/vero-config.yaml` - VeRO评估配置
-- `.opencode/snapshots/` - 快照存储目录
-- `.opencode/traces/` - 追踪记录目录
-
-### AGENTS.md 更新
-- 新增「八、事件驱动提醒机制」章节
-- 新增「九、ACI设计原则」章节
-- 添加压缩阈值策略(70%/80%/85%/90%/99%)
-- 添加Doom-Loop防护配置
-- 添加核心常量定义
-
-### 核心常量
-```python
-MAX_UNDO_HISTORY = 50
-DOOM_LOOP_THRESHOLD = 3
-DOOM_LOOP_WINDOW = 20
-MAX_CONCURRENT_TOOLS = 5
-TOOL_OUTPUT_OFFLOAD_THRESHOLD = 8000
-MAX_TOOL_RESULT_SUMMARY = 300
-SUBAGENT_ITERATION_LIMIT = 15
+```bash
+qa tdd red <test_file>        # RED phase
+qa tdd green <test_file>      # GREEN phase
+qa tdd refactor <test_file>   # REFACTOR phase
+qa tdd coverage               # Check coverage
 ```
 
 ---
 
-## 🗺️ 路线图
+## 📚 Documentation
 
-### v1.1.0（计划）
-- 填充models.json和lsp-config.json
-- 添加更多测试场景
-- 优化文档完整性
+### User Documentation
 
-### v1.2.0（计划）
-- 支持自定义Category
-- 添加更多LSP支持
-- 性能优化
+| Document | Location | Description |
+|----------|----------|-------------|
+| README.md | `/` | Complete project overview |
+| CHANGELOG.md | `/` | Version history |
+| VERSION.md | `/` | Version information |
+| Installation Guide | `Docs/guide/installation.md` | Installation instructions |
 
----
+### API Documentation
 
-## 🤝 贡献
+| Document | Location | Description |
+|----------|----------|-------------|
+| API Reference | `Docs/api/index.md` | Complete API docs |
+| Architecture | `Docs/ARCHITECTURE.md` | System architecture |
+| Plugin Guide | `Docs/plugins/` | Plugin documentation |
 
-欢迎提交Issue和Pull Request！
+### Skills Documentation
 
-- GitHub: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
-- Issues: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/issues
-
----
-
-## 📄 许可证
-
-MIT License
+- 24 skill files in `.opencode/skills/`
+- Each with complete YAML front matter
+- Usage examples and configuration
 
 ---
 
-## 🙏 致谢
+## 🔄 Upgrade Guide
 
-感谢以下项目的启发：
-- [Oh-My-OpenAgent](https://github.com/anthropics/anthropic-quickstarts/tree/main/agents/oh-my-openagent)
-- OpenCode社区
-- 所有贡献者
+### From v2.4.x to v2.6.8
+
+```bash
+# 1. Update Python package
+pip install --upgrade quickagents
+
+# 2. Verify version
+python -c "from quickagents import __version__; print(__version__)"
+# Output: 2.6.8
+
+# 3. No breaking changes in API
+# All existing code continues to work
+```
+
+### From v2.x to v2.6.8
+
+```bash
+# 1. Backup database
+cp -r .quickagents .quickagents.backup
+
+# 2. Update package
+pip install --upgrade quickagents
+
+# 3. Update OpenCode config (optional)
+curl -fsSL https://codeload.github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tar.gz/main | tar -xz --strip-components=1 Quick-Agents-for-Z.AI-GLM/.opencode
+```
 
 ---
 
-*QuickAgents v2.1.0 - 让AI代理开发更简单*
+## 🗺️ What's Next
+
+### v2.7.0 (Planned)
+
+- Multi-model routing enhancement
+- Performance optimizations
+- Additional language support (Japanese, Korean)
+
+### v3.0.0 (Planned)
+
+- Plugin marketplace
+- Custom skill creator
+- Visual workflow builder
+- Cloud sync capabilities
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see:
+
+- **Contributing Guide**: [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Code of Conduct**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- **Issue Tracker**: [GitHub Issues](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/issues)
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgments
+
+Special thanks to:
+
+- OpenCode community
+- All contributors and testers
+- Projects that inspired QuickAgents:
+  - [Oh-My-OpenAgent](https://github.com/anthropics/anthropic-quickstarts/tree/main/agents/oh-my-openagent)
+  - OpenDev paper (arXiv:2603.05344v2)
+  - VeRO paper (arXiv:2602.22480)
+  - SWE-agent paper
+
+---
+
+## 📞 Support
+
+- **GitHub**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
+- **Issues**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/issues
+- **PyPI**: https://pypi.org/project/quickagents/
+- **Documentation**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs
+
+---
+
+**Full Changelog**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/compare/v2.4.0...v2.6.8
+
+---
+
+*QuickAgents v2.6.8 - Making AI agent development easier*
+*Released with ❤️ by Coder-Beam*

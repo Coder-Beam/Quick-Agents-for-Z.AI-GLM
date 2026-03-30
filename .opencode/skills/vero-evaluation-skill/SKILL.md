@@ -1,8 +1,20 @@
-# VeRO Evaluation Skill
+---
+name: vero-evaluation-skill
+description: |
+  VeRO (Versioning-Rewards-Observations) evaluation skill based on VeRO paper.
+  Provides task snapshot versioning, budget-controlled evaluation, and structured tracking.
+license: MIT
+allowed-tools:
+  - read
+  - write
+  - bash
+metadata:
+  category: evaluation
+  priority: medium
+  version: 1.0.0
+---
 
-> **来源**: VeRO 论文 (arXiv:2602.22480)
-> **核心目标**: 版本化快照 + 预算控制评估 + 结构化追踪
-> **适用场景**: 任务评估、性能追踪、质量保证
+# VeRO Evaluation Skill
 
 ---
 

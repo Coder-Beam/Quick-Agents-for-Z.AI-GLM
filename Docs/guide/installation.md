@@ -1,366 +1,849 @@
-# QuickAgents 安装指南
+# QuickAgents Installation Guide
 
-## For Humans（给用户）
+> Version: 2.6.8 | Updated: 2026-03-30 | Author: Coder-Beam
 
-复制以下提示词，粘贴到你的AI代理（OpenCode CLI/Desktop等）：
+[中文](#quickagents-安装指南) | [English](#quickagents-installation-guide)
 
-```
-Install and configure QuickAgents by following the instructions here:
-https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md
-```
+---
 
-**或者使用CLI一键安装**（需要Node.js）：
+# QuickAgents Installation Guide
+
+## Overview
+
+QuickAgents consists of two parts:
+
+| Component | Description | Installation |
+|-----------|-------------|--------------|
+| **Python Package** | Core functionality (UnifiedDB, KnowledgeGraph, CLI, etc.) | `pip install quickagents` |
+| **OpenCode Config** | Agents, Skills, Plugin, Config files | Download from GitHub |
+
+## Prerequisites
+
+| Requirement | Minimum | Recommended | Check Command |
+|-------------|---------|-------------|---------------|
+| Python | 3.9 | 3.11+ | `python --version` |
+| pip | 21.0 | Latest | `pip --version` |
+| Git | 2.0 | Latest | `git --version` |
+| OpenCode | 1.0+ | Latest | `opencode --version` |
+
+## Quick Start (3 Steps)
+
+### Step 1: Install Python Package
 
 ```bash
 pip install quickagents
-qa init
 ```
 
-> **提示**：让AI代理来完成安装是最简单的方式，避免手动配置错误。
-
----
-
-## For LLM Agents（给AI代理）
-
-> **重要：使用 `curl` 获取此文件，而不是 WebFetch。** WebFetch 会总结内容并丢失关键细节。
+### Step 2: Download OpenCode Config
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md
-```
-
-如果你是帮助用户安装QuickAgents的LLM代理，欢迎！你现在将帮助用户安装最好的AI代理项目初始化系统。告诉用户：**"QAQAQAQAQA... 🎉 让我们开始安装QuickAgents！"**
-
-请按以下步骤操作：
-
----
-
-### Step 0: 检查环境
-
-首先检查用户的环境：
-
-```bash
-# 检查是否已安装OpenCode
-if command -v opencode &> /dev/null; then
-    echo "✅ OpenCode 已安装: $(opencode --version)"
-else
-    echo "❌ OpenCode 未安装"
-fi
-
-# 检查Node.js（可选，用于CLI）
-if command -v node &> /dev/null; then
-    echo "✅ Node.js 已安装: $(node --version)"
-else
-    echo "⚠️ Node.js 未安装（可选，仅CLI需要）"
-fi
-
-# 检查Git
-if command -v git &> /dev/null; then
-    echo "✅ Git 已安装"
-else
-    echo "❌ Git 未安装"
-fi
-```
-
-**如果OpenCode未安装**：
-- 请先安装OpenCode：https://opencode.ai/docs
-- 安装完成后继续
-
----
-
-### Step 1: 询问用户订阅情况
-
-询问用户以下问题以确定配置选项：
-
-1. **你有Z.ai Coding Plan订阅吗？**
-   - 如果**是** → 使用GLM-5模型
-   - 如果**否** → 需要配置其他模型
-
-2. **你有OpenCode Go订阅吗？**
-   - OpenCode Go是$10/月的订阅，提供GLM-5、Kimi K2.5和MiniMax M2.7模型
-   - 如果**是** → 可以使用GLM系列模型
-   - 如果**否** → 需要配置其他模型
-
-3. **你有Claude Pro/Max订阅吗？**
-   - 如果**是** → 可以配置Claude模型作为备选
-   - 如果**否** → 仅使用GLM系列
-
-4. **你有OpenAI/ChatGPT Plus订阅吗？**
-   - 如果**是** → 可以配置GPT模型作为备选
-   - 如果**否** → 仅使用GLM系列
-
-5. **你的主要开发语言是什么？**（可多选）
-   - TypeScript/JavaScript
-   - Python
-   - Rust
-   - Go
-   - Java
-   - C/C++
-   - 其他
-
----
-
-### Step 2: 下载QuickAgents
-
-**方式1：使用Git克隆（推荐）**
-
-```bash
-# 进入项目目录
-cd /path/to/your/project
-
-# 克隆QuickAgents
-git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git .quickagents-temp
-
-# 复制必要文件
-cp -r .quickagents-temp/.opencode ./
-cp .quickagents-temp/AGENTS.md ./
-
-# 清理临时文件
-rm -rf .quickagents-temp
-
-echo "✅ QuickAgents文件已复制"
-```
-
-**方式2：使用curl下载（无Git环境）**
-
-```bash
-# 创建临时目录
-mkdir -p .quickagents-temp
-
-# 下载核心文件
-curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/AGENTS.md -o AGENTS.md
-
-# 下载.opencode目录
+# In your project root directory
 curl -fsSL https://codeload.github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tar.gz/main | tar -xz --strip-components=1 Quick-Agents-for-Z.AI-GLM/.opencode
-
-echo "✅ QuickAgents文件已下载"
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/opencode.json -o opencode.json
 ```
 
----
-
-### Step 3: 配置models.json
-
-根据用户的订阅情况，生成 `.opencode/config/models.json`：
-
-**场景A：仅Z.ai Coding Plan**
-
-```json
-{
-  "version": "2.1.1",
-  "primary": "zai-coding-plan/glm-5",
-  "categories": {
-    "quick": "zai-coding-plan/glm-5-flash",
-    "planning": "zai-coding-plan/glm-5",
-    "coding": "zai-coding-plan/glm-5",
-    "testing": "zai-coding-plan/glm-5-flash",
-    "documentation": "zai-coding-plan/glm-5-flash"
-  },
-  "fallback": []
-}
-```
-
-**场景B：OpenCode Go订阅**
-
-```json
-{
-  "version": "2.1.1",
-  "primary": "opencode/glm-5",
-  "categories": {
-    "quick": "opencode/glm-5-flash",
-    "planning": "opencode/glm-5",
-    "coding": "opencode/glm-5",
-    "testing": "opencode/glm-5-flash",
-    "documentation": "opencode/glm-5-flash",
-    "visual-engineering": "opencode/gemini-2.0-flash",
-    "ultrabrain": "opencode/gpt-5.4"
-  },
-  "fallback": ["opencode/kimi-k2.5", "opencode/minimax-m2.7"]
-}
-```
-
-**场景C：Claude + OpenCode Go**
-
-```json
-{
-  "version": "2.1.1",
-  "primary": "anthropic/claude-opus-4-6",
-  "categories": {
-    "quick": "opencode/glm-5-flash",
-    "planning": "anthropic/claude-sonnet-4-6",
-    "coding": "anthropic/claude-sonnet-4-6",
-    "testing": "opencode/glm-5-flash",
-    "documentation": "opencode/glm-5-flash",
-    "visual-engineering": "opencode/gemini-2.0-flash",
-    "ultrabrain": "anthropic/claude-opus-4-6"
-  },
-  "fallback": ["opencode/glm-5", "opencode/kimi-k2.5"]
-}
-```
-
----
-
-### Step 4: 配置lsp-config.json
-
-根据用户的开发语言，生成 `.opencode/config/lsp-config.json`：
-
-**单语言配置（TypeScript）**
-
-```json
-{
-  "version": "2.1.1",
-  "languages": ["typescript"],
-  "ast-grep": true,
-  "servers": {
-    "typescript": {
-      "command": "typescript-language-server",
-      "args": ["--stdio"]
-    }
-  }
-}
-```
-
-**多语言配置**
-
-```json
-{
-  "version": "2.1.1",
-  "languages": ["typescript", "python", "rust"],
-  "ast-grep": true,
-  "servers": {
-    "typescript": {
-      "command": "typescript-language-server",
-      "args": ["--stdio"]
-    },
-    "python": {
-      "command": "pyright-langserver",
-      "args": ["--stdio"]
-    },
-    "rust": {
-      "command": "rust-analyzer",
-      "args": []
-    }
-  }
-}
-```
-
----
-
-### Step 5: 创建Docs目录
+### Step 3: Verify Installation
 
 ```bash
-# 创建文档目录
-mkdir -p Docs
+# Check Python package
+python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
 
-# 创建必要的文档文件
-touch Docs/MEMORY.md
-touch Docs/TASKS.md
-touch Docs/DESIGN.md
-touch Docs/INDEX.md
-touch Docs/DECISIONS.md
+# Check CLI
+qa --help
 
-echo "✅ 文档目录已创建"
+# Check OpenCode config
+ls .opencode/plugins/quickagents.ts
 ```
 
----
-
-### Step 6: 验证安装
-
-```bash
-# 检查文件结构
-echo "检查安装..."
-test -f AGENTS.md && echo "✅ AGENTS.md"
-test -d .opencode && echo "✅ .opencode/"
-test -d .opencode/agents && echo "✅ .opencode/agents/"
-test -d .opencode/skills && echo "✅ .opencode/skills/"
-test -d Docs && echo "✅ Docs/"
-test -f .opencode/config/models.json && echo "✅ models.json"
-test -f .opencode/config/lsp-config.json && echo "✅ lsp-config.json"
-```
-
----
-
-### Step 7: 开始使用
-
-恭喜！🎉 QuickAgents已成功安装！
-
-现在你可以开始使用：
+**Done!** Now you can start using QuickAgents:
 
 ```
 启动QuickAgent
 ```
 
-**或者使用其他触发词**：
-- 「启动QuickAgents」
-- 「启动QA」
-- 「Start QA」
+---
+
+## Detailed Installation
+
+### 1. Environment Check
+
+**Windows:**
+```bash
+python --version
+pip --version
+```
+
+**macOS/Linux:**
+```bash
+python3 --version
+pip3 --version
+```
+
+**If Python not installed:**
+
+<details>
+<summary>Windows Installation</summary>
+
+```powershell
+# Option 1: Official Installer (Recommended)
+# 1. Visit https://www.python.org/downloads/
+# 2. Download Python 3.12.x
+# 3. Check "Add Python to PATH" during installation
+
+# Option 2: winget
+winget install Python.Python.3.12
+
+# Option 3: Scoop
+scoop install python
+```
+</details>
+
+<details>
+<summary>macOS Installation</summary>
+
+```bash
+# Option 1: Homebrew (Recommended)
+brew install python@3.12
+
+# Option 2: Official Installer
+# Visit https://www.python.org/downloads/macos/
+```
+</details>
+
+<details>
+<summary>Linux Installation</summary>
+
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install python3.12 python3-pip
+
+# Fedora/RHEL
+sudo dnf install python3.12 python3-pip
+
+# Arch Linux
+sudo pacman -S python python-pip
+```
+</details>
+
+### 2. Install Python Package
+
+```bash
+# Basic installation
+pip install quickagents
+
+# With Windows features
+pip install quickagents[windows]
+
+# Full installation
+pip install quickagents[full]
+
+# Development mode
+git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
+cd Quick-Agents-for-Z.AI-GLM
+pip install -e .
+```
+
+### 3. Download OpenCode Configuration
+
+**Option A: Using curl (Recommended)**
+
+```bash
+# Create project directory
+mkdir my-project && cd my-project
+
+# Download .opencode directory
+curl -fsSL https://codeload.github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tar.gz/main | tar -xz --strip-components=1 Quick-Agents-for-Z.AI-GLM/.opencode
+
+# Download required files
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/opencode.json -o opencode.json
+
+# Create Docs directory
+mkdir -p Docs
+touch Docs/MEMORY.md Docs/TASKS.md Docs/DESIGN.md Docs/INDEX.md
+```
+
+**Option B: Using Git Clone**
+
+```bash
+# Clone repository
+git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git temp-qa
+
+# Copy to your project
+cp -r temp-qa/.opencode ./
+cp temp-qa/AGENTS.md ./
+cp temp-qa/opencode.json ./
+mkdir -p Docs
+cp -r temp-qa/Docs/* Docs/
+
+# Cleanup
+rm -rf temp-qa
+```
+
+**Option C: Manual Download**
+
+1. Visit https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
+2. Download ZIP
+3. Extract `.opencode/`, `AGENTS.md`, `opencode.json` to your project
+
+### 4. Configure Models
+
+Create `.opencode/config/models.json`:
+
+```json
+{
+  "primary": "glm-5",
+  "categories": {
+    "quick": "glm-5-flash",
+    "planning": "glm-5",
+    "coding": "glm-5"
+  }
+}
+```
+
+### 5. Initialize Database
+
+```bash
+# Initialize UnifiedDB
+python -c "from quickagents import UnifiedDB; db = UnifiedDB(); print('Database initialized')"
+
+# Install Git hooks (optional)
+qa hooks install
+```
+
+### 6. Verify Installation
+
+```bash
+# 1. Check Python package
+python -c "
+from quickagents import __version__, UnifiedDB, KnowledgeGraph
+print(f'QuickAgents v{__version__}')
+db = UnifiedDB()
+kg = KnowledgeGraph()
+print('All modules imported successfully')
+"
+
+# 2. Check CLI
+qa --help
+qa stats
+
+# 3. Check OpenCode config
+test -f AGENTS.md && echo "✅ AGENTS.md"
+test -f opencode.json && echo "✅ opencode.json"
+test -d .opencode && echo "✅ .opencode/"
+test -f .opencode/plugins/quickagents.ts && echo "✅ Plugin"
+test -d .opencode/agents && echo "✅ Agents ($(ls .opencode/agents/*.md 2>/dev/null | wc -l) files)"
+test -d .opencode/skills && echo "✅ Skills ($(ls -d .opencode/skills/*/ 2>/dev/null | wc -l) dirs)"
+```
 
 ---
 
-## 快速参考
+## CLI Commands Reference
 
-### 触发词
-| 触发词 | 说明 |
-|--------|------|
-| `启动QuickAgent` | 推荐，启动项目初始化 |
-| `启动QuickAgents` | 兼容 |
-| `启动QA` | 简短 |
-| `Start QA` | 英文 |
+```bash
+# Database operations
+qa stats                      # Show statistics
+qa sync                       # Sync SQLite to Markdown
+qa memory get <key>           # Get memory
+qa memory set <key> <value>   # Set memory
+qa memory search <query>      # Search memory
 
-### 常用命令
-| 命令 | 说明 |
-|------|------|
-| `/start-work` | 跨会话恢复工作 |
-| `/ultrawork <任务>` | 超高效执行任务 |
-| `@agent-name` | 调用特定代理 |
+# Task management
+qa tasks list                 # List tasks
+qa tasks add <id> <name>      # Add task
 
-### 配置文件
-| 文件 | 位置 |
-|------|------|
-| 模型配置 | `.opencode/config/models.json` |
-| LSP配置 | `.opencode/config/lsp-config.json` |
-| 进度追踪 | `.quickagents/boulder.json` |
+# Evolution system
+qa evolution status           # Show evolution status
+qa evolution optimize         # Run optimization
+
+# Git hooks
+qa hooks install              # Install Git hooks
+qa hooks status               # Check hooks status
+
+# Knowledge graph
+qa kg search <query>          # Search knowledge graph
+qa kg trace <node-id>         # Trace requirement
+
+# TDD workflow
+qa tdd red <test_file>        # Run RED phase
+qa tdd green <test_file>      # Run GREEN phase
+qa tdd refactor <test_file>   # Run REFACTOR phase
+```
+
+---
+
+## Project Structure
+
+After installation, your project should look like:
+
+```
+my-project/
+├── AGENTS.md                 # AI agent instructions
+├── opencode.json             # OpenCode config
+├── .opencode/
+│   ├── plugins/
+│   │   ├── quickagents.ts    # Unified plugin
+│   │   └── package.json
+│   ├── agents/               # 15 agent configs
+│   │   ├── yinglong-init.md
+│   │   ├── boyi-consult.md
+│   │   └── ...
+│   ├── skills/               # 24 skill configs
+│   │   ├── tdd-workflow-skill/
+│   │   ├── code-review-skill/
+│   │   └── ...
+│   ├── config/
+│   │   ├── models.json       # Model configuration
+│   │   └── lsp-config.json   # LSP configuration
+│   ├── commands/
+│   │   ├── start-work.md
+│   │   └── ultrawork.md
+│   └── memory/
+│       ├── MEMORY.md
+│       └── TASKS.md
+├── Docs/
+│   ├── MEMORY.md
+│   ├── TASKS.md
+│   ├── DESIGN.md
+│   └── INDEX.md
+└── .quickagents/
+    └── unified.db            # SQLite database
+```
+
+---
+
+## Usage
+
+### Start QuickAgents
+
+In OpenCode, send one of these triggers:
+
+```
+启动QuickAgent
+启动QuickAgents
+启动QA
+Start QA
+```
+
+### Common Workflows
+
+**New Project:**
+```
+启动QuickAgent
+# Follow the interactive prompts
+```
+
+**Continue Development:**
+```
+/start-work
+# Resume from last session
+```
+
+**Code Review:**
+```
+@code-reviewer Review the authentication module
+```
+
+**TDD Development:**
+```
+@yinglong-init Implement user authentication with TDD
+```
+
+---
+
+## Troubleshooting
+
+### Python Not Found
+
+```bash
+# Windows: Check PATH
+where python
+
+# macOS/Linux: Check PATH
+which python3
+
+# If not found, reinstall Python with "Add to PATH" option
+```
+
+### pip Install Fails
+
+```bash
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Use --user flag
+pip install --user quickagents
+
+# Clear cache
+pip cache purge
+pip install quickagents --no-cache-dir
+```
+
+### Plugin Not Loading
+
+```bash
+# Check plugin exists
+ls .opencode/plugins/quickagents.ts
+
+# Check opencode.json
+cat opencode.json
+
+# Should show:
+# {"plugin": ["@coder-beam/quickagents"]}
+```
+
+### Database Errors
+
+```bash
+# Reset database
+rm -rf .quickagents/
+python -c "from quickagents import UnifiedDB; UnifiedDB()"
+```
+
+### CLI Not Found
+
+```bash
+# Check installation
+pip show quickagents
+
+# Reinstall
+pip install --force-reinstall quickagents
+
+# Check PATH
+qa --help
+```
+
+---
+
+## Upgrade
+
+```bash
+# Upgrade Python package
+pip install --upgrade quickagents
+
+# Update OpenCode config
+curl -fsSL https://codeload.github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tar.gz/main | tar -xz --strip-components=1 Quick-Agents-for-Z.AI-GLM/.opencode
+```
+
+---
+
+## Uninstall
+
+```bash
+# Remove Python package
+pip uninstall quickagents
+
+# Remove config files
+rm -rf .opencode/ AGENTS.md opencode.json
+
+# Remove database
+rm -rf .quickagents/
+```
+
+---
+
+## Support
+
+- **GitHub**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
+- **Issues**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/issues
+- **PyPI**: https://pypi.org/project/quickagents/
+
+---
+
+# QuickAgents 安装指南
+
+## 概述
+
+QuickAgents 由两部分组成：
+
+| 组件 | 描述 | 安装方式 |
+|------|------|----------|
+| **Python包** | 核心功能（UnifiedDB、KnowledgeGraph、CLI等） | `pip install quickagents` |
+| **OpenCode配置** | 代理、技能、插件、配置文件 | 从GitHub下载 |
+
+## 前置要求
+
+| 要求 | 最低版本 | 推荐版本 | 检查命令 |
+|------|----------|----------|----------|
+| Python | 3.9 | 3.11+ | `python --version` |
+| pip | 21.0 | 最新 | `pip --version` |
+| Git | 2.0 | 最新 | `git --version` |
+| OpenCode | 1.0+ | 最新 | `opencode --version` |
+
+## 快速安装（3步）
+
+### 步骤1：安装Python包
+
+```bash
+pip install quickagents
+```
+
+### 步骤2：下载OpenCode配置
+
+```bash
+# 在项目根目录执行
+curl -fsSL https://codeload.github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tar.gz/main | tar -xz --strip-components=1 Quick-Agents-for-Z.AI-GLM/.opencode
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/opencode.json -o opencode.json
+```
+
+### 步骤3：验证安装
+
+```bash
+# 检查Python包
+python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
+
+# 检查CLI
+qa --help
+
+# 检查OpenCode配置
+ls .opencode/plugins/quickagents.ts
+```
+
+**完成！** 现在可以开始使用QuickAgents：
+
+```
+启动QuickAgent
+```
+
+---
+
+## 详细安装步骤
+
+### 1. 环境检测
+
+**Windows:**
+```bash
+python --version
+pip --version
+```
+
+**macOS/Linux:**
+```bash
+python3 --version
+pip3 --version
+```
+
+**如果Python未安装：**
+
+<details>
+<summary>Windows安装</summary>
+
+```powershell
+# 方式1：官方安装包（推荐）
+# 1. 访问 https://www.python.org/downloads/
+# 2. 下载Python 3.12.x
+# 3. 安装时勾选 "Add Python to PATH"
+
+# 方式2：winget
+winget install Python.Python.3.12
+
+# 方式3：Scoop
+scoop install python
+```
+</details>
+
+<details>
+<summary>macOS安装</summary>
+
+```bash
+# 方式1：Homebrew（推荐）
+brew install python@3.12
+
+# 方式2：官方安装包
+# 访问 https://www.python.org/downloads/macos/
+```
+</details>
+
+<details>
+<summary>Linux安装</summary>
+
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install python3.12 python3-pip
+
+# Fedora/RHEL
+sudo dnf install python3.12 python3-pip
+
+# Arch Linux
+sudo pacman -S python python-pip
+```
+</details>
+
+### 2. 安装Python包
+
+```bash
+# 基础安装
+pip install quickagents
+
+# 包含Windows功能
+pip install quickagents[windows]
+
+# 完整安装
+pip install quickagents[full]
+
+# 开发模式
+git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
+cd Quick-Agents-for-Z.AI-GLM
+pip install -e .
+```
+
+### 3. 下载OpenCode配置
+
+**方式A：使用curl（推荐）**
+
+```bash
+# 创建项目目录
+mkdir my-project && cd my-project
+
+# 下载.opencode目录
+curl -fsSL https://codeload.github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tar.gz/main | tar -xz --strip-components=1 Quick-Agents-for-Z.AI-GLM/.opencode
+
+# 下载必要文件
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/opencode.json -o opencode.json
+
+# 创建Docs目录
+mkdir -p Docs
+touch Docs/MEMORY.md Docs/TASKS.md Docs/DESIGN.md Docs/INDEX.md
+```
+
+**方式B：使用Git克隆**
+
+```bash
+# 克隆仓库
+git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git temp-qa
+
+# 复制到你的项目
+cp -r temp-qa/.opencode ./
+cp temp-qa/AGENTS.md ./
+cp temp-qa/opencode.json ./
+mkdir -p Docs
+cp -r temp-qa/Docs/* Docs/
+
+# 清理
+rm -rf temp-qa
+```
+
+### 4. 配置模型
+
+创建 `.opencode/config/models.json`:
+
+```json
+{
+  "primary": "glm-5",
+  "categories": {
+    "quick": "glm-5-flash",
+    "planning": "glm-5",
+    "coding": "glm-5"
+  }
+}
+```
+
+### 5. 初始化数据库
+
+```bash
+# 初始化UnifiedDB
+python -c "from quickagents import UnifiedDB; db = UnifiedDB(); print('数据库已初始化')"
+
+# 安装Git钩子（可选）
+qa hooks install
+```
+
+### 6. 验证安装
+
+```bash
+# 1. 检查Python包
+python -c "
+from quickagents import __version__, UnifiedDB, KnowledgeGraph
+print(f'QuickAgents v{__version__}')
+db = UnifiedDB()
+kg = KnowledgeGraph()
+print('所有模块导入成功')
+"
+
+# 2. 检查CLI
+qa --help
+qa stats
+
+# 3. 检查OpenCode配置
+test -f AGENTS.md && echo "✅ AGENTS.md"
+test -f opencode.json && echo "✅ opencode.json"
+test -d .opencode && echo "✅ .opencode/"
+test -f .opencode/plugins/quickagents.ts && echo "✅ 插件"
+test -d .opencode/agents && echo "✅ 代理 ($(ls .opencode/agents/*.md 2>/dev/null | wc -l) 个文件)"
+test -d .opencode/skills && echo "✅ 技能 ($(ls -d .opencode/skills/*/ 2>/dev/null | wc -l) 个目录)"
+```
+
+---
+
+## CLI命令参考
+
+```bash
+# 数据库操作
+qa stats                      # 显示统计信息
+qa sync                       # 同步SQLite到Markdown
+qa memory get <key>           # 获取记忆
+qa memory set <key> <value>   # 设置记忆
+qa memory search <query>      # 搜索记忆
+
+# 任务管理
+qa tasks list                 # 列出任务
+qa tasks add <id> <name>      # 添加任务
+
+# 进化系统
+qa evolution status           # 显示进化状态
+qa evolution optimize         # 执行优化
+
+# Git钩子
+qa hooks install              # 安装Git钩子
+qa hooks status               # 检查钩子状态
+
+# 知识图谱
+qa kg search <query>          # 搜索知识图谱
+qa kg trace <node-id>         # 追踪需求
+
+# TDD工作流
+qa tdd red <test_file>        # 运行RED阶段
+qa tdd green <test_file>      # 运行GREEN阶段
+qa tdd refactor <test_file>   # 运行REFACTOR阶段
+```
+
+---
+
+## 使用方法
+
+### 启动QuickAgents
+
+在OpenCode中发送以下触发词之一：
+
+```
+启动QuickAgent
+启动QuickAgents
+启动QA
+Start QA
+```
+
+### 常用工作流
+
+**新项目：**
+```
+启动QuickAgent
+# 按照交互提示操作
+```
+
+**继续开发：**
+```
+/start-work
+# 从上次会话恢复
+```
+
+**代码审查：**
+```
+@code-reviewer 审查认证模块
+```
+
+**TDD开发：**
+```
+@yinglong-init 使用TDD实现用户认证
+```
 
 ---
 
 ## 故障排查
 
-### 问题1：OpenCode无法识别AGENTS.md
+### 找不到Python
 
-**解决方案**：
 ```bash
-# 确保AGENTS.md在项目根目录
-ls -la AGENTS.md
+# Windows：检查PATH
+where python
 
-# 确保文件编码正确
-file AGENTS.md  # 应显示: UTF-8 Unicode text
+# macOS/Linux：检查PATH
+which python3
+
+# 如果找不到，重新安装Python并勾选"Add to PATH"
 ```
 
-### 问题2：代理无法启动
+### pip安装失败
 
-**解决方案**：
 ```bash
-# 检查.opencode目录结构
-ls -la .opencode/agents/
-ls -la .opencode/skills/
+# 升级pip
+python -m pip install --upgrade pip
 
-# 验证JSON配置
-cat .opencode/config/models.json | python -m json.tool
+# 使用--user标志
+pip install --user quickagents
+
+# 清除缓存
+pip cache purge
+pip install quickagents --no-cache-dir
 ```
 
-### 问题3：模型调用失败
+### 插件未加载
 
-**解决方案**：
-1. 检查models.json配置是否正确
-2. 确认订阅状态有效
-3. 尝试使用fallback模型
+```bash
+# 检查插件是否存在
+ls .opencode/plugins/quickagents.ts
+
+# 检查opencode.json
+cat opencode.json
+
+# 应该显示：
+# {"plugin": ["@coder-beam/quickagents"]}
+```
+
+### 数据库错误
+
+```bash
+# 重置数据库
+rm -rf .quickagents/
+python -c "from quickagents import UnifiedDB; UnifiedDB()"
+```
+
+### CLI未找到
+
+```bash
+# 检查安装
+pip show quickagents
+
+# 重新安装
+pip install --force-reinstall quickagents
+
+# 检查PATH
+qa --help
+```
 
 ---
 
-## 下一步
+## 升级
 
-1. **阅读用户指南**：`Docs/USER_GUIDE.md`
-2. **了解Agent系统**：`Docs/AGENT_GUIDE.md`
-3. **查看示例代码**：`Docs/EXAMPLES.md`
+```bash
+# 升级Python包
+pip install --upgrade quickagents
+
+# 更新OpenCode配置
+curl -fsSL https://codeload.github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tar.gz/main | tar -xz --strip-components=1 Quick-Agents-for-Z.AI-GLM/.opencode
+```
 
 ---
 
-*文档版本: v2.1.1 | 更新时间: 2026-03-27*
+## 卸载
+
+```bash
+# 移除Python包
+pip uninstall quickagents
+
+# 移除配置文件
+rm -rf .opencode/ AGENTS.md opencode.json
+
+# 移除数据库
+rm -rf .quickagents/
+```
+
+---
+
+## 支持
+
+- **GitHub**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
+- **问题反馈**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/issues
+- **PyPI**: https://pypi.org/project/quickagents/

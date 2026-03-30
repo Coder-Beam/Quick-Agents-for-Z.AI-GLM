@@ -1,10 +1,20 @@
 ---
-skill_name: lsp-ast-skill
-version: 1.0.0
-description: LSP和AST-Grep集成技能 - 智能诊断、代码搜索、重构
+name: lsp-ast-skill
+description: |
+  LSP and AST-Grep integration skill for intelligent diagnostics,
+  code pattern search, and automated refactoring.
+license: MIT
+allowed-tools:
+  - read
+  - write
+  - edit
+  - bash
 dependencies:
   - code-review-skill
-tags: [lsp, ast, diagnostics, refactoring, code-analysis]
+metadata:
+  category: development
+  priority: medium
+  version: 1.0.0
 ---
 
 # LSP + AST-Grep Skill

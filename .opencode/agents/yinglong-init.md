@@ -40,6 +40,146 @@ permission:
 - 根据团队规模推荐合适架构
 - 根据复杂度估算合理时间线
 
+## ⚠️ Python环境检测（Step 0 - 必需）
+
+> **执行时机**: 在任何其他步骤之前，首先检测Python环境
+
+### 检测流程
+
+```
+启动QuickAgent
+    ↓
+Step 0: Python环境检测
+    ├─ 检测 python --version / python3 --version
+    ├─ 检测 pip --version / pip3 --version
+    └─ 检测 Python版本 >= 3.9
+        ├─ 通过 → 继续后续步骤
+        └─ 失败 → 显示安装引导
+```
+
+### AI执行检测命令
+
+```bash
+# Windows优先检测python，macOS/Linux优先检测python3
+python --version 2>&1 || python3 --version 2>&1
+pip --version 2>&1 || pip3 --version 2>&1
+```
+
+### 版本要求
+
+| 组件 | 最低版本 | 推荐版本 | 原因 |
+|------|----------|----------|------|
+| Python | 3.9 | 3.11+ | quickagents使用match语法 |
+| pip | 21.0 | 最新 | 依赖解析 |
+
+### 检测失败时的引导
+
+#### Windows用户
+
+```markdown
+## ⚠️ Python环境未检测到
+
+QuickAgents需要Python 3.9+才能运行。
+
+### 安装选项
+
+**选项1 - Microsoft Store（推荐新手）**:
+1. 打开Microsoft Store
+2. 搜索"Python 3.12"
+3. 点击"获取"安装
+4. 重启终端后重试
+
+**选项2 - 官方安装包**:
+1. 访问 https://www.python.org/downloads/
+2. 下载Python 3.12.x安装包
+3. 运行安装时勾选"Add Python to PATH"
+4. 安装完成后重启终端
+
+**选项3 - Scoop（推荐开发者）**:
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
+scoop install python
+```
+
+**选项4 - winget**:
+```powershell
+winget install Python.Python.3.12
+```
+
+安装完成后，请重新发送「启动QuickAgent」。
+```
+
+#### macOS用户
+
+```markdown
+## ⚠️ Python环境未检测到
+
+QuickAgents需要Python 3.9+才能运行。
+
+### 安装选项
+
+**选项1 - Homebrew（推荐）**:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install python@3.12
+```
+
+**选项2 - 官方安装包**:
+1. 访问 https://www.python.org/downloads/
+2. 下载macOS安装包
+3. 运行安装
+
+**选项3 - pyenv（多版本管理）**:
+```bash
+brew install pyenv
+pyenv install 3.12.0
+pyenv global 3.12.0
+```
+
+安装完成后，请重新发送「启动QuickAgent」。
+```
+
+#### Linux用户
+
+```markdown
+## ⚠️ Python环境未检测到
+
+QuickAgents需要Python 3.9+才能运行。
+
+### 安装选项
+
+**Ubuntu/Debian**:
+```bash
+sudo apt update
+sudo apt install python3.12 python3-pip
+```
+
+**Fedora/RHEL**:
+```bash
+sudo dnf install python3.12 python3-pip
+```
+
+**Arch Linux**:
+```bash
+sudo pacman -S python python-pip
+```
+
+安装完成后，请重新发送「启动QuickAgent」。
+```
+
+### 检测成功后继续
+
+```
+✅ Python环境检测通过
+   • Python版本: 3.12.x
+   • pip版本: 24.x
+
+→ 继续执行启动流程...
+```
+
+---
+
 ## 首次使用配置引导
 
 ### 触发时机

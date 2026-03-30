@@ -1,10 +1,18 @@
 ---
-skill_name: multi-model-skill
-version: 1.0.0
-description: 多模型协同技能 - 模型路由、Fallback机制、负载均衡
+name: multi-model-skill
+description: |
+  Multi-model collaboration skill providing intelligent model routing,
+  automatic fallback, load balancing, and cost optimization.
+license: MIT
+allowed-tools:
+  - read
+  - skill
 dependencies:
   - project-memory-skill
-tags: [multi-model, routing, fallback, load-balancing, optimization]
+metadata:
+  category: optimization
+  priority: medium
+  version: 1.0.0
 ---
 
 # Multi-Model Skill

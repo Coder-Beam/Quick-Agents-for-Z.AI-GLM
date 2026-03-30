@@ -278,10 +278,24 @@ evolution.check_periodic_trigger()  # 等同于 qa evolution status
 │                 启动QuickAgent 完整流程                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
+│  0. 【必需】Python环境检测                                    │
+│     ├─ 执行 python --version / python3 --version            │
+│     ├─ 执行 pip --version / pip3 --version                  │
+│     ├─ 检测版本 >= 3.9                                       │
+│     │   ├─ 通过 → 继续流程                                   │
+│     │   └─ 失败 → 显示安装引导（见下方）                      │
+│     └─ AI输出：「Python环境检测通过」或显示安装引导           │
+│                                                              │
 │  1. 读取并确认理解 AGENTS.md                                  │
 │     └─ AI输出：「已读取AGENTS.md，准备启动项目初始化流程」        │
 │                                                              │
-│  2. 智能判断项目场景（新增）                                   │
+│  2. 【关键】安装QuickAgents插件                               │
+│     ├─ 检查 .opencode/plugins/quickagents.ts 是否存在        │
+│     ├─ 不存在 → 从QuickAgents仓库复制                         │
+│     ├─ 执行 pip install quickagents（确保Python API可用）     │
+│     └─ AI输出：「QuickAgents插件已安装」                      │
+│                                                              │
+│  3. 智能判断项目场景                                          │
 │     ├─ 检查「项目需求.md」                                    │
 │     │   └─ 存在 → 新项目模式                                  │
 │     └─ 检查目录内容                                           │
@@ -290,33 +304,142 @@ evolution.check_periodic_trigger()  # 等同于 qa evolution status
 │             ├─ 检测项目类型和技术栈                           │
 │             └─ 询问用户意图（继续开发/重新开始）                │
 │                                                              │
-│  3. 根据场景执行相应流程                                       │
+│  4. 根据场景执行相应流程                                       │
 │     ├─ 新项目模式 → 7层互动询问卡                             │
 │     └─ 继续开发模式 → 加载现有文档和任务                       │
 │                                                              │
-│  4. 填充AGENTS.md中的项目信息占位符                           │
+│  5. 填充AGENTS.md中的项目信息占位符                           │
 │                                                              │
-│  5. 同步更新MEMORY.md中的Factual记忆                         │
+│  6. 同步更新MEMORY.md中的Factual记忆                         │
 │                                                              │
-│  6. AI分析所需Skills并搜索/创建                               │
+│  7. AI分析所需Skills并搜索/创建                               │
 │     ├─ 按优先级搜索5个来源                                    │
 │     ├─ 找到适配Skills → 确认后使用                            │
 │     └─ 未找到 → 确认后创建                                    │
 │                                                              │
-│  7. 初始化项目目录结构                                        │
+│  8. 初始化项目目录结构                                        │
 │     └─ 创建 Docs/ 及必需文档                                 │
 │                                                              │
-│  8. 分解需求为功能/模块（用户确认粒度）                        │
+│  9. 分解需求为功能/模块（用户确认粒度）                        │
 │                                                              │
-│  9. 为每个功能/模块创建文档                                   │
+│  10. 为每个功能/模块创建文档                                  │
 │     └─ TASKS.md / DESIGN.md / INDEX.md / MEMORY.md          │
 │                                                              │
-│  10. 输出跨会话衔接提示词                                     │
+│  11. 输出跨会话衔接提示词                                     │
 │                                                              │
-│  11. 开始执行第一个任务                                       │
+│  12. 开始执行第一个任务                                       │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### （二.1）Python环境检测详情
+
+**检测命令**:
+```bash
+# Windows
+python --version
+pip --version
+
+# macOS/Linux
+python3 --version
+pip3 --version
+```
+
+**版本要求**:
+| 组件 | 最低版本 | 推荐版本 |
+|------|----------|----------|
+| Python | 3.9 | 3.12+ |
+| pip | 21.0 | 24.0+ |
+
+**未安装时的引导**:
+
+#### Windows用户
+```markdown
+## Python安装引导
+
+QuickAgents需要Python 3.9+才能运行。
+
+### 方式1: 官方安装包（推荐）
+1. 访问 https://www.python.org/downloads/
+2. 下载Python 3.12.x安装包
+3. 安装时勾选 "Add Python to PATH"
+4. 重新打开终端验证: python --version
+
+### 方式2: Scoop包管理器
+scoop install python
+```
+
+#### macOS用户
+```markdown
+## Python安装引导
+
+### 方式1: Homebrew（推荐）
+brew install python@3.12
+
+### 方式2: 官方安装包
+访问 https://www.python.org/downloads/macos/
+```
+
+#### Linux用户
+```markdown
+## Python安装引导
+
+### Ubuntu/Debian
+sudo apt update && sudo apt install python3.12 python3-pip
+
+### Fedora/RHEL
+sudo dnf install python3.12 python3-pip
+
+### Arch Linux
+sudo pacman -S python python-pip
+```
+
+### （三）QuickAgents插件安装
+
+**插件位置**: `.opencode/plugins/quickagents.ts`
+
+**插件功能**（统一整合）:
+
+| 模块 | 功能 | Token节省 |
+|------|------|-----------|
+| FileManager Cache | 文件哈希检测，缓存未变文件 | 60-100% |
+| LoopDetector | 检测重复工具调用，防止死循环 | 100% |
+| Reminder | 工具调用计数、长时间运行提醒 | 间接 |
+| SkillEvolution | 自动触发Skills进化 | 0 |
+| FeedbackCollector | 自动收集错误和经验 | 0 |
+
+**安装命令**:
+
+```bash
+# 1. 确保quickagents已安装
+pip install quickagents
+
+# 2. 插件文件位于 .opencode/plugins/quickagents.ts
+# OpenCode会自动加载该目录下的插件
+
+# 3. 验证插件可用
+python -c "from quickagents import UnifiedDB; print('OK')"
+```
+
+**启用配置** (`opencode.json`):
+
+```json
+{
+  "plugin": ["@quickagents/unified"]
+}
+```
+
+**插件Hooks**:
+
+| Hook | 触发时机 | 功能 |
+|------|----------|------|
+| `tool.execute.before` | 工具执行前 | FileManager缓存检查、循环检测 |
+| `tool.execute.after` | 工具执行后 | 缓存更新、Skill使用记录 |
+| `file.watcher.updated` | 文件变化时 | 缓存失效 |
+| `session.status` | Session状态检查 | 长时间运行提醒 |
+| `session.error` | Session错误 | 错误收集 |
+| `session.deleted` | Session结束 | 状态清理 |
+| `command.executed` | 命令执行后 | Git提交触发进化 |
 
 ### （三）项目需求.md 支持规范
 

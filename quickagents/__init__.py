@@ -4,7 +4,7 @@ QuickAgents - AI Agent Enhancement Toolkit
 A Python package that provides local implementations of QuickAgents skills,
 reducing token consumption by handling common operations locally.
 
-Architecture (v2.3.0+):
+Architecture (v2.6.8):
 - SQLite主存储：高效查询，Token节省60%+
 - Markdown辅助备份：人类可读，Git版本控制
 - 双向同步：SQLite <-> Markdown
@@ -59,8 +59,8 @@ CLI Usage:
     qa progress              # 当前进度
 """
 
-__version__ = '2.3.0'
-__author__ = 'QuickAgents Team'
+__version__ = '2.6.8'
+__author__ = 'Coder-Beam'
 
 from .core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType, get_unified_db
 from .core.markdown_sync import MarkdownSync, get_markdown_sync
