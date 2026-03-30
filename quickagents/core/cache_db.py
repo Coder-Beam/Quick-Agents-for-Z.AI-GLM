@@ -483,8 +483,9 @@ class CacheDB:
     
     def _calculate_file_hash(self, path: str) -> str:
         """计算文件哈希"""
-        with open(path, 'r', encoding='utf-8') as f:
-            return self._calculate_hash(f.read())
+        from ..utils.encoding import read_file_utf8
+        content = read_file_utf8(path)
+        return self._calculate_hash(content)
     
     def _calculate_fingerprint(self, tool_name: str, tool_args: Dict) -> str:
         """计算工具调用指纹"""
