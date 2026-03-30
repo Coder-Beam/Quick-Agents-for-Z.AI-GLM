@@ -69,6 +69,7 @@ from ..core.git_hooks import GitHooks
 from ..skills.feedback_collector import FeedbackCollector
 from ..skills.tdd_workflow import TDDWorkflow, TDDPhase
 from ..skills.git_commit import GitCommit
+from ..utils.encoding import read_file_utf8, write_file_utf8
 
 
 def cmd_read(args):
@@ -554,8 +555,8 @@ def cmd_models(args):
         print(f"[FAIL] 配置文件不存在: {models_json_path}")
         return
     
-    with open(models_json_path, 'r', encoding='utf-8') as f:
-        config = json.load(f)
+    from ..utils.encoding import read_file_utf8
+    config = json.loads(read_file_utf8(str(models_json_path)))
     
     if args.action == 'show' or args.action == 'status':
         print("[Models] 当前模型配置")
@@ -683,8 +684,7 @@ def cmd_models(args):
                 if model == current_primary:
                     config['categories'][cat] = target
             
-            with open(models_json_path, 'w', encoding='utf-8') as f:
-                json.dump(config, f, indent=2, ensure_ascii=False)
+            write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
             
             print(f"[OK] 升级完成: {current_primary} -> {target}")
     
@@ -715,8 +715,7 @@ def cmd_models(args):
             config['lockModel'] = args.model
             config['default']['primary'] = args.model
         
-        with open(models_json_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
+        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
         
         print(f"[OK] 策略已切换: {strategy}")
     
@@ -736,8 +735,7 @@ def cmd_models(args):
         config['lockModel'] = model
         config['default']['primary'] = model
         
-        with open(models_json_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
+        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
         
         print(f"[OK] 已锁定模型: {model}")
     
@@ -746,8 +744,7 @@ def cmd_models(args):
         
         config['lockModel'] = None
         
-        with open(models_json_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
+        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
         
         print("[OK] 已解除锁定")
 

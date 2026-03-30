@@ -704,7 +704,9 @@ class UnifiedDB:
         if not os.path.exists(path):
             return True, None
         
-        current_hash = hashlib.md5(open(path, 'r', encoding='utf-8').read().encode()).hexdigest()[:16]
+        from ..utils.encoding import read_file_utf8
+        content = read_file_utf8(path)
+        current_hash = hashlib.md5(content.encode()).hexdigest()[:16]
         cached = self.get_file_cache(path)
         
         if cached is None:

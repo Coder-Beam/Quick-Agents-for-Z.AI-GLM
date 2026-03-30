@@ -739,8 +739,8 @@ class SkillEvolution:
             md_content = self._generate_skill_md(skill_name, history, stats)
             
             file_path = output_dir / f'{skill_name}.md'
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(md_content)
+            from ..utils.encoding import write_file_utf8
+            write_file_utf8(str(file_path), md_content)
             
             result['files_created'].append(str(file_path))
             result['skills_synced'] += 1

@@ -223,8 +223,8 @@ class KnowledgeExtractor:
             }
         
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            from ...utils.encoding import read_file_utf8
+            content = read_file_utf8(file_path)
         except PermissionError:
             return {
                 'success': False,

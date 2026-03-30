@@ -116,8 +116,8 @@ class FileManager:
             os.makedirs(dir_path, exist_ok=True)
         
         # 写入文件
-        with open(file_path, 'w', encoding='utf-8', newline='\n') as f:
-            f.write(content)
+        from ..utils.encoding import write_file_utf8
+        write_file_utf8(file_path, content)
         
         # 更新缓存
         self.cache.update(file_path, content)
@@ -249,8 +249,8 @@ class FileManager:
     
     def _read_file(self, file_path: str) -> str:
         """读取文件内容"""
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
+        from ..utils.encoding import read_file_utf8
+        return read_file_utf8(file_path)
     
     def _update_last_read(self, path: str, content: str) -> None:
         """更新最后读取记录"""
