@@ -28,55 +28,230 @@
 
 ---
 
-## 核心原则：Python API优先
+## 工具使用规范
 
-> **重要**: AI代理调用QuickAgents功能时，**必须使用Python API**，而非Bash命令。
+### 一、工具分类与使用原则
 
-### 为什么使用Python API
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    工具使用决策树                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  需要执行什么操作？                                          │
+│       │                                                     │
+│       ├─ 文件读写编辑 ──→ 使用 OpenCode原生工具              │
+│       │                     ├─ read (读取文件)              │
+│       │                     ├─ write (写入文件)             │
+│       │                     └─ edit (编辑文件)              │
+│       │                                                     │
+│       ├─ 内容搜索查找 ──→ 使用 OpenCode原生工具              │
+│       │                     ├─ grep (搜索内容)              │
+│       │                     └─ glob (查找文件)              │
+│       │                                                     │
+│       ├─ 命令执行 ──→ 使用 OpenCode原生bash工具              │
+│       │                 (仅限Git/npm/pip/用户要求)          │
+│       │                                                     │
+│       └─ QuickAgents功能 ──→ 使用 Python API (0 Token)      │
+│                              ├─ UnifiedDB (记忆系统)        │
+│                              ├─ LoopDetector (循环检测)     │
+│                              ├─ Reminder (事件提醒)         │
+│                              ├─ SkillEvolution (自我进化)   │
+│                              └─ KnowledgeGraph (知识图谱)   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-| 方面 | Python API | Bash命令 |
-|------|-----------|----------|
-| Token消耗 | 0 Token | 需要执行命令、读取输出 |
-| 执行效率 | 直接调用 | 需要启动子进程 |
-| 错误处理 | Python异常 | 需要解析输出 |
-| 数据传递 | 直接对象 | 需要序列化/反序列化 |
+### 二、OpenCode原生工具（主要使用）
 
-### 正确的使用方式
+**适用场景**：所有文件操作、内容搜索、命令执行
+
+| 工具 | 用途 | 使用示例 |
+|------|------|---------|
+| `read` | 读取文件 | `read(filePath="src/main.py")` |
+| `write` | 写入文件 | `write(filePath="src/main.py", content="...")` |
+| `edit` | 编辑文件 | `edit(filePath="src/main.py", oldString="x", newString="y")` |
+| `grep` | 搜索内容 | `grep(pattern="def main", include="*.py")` |
+| `glob` | 查找文件 | `glob(pattern="**/*.py")` |
+| `bash` | 执行命令 | `bash(command="git status")` |
+
+**执行检查清单**：
+- [ ] 文件操作 → 使用read/write/edit
+- [ ] 内容搜索 → 使用grep/glob
+- [ ] Git操作 → 使用bash执行git命令
+- [ ] 包安装 → 使用bash执行npm/pip命令
+
+### 三、QuickAgents Python API（增强功能）
+
+**适用场景**：记忆系统、循环检测、事件提醒、自我进化、知识图谱
+
+**必须使用Python API的场景**：
+
+| 场景 | 模块 | 代码示例 |
+|------|------|---------|
+| 记录/读取记忆 | UnifiedDB | `db.set_memory('key', 'value', MemoryType.FACTUAL)` |
+| 检测循环模式 | LoopDetector | `detector.is_looping()` |
+| 检查提醒 | Reminder | `reminder.check_alerts()` |
+| 任务完成触发 | SkillEvolution | `evolution.on_task_complete(task_info)` |
+| Git提交触发 | SkillEvolution | `evolution.on_git_commit()` |
+| 知识图谱操作 | KnowledgeGraph | `db.knowledge.create_node(...)` |
+
+**执行代码模板**：
 
 ```python
-# 正确：AI代理使用Python API
-from quickagents import get_evolution, FeedbackType, MemoryType
+# ===== 记忆系统 =====
+from quickagents import UnifiedDB, MemoryType, TaskStatus, FeedbackType
+
+db = UnifiedDB()
+
+# 设置记忆
+db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
+db.set_memory('current.task', '实现认证', MemoryType.WORKING)
+db.set_memory('lesson.001', '避免过度工程', MemoryType.EXPERIENTIAL, category='pitfalls')
+
+# 获取记忆
+name = db.get_memory('project.name')
+
+# 搜索记忆
+results = db.search_memory('认证', MemoryType.EXPERIENTIAL)
+
+# ===== 循环检测 =====
+from quickagents import LoopDetector
+
+detector = LoopDetector()
+
+# 记录工具调用
+detector.record_tool_call('read', 'file.py')
+
+# 检测循环
+if detector.is_looping():
+    patterns = detector.get_loop_patterns()
+    # 触发用户确认
+
+# ===== 事件提醒 =====
+from quickagents import Reminder
+
+reminder = Reminder()
+
+# 记录工具调用
+reminder.record_tool_call()
+
+# 检查提醒
+alerts = reminder.check_alerts()
+for alert in alerts:
+    print(f"[{alert['level']}] {alert['message']}")
+
+# ===== 自我进化 =====
+from quickagents import get_evolution
 
 evolution = get_evolution()
 
-# 记录反馈
-evolution.db.add_feedback(FeedbackType.BUG, '描述', project_name='my-project')
+# 任务完成时
+evolution.on_task_complete({
+    'task_id': 'T001',
+    'task_name': '实现认证',
+    'skills_used': ['tdd-workflow-skill'],
+    'success': True,
+    'duration_ms': 45000
+})
 
-# 设置记忆
-evolution.db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
+# Git提交时
+evolution.on_git_commit()
 
-# 任务完成
-evolution.on_task_complete({'task_id': 'T001', 'success': True})
+# 检查定期优化
+if evolution.check_periodic_trigger():
+    result = evolution.run_periodic_optimization()
+
+# ===== 知识图谱 =====
+from quickagents import UnifiedDB, NodeType, EdgeType
+
+db = UnifiedDB()
+
+# 创建节点
+node = db.knowledge.create_node(
+    node_type=NodeType.REQUIREMENT,
+    title='用户认证需求',
+    content='实现JWT认证'
+)
+
+# 创建边
+db.knowledge.create_edge(
+    source_id=node.id,
+    target_id='T001',
+    edge_type=EdgeType.TRACES_TO
+)
+
+# 搜索
+results = db.knowledge.search('认证')
+
+# 发现关系
+relations = db.knowledge.discover_relations(node.id)
+
+# 追踪需求
+trace = db.knowledge.trace_requirement(node.id)
 ```
 
-### 错误的使用方式
+### 四、禁止使用Bash命令调用QuickAgents CLI
 
-```bash
-# 错误：AI代理不应使用Bash命令
-qa feedback bug '描述'
-qa memory set project.name 'MyProject'
+**红线**：AI代理**绝对禁止**使用Bash命令调用QuickAgents CLI
+
+| 命令 | 状态 | 替代方案 |
+|------|------|---------|
+| `qa memory get xxx` | ❌ 禁止 | `db.get_memory('xxx')` |
+| `qa memory set xxx yyy` | ❌ 禁止 | `db.set_memory('xxx', 'yyy', MemoryType.FACTUAL)` |
+| `qa stats` | ❌ 禁止 | `db.get_stats()` |
+| `qa loop check` | ❌ 禁止 | `detector.get_loop_patterns()` |
+| `qa evolution status` | ❌ 禁止 | `evolution = get_evolution(); evolution.check_periodic_trigger()` |
+| `git add/commit/push` | ✅ 允许 | `bash(command="git add . && git commit -m 'msg'")` |
+| `pip install xxx` | ✅ 允许 | `bash(command="pip install xxx")` |
+
+### 五、执行检查清单
+
+**每次操作前必须检查**：
+
+```
+操作类型检查：
+□ 文件读取 → 使用 read 工具
+□ 文件写入 → 使用 write 工具
+□ 文件编辑 → 使用 edit 工具
+□ 内容搜索 → 使用 grep 工具
+□ 文件查找 → 使用 glob 工具
+
+QuickAgents功能检查：
+□ 记忆操作 → 使用 UnifiedDB Python API
+□ 循环检测 → 使用 LoopDetector Python API
+□ 事件提醒 → 使用 Reminder Python API
+□ 自我进化 → 使用 SkillEvolution Python API
+□ 知识图谱 → 使用 KnowledgeGraph Python API
+
+禁止操作检查：
+□ 是否想用 qa xxx 命令？ → 改用 Python API
+□ 是否想用 bash 执行 qa？ → 改用 Python API
 ```
 
-### 例外情况
-
-仅以下情况可以使用Bash命令：
-1. **Git操作** - `git add`, `git commit`, `git push`
-2. **npm/pip安装** - 包管理命令
-3. **用户明确要求** - 直接在终端执行
-
-### CLI命令的用途
+### 六、CLI命令的用途
 
 CLI命令（`qa xxx`）是给**终端用户**使用的，不是给AI代理使用的。
+
+**终端用户使用场景**：
+```bash
+# 用户在终端手动执行
+qa stats                 # 查看统计
+qa sync                  # 同步到Markdown
+qa evolution status      # 查看进化状态
+qa hooks install         # 安装Git钩子
+```
+
+**AI代理使用场景**：
+```python
+# AI代理在代码中执行
+from quickagents import UnifiedDB, get_evolution
+
+db = UnifiedDB()
+stats = db.get_stats()  # 等同于 qa stats
+
+evolution = get_evolution()
+evolution.check_periodic_trigger()  # 等同于 qa evolution status
+```
 
 ---
 
