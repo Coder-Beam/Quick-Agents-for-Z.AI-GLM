@@ -639,8 +639,8 @@ def cmd_models(args):
         
         current_primary = config.get('default', {}).get('primary', '')
         
-        if args.to:
-            target = args.to
+        if args.target:
+            target = args.target
         else:
             target = upgrade_path.get(current_primary, '')
         
@@ -828,7 +828,7 @@ def main():
     # git 命令
     p_git = subparsers.add_parser('git', help='Git提交管理')
     p_git.add_argument('action', choices=['status', 'check', 'commit', 'push'], help='操作')
-    p_git.add_argument('type', nargs='?', help='提交类型')
+    p_git.add_argument('commit_type', nargs='?', help='提交类型')
     p_git.add_argument('scope', nargs='?', help='范围')
     p_git.add_argument('subject', nargs='?', help='主题')
     p_git.set_defaults(func=cmd_git)
@@ -849,14 +849,13 @@ def main():
     # ==================== 模型管理命令 ====================
     
     # models 命令
-    p_models = subparsers.add_parser('models', help='模型配置管理')
-    p_models.add_argument('action', choices=['show', 'status', 'list', 'check-updates', 'upgrade', 'strategy', 'lock', 'unlock'], help='操作')
+    p_models.add_argument('action', choices=['show', 'list', 'check-updates', 'upgrade', 'strategy', 'lock', 'unlock'], help='操作')
     p_models.add_argument('--agent', '-a', help='查看特定Agent的模型')
-    p_models.add_argument('--to', '-t', help='升级目标版本')
+    p_models.add_argument('--target', help='升级目标版本')
     p_models.add_argument('--dry-run', '-d', action='store_true', help='预览变更')
     p_models.add_argument('--force', '-f', action='store_true', help='强制执行')
-    p_models.add_argument('--strategy-name', '-s', dest=str, help='策略名称')
-    p_models.add_argument('--model', '-m', dest=str, help='模型名称')
+    p_models.add_argument('--strategy-name', dest='strategy_name', help='策略名称')
+    p_models.add_argument('--model', dest='model_name', help='模型名称')
     p_models.add_argument('model_name', nargs='?', help='模型名称')
     p_models.set_defaults(func=cmd_models)
     

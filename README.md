@@ -182,6 +182,16 @@ qa hooks status
 qa kg create-node --type requirement --title "需求标题"
 qa kg search <query>
 qa kg trace <node-id>
+
+# 模型配置（ZhipuAI GLM Coding Plan）
+qa models show                    # 查看当前配置
+qa models list                    # 列出可用模型
+qa models check-updates           # 检查GLM更新
+qa models upgrade --dry-run       # 预览升级
+qa models upgrade --force         # 执行升级
+qa models strategy coding-plan    # 切换到Coding Plan
+qa models lock GLM-5              # 锁定单一模型
+qa models unlock                  # 解除锁定
 ```
 
 ## 🏗️ 架构
@@ -222,6 +232,7 @@ Docs/                    # Markdown辅助备份
 | SkillEvolution | Skills自我进化 | 0 |
 | KnowledgeGraph | 知识图谱 | 80%+ |
 | Browser | 浏览器自动化 | 50%+ |
+| Encoding | 统一UTF-8编码（跨平台） | 0 |
 
 ## 🧪 测试
 
@@ -423,6 +434,16 @@ qa hooks status
 qa kg create-node --type requirement --title "Requirement Title"
 qa kg search <query>
 qa kg trace <node-id>
+
+# Model configuration (ZhipuAI GLM Coding Plan)
+qa models show                    # View current config
+qa models list                    # List available models
+qa models check-updates           # Check GLM updates
+qa models upgrade --dry-run       # Preview upgrade
+qa models upgrade --force         # Execute upgrade
+qa models strategy coding-plan    # Switch to Coding Plan
+qa models lock GLM-5              # Lock single model
+qa models unlock                  # Unlock
 ```
 
 ## 🏗️ Architecture
@@ -463,6 +484,7 @@ Docs/                    # Markdown backup
 | SkillEvolution | Skills self-evolution | 0 |
 | KnowledgeGraph | Knowledge graph | 80%+ |
 | Browser | Browser automation | 50%+ |
+| Encoding | Unified UTF-8 encoding (cross-platform) | 0 |
 
 ## 🧪 Testing
 
