@@ -118,7 +118,17 @@ browser.close()
 
 ## 🚀 安装
 
-### 基础安装
+### 一句话安装（推荐）
+
+直接告诉你的LLM代理工具（如OpenCode、Claude等）：
+
+```
+请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装QuickAgents
+```
+
+代理会自动完成所有安装步骤。
+
+### 手动安装
 
 ```bash
 pip install quickagents
@@ -349,7 +359,17 @@ browser.close()
 
 ## 🚀 Installation
 
-### Basic Installation
+### One-Line Install (Recommended)
+
+Tell your LLM agent tool (e.g., OpenCode, Claude):
+
+```
+Follow the instructions at https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md to install QuickAgents
+```
+
+The agent will automatically complete all installation steps.
+
+### Manual Installation
 
 ```bash
 pip install quickagents
