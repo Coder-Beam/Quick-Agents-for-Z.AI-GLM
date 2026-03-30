@@ -729,10 +729,70 @@ Docs/
    - 支持紧急任务插队，但需用户明确确认
    - 插队任务完成后，恢复原任务执行
 
-3. **跨会话衔接原则**：
-   - **必须仅通过读取 `MEMORY.md` 文件**了解项目状态
-   - 在开始新会话的第一个任务前，必须先读取 `MEMORY.md` 文件
-   - 不依赖压缩的会话上下文
+ 3. **跨会话衔接原则**：
+    - **必须仅通过读取 `MEMORY.md` 文件**了解项目状态
+    - 在开始新会话的第一个任务前，必须先读取 `MEMORY.md` 文件
+    - 不依赖压缩的会话上下文
+
+ 4. **记忆文件同步规范（重要）**：
+    
+    > ⚠️ **禁止直接使用 write/edit 工具修改 Docs/MEMORY.md**
+    
+    QuickAgents 采用 **SQLite 为主存储，Markdown 为辅助备份** 的架构：
+    
+    ```
+    数据流向：
+    ┌─────────────────────────────────────────────────────────────┐
+    │                                                             │
+    │   AI代理 ──set_memory()──> SQLite ──sync──> MEMORY.md     │
+    │                              │                              │
+    │                              ↓                              │
+    │                         主存储                              │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
+    ```
+    
+    **正确更新记忆的方式**：
+    
+    ```python
+    # 方式1: 使用 UnifiedDB（推荐）
+    from quickagents import UnifiedDB, MemoryType, MarkdownSync
+    
+    db = UnifiedDB()
+    
+    # 设置记忆（自动写入SQLite）
+    db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
+    db.set_memory('current.task', '实现认证', MemoryType.WORKING)
+    db.set_memory('lesson.001', '避免过度工程', MemoryType.EXPERIENTIAL)
+    
+    # 同步到Markdown（可选，通常在任务完成或Git提交时执行）
+    sync = MarkdownSync(db)
+    sync.sync_memory()  # 同步记忆
+    sync.sync_all()     # 同步所有
+    ```
+    
+    ```bash
+    # 方式2: 使用CLI命令
+    qa memory set project.name MyProject
+    qa sync memory
+    ```
+    
+    **为什么不能直接 write MEMORY.md？**
+    
+    1. **数据一致性**：直接 write 会绕过 SQLite，导致数据不一致
+    2. **同步覆盖**：`qa sync` 会从 SQLite 生成内容覆盖 MEMORY.md
+    3. **丢失数据**：直接 write 的内容可能在同步时被覆盖丢失
+    
+    **允许直接 write 的文件**：
+    - ✅ Docs/DESIGN.md
+    - ✅ Docs/INDEX.md
+    - ✅ Docs/TASKS.md（但推荐使用 db.add_task()）
+    - ✅ 其他项目文档
+    
+    **禁止直接 write 的文件**：
+    - ❌ Docs/MEMORY.md（必须通过 UnifiedDB）
+    - ❌ .quickagents/boulder.json（必须通过 UnifiedDB）
+    - ❌ .quickagents/feedback/*.md（必须通过 UnifiedDB）
 
 ---
 

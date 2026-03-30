@@ -101,6 +101,15 @@ from .knowledge_graph import (
 # Windows脚本替代工具（可选依赖）
 from .utils.script_helper import ScriptHelper
 
+# 记忆辅助工具（v2.6.8+）
+from .utils.memory_helper import (
+    update_memory,
+    update_memories,
+    add_experiential_memory,
+    update_working_memory,
+    sync_all_memory
+)
+
 # 浏览器自动化（可选依赖）
 from .browser import Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest
 
@@ -137,6 +146,12 @@ __all__ = [
     'get_git_commit',
     # Windows script helper (optional)
     'ScriptHelper',
+    # Memory helper (v2.6.8+)
+    'update_memory',
+    'update_memories',
+    'add_experiential_memory',
+    'update_working_memory',
+    'sync_all_memory',
     # Browser automation
     'Browser',
     'BrowserBackend',
