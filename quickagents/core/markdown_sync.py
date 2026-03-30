@@ -59,22 +59,76 @@ class MarkdownSync:
         # 确保目录存在
         self.docs_dir.mkdir(parents=True, exist_ok=True)
         self.quickagents_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 冲突检测器
+        from ..utils.sync_conflict import SyncConflictDetector
+        self.conflict_detector = SyncConflictDetector(
+            str(self.docs_dir), str(self.quickagents_dir)
+        )
     
-    def sync_all(self) -> Dict[str, bool]:
-        """同步所有表到Markdown"""
+    def sync_all(self, check_conflicts: bool = True, force: bool = False) -> Dict[str, Any]:
+        """
+        同步所有表到Markdown
+        
+        Args:
+            check_conflicts: 是否检查冲突（默认True）
+            force: 是否强制同步，忽略冲突（默认False）
+        
+        Returns:
+            结果字典，包含同步状态和冲突信息
+        """
+        # 检查冲突
+        conflicts = []
+        if check_conflicts and not force:
+            conflicts = self.conflict_detector.check_conflicts()
+            if conflicts:
+                # 返回冲突信息，不执行同步
+                return {
+                    'success': False,
+                    'conflicts': conflicts,
+                    'conflict_report': self.conflict_detector.get_conflict_report(),
+                    'message': '检测到文件冲突，请使用 force=True 强制同步或先处理冲突'
+                }
+        
+        # 执行同步
         results = {
-            'memory': self.sync_memory(),
-            'tasks': self.sync_tasks(),
-            'decisions': self.sync_decisions(),
-            'progress': self.sync_progress(),
-            'feedback': self.sync_feedback()
+            'memory': self.sync_memory(False),
+            'tasks': self.sync_tasks(False),
+            'decisions': self.sync_decisions(False),
+            'progress': self.sync_progress(False),
+            'feedback': self.sync_feedback(False)
         }
-        return results
+        
+        # 记录同步状态
+        self.conflict_detector.record_all_sync_states()
+        
+        return {
+            'success': True,
+            'results': results,
+            'conflicts': conflicts,
+            'message': '同步完成'
+        }
     
     # ==================== 三维记忆同步 ====================
     
-    def sync_memory(self) -> bool:
-        """同步三维记忆到MEMORY.md"""
+    def sync_memory(self, check_conflicts: bool = True) -> bool:
+        """
+        同步三维记忆到MEMORY.md
+        
+        Args:
+            check_conflicts: 是否检查冲突
+        
+        Returns:
+            是否成功
+        """
+        # 检查冲突
+        if check_conflicts:
+            conflicts = self.conflict_detector.check_conflicts(['memory'])
+            if conflicts:
+                print(f"[WARN] 检测到冲突: {conflicts[0]['reason']}")
+                print("  使用 sync_memory(check_conflicts=False) 强制同步")
+                return False
+        
         try:
             # 获取所有记忆
             factual = self.db.get_memories_by_type(MemoryType.FACTUAL)
@@ -87,6 +141,9 @@ class MarkdownSync:
             # 写入文件
             memory_path = self.docs_dir / 'MEMORY.md'
             memory_path.write_text(content, encoding='utf-8')
+            
+            # 记录同步状态
+            self.conflict_detector.record_sync_state('memory')
             
             return True
         except Exception as e:
@@ -180,8 +237,13 @@ class MarkdownSync:
     
     # ==================== 任务管理同步 ====================
     
-    def sync_tasks(self) -> bool:
-        """同步任务到TASKS.md"""
+    def sync_tasks(self, record_state: bool = True) -> bool:
+        """
+        同步任务到TASKS.md
+        
+        Args:
+            record_state: 是否记录同步状态
+        """
         try:
             # 获取所有任务
             all_tasks = self.db.get_tasks()
@@ -196,6 +258,10 @@ class MarkdownSync:
             # 写入文件
             tasks_path = self.docs_dir / 'TASKS.md'
             tasks_path.write_text(content, encoding='utf-8')
+            
+            # 记录同步状态
+            if record_state:
+                self.conflict_detector.record_sync_state('tasks')
             
             return True
         except Exception as e:
@@ -287,14 +353,23 @@ class MarkdownSync:
     
     # ==================== 决策日志同步 ====================
     
-    def sync_decisions(self) -> bool:
-        """同步决策日志到DECISIONS.md"""
+    def sync_decisions(self, record_state: bool = True) -> bool:
+        """
+        同步决策日志到DECISIONS.md
+        
+        Args:
+            record_state: 是否记录同步状态
+        """
         try:
             decisions = self.db.get_decisions()
             content = self._generate_decisions_md(decisions)
             
             decisions_path = self.docs_dir / 'DECISIONS.md'
             decisions_path.write_text(content, encoding='utf-8')
+            
+            # 记录同步状态
+            if record_state:
+                self.conflict_detector.record_sync_state('decisions')
             
             return True
         except Exception as e:
@@ -350,8 +425,13 @@ class MarkdownSync:
     
     # ==================== 进度追踪同步 ====================
     
-    def sync_progress(self) -> bool:
-        """同步进度到boulder.json（兼容旧格式）"""
+    def sync_progress(self, record_state: bool = True) -> bool:
+        """
+        同步进度到boulder.json（兼容旧格式）
+        
+        Args:
+            record_state: 是否记录同步状态
+        """
         try:
             progress = self.db.get_progress()
             if not progress:
@@ -394,6 +474,10 @@ class MarkdownSync:
             boulder_path = self.quickagents_dir / 'boulder.json'
             boulder_path.write_text(json.dumps(boulder_data, ensure_ascii=False, indent=2), encoding='utf-8')
             
+            # 记录同步状态
+            if record_state:
+                self.conflict_detector.record_sync_state('progress')
+            
             return True
         except Exception as e:
             print(f"同步进度失败: {e}")
@@ -401,8 +485,13 @@ class MarkdownSync:
     
     # ==================== 经验收集同步 ====================
     
-    def sync_feedback(self) -> bool:
-        """同步经验收集到Markdown文件"""
+    def sync_feedback(self, record_state: bool = True) -> bool:
+        """
+        同步经验收集到Markdown文件
+        
+        Args:
+            record_state: 是否记录同步状态
+        """
         try:
             feedback_dir = self.quickagents_dir / 'feedback'
             feedback_dir.mkdir(parents=True, exist_ok=True)
@@ -422,6 +511,11 @@ class MarkdownSync:
                 
                 file_path = feedback_dir / filename
                 file_path.write_text(content, encoding='utf-8')
+            
+            # 记录同步状态
+            if record_state:
+                self.conflict_detector.record_sync_state('feedback_bugs')
+                self.conflict_detector.record_sync_state('feedback_improvements')
             
             return True
         except Exception as e:

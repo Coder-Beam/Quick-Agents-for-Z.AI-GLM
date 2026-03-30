@@ -218,6 +218,8 @@ def cmd_stats(args):
 
 def cmd_sync(args):
     """同步SQLite到Markdown"""
+    from ..utils.sync_conflict import get_sync_conflict_detector
+    
     db_path = '.quickagents/unified.db'
     
     if not os.path.exists(db_path):
@@ -228,27 +230,52 @@ def cmd_sync(args):
     db = UnifiedDB(db_path)
     sync = MarkdownSync(db)
     
+    # 检查冲突（除非强制同步）
+    force = hasattr(args, 'force') and args.force
     table = args.table if hasattr(args, 'table') and args.table else None
     
+    if not force:
+        detector = get_sync_conflict_detector()
+        
+        # 确定要检查的文件
+        file_keys = None
+        if table:
+            file_keys = [table]
+        
+        conflicts = detector.check_conflicts(file_keys)
+        
+        if conflicts:
+            print("[WARN] 检测到同步冲突！")
+            print("-" * 50)
+            print(detector.get_conflict_report(file_keys))
+            print("\n使用 --force 强制同步，忽略冲突")
+            return
+    
+    # 执行同步
     if table == 'memory' or table is None:
-        sync.sync_memory()
-        print("[OK] 已同步 memory -> Docs/MEMORY.md")
+        result = sync.sync_memory()
+        if result:
+            print("[OK] 已同步 memory -> Docs/MEMORY.md")
     
     if table == 'tasks' or table is None:
-        sync.sync_tasks()
-        print("[OK] 已同步 tasks -> Docs/TASKS.md")
+        result = sync.sync_tasks()
+        if result:
+            print("[OK] 已同步 tasks -> Docs/TASKS.md")
     
     if table == 'decisions' or table is None:
-        sync.sync_decisions()
-        print("[OK] 已同步 decisions -> Docs/DECISIONS.md")
+        result = sync.sync_decisions()
+        if result:
+            print("[OK] 已同步 decisions -> Docs/DECISIONS.md")
     
     if table == 'progress' or table is None:
-        sync.sync_progress()
-        print("[OK] 已同步 progress -> .quickagents/boulder.json")
+        result = sync.sync_progress()
+        if result:
+            print("[OK] 已同步 progress -> .quickagents/boulder.json")
     
     if table == 'feedback' or table is None:
-        sync.sync_feedback()
-        print("[OK] 已同步 feedback -> ~/.quickagents/feedback/")
+        result = sync.sync_feedback()
+        if result:
+            print("[OK] 已同步 feedback -> ~/.quickagents/feedback/")
     
     if table is None:
         print("\n[Done] 所有表同步完成")
@@ -810,6 +837,8 @@ def main():
     p_sync = subparsers.add_parser('sync', help='同步SQLite到Markdown')
     p_sync.add_argument('table', nargs='?', choices=['memory', 'tasks', 'decisions', 'progress', 'feedback'], 
                         help='要同步的表（默认全部）')
+    p_sync.add_argument('--force', '-f', action='store_true', 
+                        help='强制同步，忽略冲突')
     p_sync.set_defaults(func=cmd_sync)
     
     # reminder 命令

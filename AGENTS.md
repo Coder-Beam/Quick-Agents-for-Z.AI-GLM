@@ -89,6 +89,7 @@
 | 场景 | 模块 | 代码示例 |
 |------|------|---------|
 | 记录/读取记忆 | UnifiedDB | `db.set_memory('key', 'value', MemoryType.FACTUAL)` |
+| 快捷更新记忆 | memory_helper | `update_memory('key', 'value')` |
 | 检测循环模式 | LoopDetector | `detector.is_looping()` |
 | 检查提醒 | Reminder | `reminder.check_alerts()` |
 | 任务完成触发 | SkillEvolution | `evolution.on_task_complete(task_info)` |
@@ -98,12 +99,34 @@
 **执行代码模板**：
 
 ```python
-# ===== 记忆系统 =====
-from quickagents import UnifiedDB, MemoryType, TaskStatus, FeedbackType
+# ===== 记忆系统（推荐使用辅助函数）=====
+from quickagents import (
+    update_memory, update_memories, 
+    add_experiential_memory, update_working_memory,
+    sync_all_memory, MemoryType
+)
+
+# 方式1: 使用辅助函数（推荐，自动同步到Markdown）
+update_memory('project.name', 'MyProject')
+update_memory('current.task', '实现认证', MemoryType.WORKING)
+add_experiential_memory('避免过度工程', category='pitfalls')
+
+# 批量更新
+update_memories({
+    'project.name': 'QuickAgents',
+    'project.version': '2.6.8',
+    'current.task': '实现认证'
+})
+
+# 手动同步所有
+sync_all_memory()
+
+# 方式2: 使用UnifiedDB（底层API）
+from quickagents import UnifiedDB, MemoryType, MarkdownSync
 
 db = UnifiedDB()
 
-# 设置记忆
+# 设置记忆（仅写入SQLite）
 db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
 db.set_memory('current.task', '实现认证', MemoryType.WORKING)
 db.set_memory('lesson.001', '避免过度工程', MemoryType.EXPERIENTIAL, category='pitfalls')
@@ -113,6 +136,11 @@ name = db.get_memory('project.name')
 
 # 搜索记忆
 results = db.search_memory('认证', MemoryType.EXPERIENTIAL)
+
+# 手动同步到Markdown
+sync = MarkdownSync(db)
+sync.sync_memory()  # 同步记忆
+sync.sync_all()     # 同步所有
 
 # ===== 循环检测 =====
 from quickagents import LoopDetector
