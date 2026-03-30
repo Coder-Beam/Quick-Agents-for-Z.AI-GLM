@@ -305,23 +305,31 @@ QuickAgents 会自动检测智谱AI发布的新版本：
 ### 升级命令
 
 ```bash
-# 查看可用升级
+# 查看当前配置
+qa models show
+
+# 查看可用模型列表
+qa models list
+
+# 检查 GLM 更新
 qa models check-updates
 
-# 或使用 GLM 专用命令（推荐）
-python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py check
+# 预览升级（推荐先执行）
+qa models upgrade --dry-run
 
-# 升级指定模型
-qa models upgrade GLM-5 GLM-5.1
+# 执行升级
+qa models upgrade --force
 
-# 预览升级（不实际执行）
-python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgrade --dry-run
+# 升级到指定版本
+qa models upgrade --to GLM-5.1 --force
 
-# 实际升级
-python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgrade
+# 切换策略
+qa models strategy coding-plan --force
+qa models strategy single-model --model GLM-5 --force
 
-# 查看当前状态
-python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py status
+# 锁定/解锁模型
+qa models lock GLM-5 --force
+qa models unlock
 ```
 
 ### GLM 版本自动同步 Skill
