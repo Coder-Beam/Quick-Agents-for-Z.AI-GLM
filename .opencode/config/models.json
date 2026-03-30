@@ -1,0 +1,70 @@
+{
+  "$schema": "./models-schema.json",
+  "version": "2.6.8",
+  "description": "QuickAgents centralized model configuration",
+  
+  "lockModel": null,
+  
+  "default": {
+    "primary": "glm-5",
+    "fallback": null
+  },
+  
+  "providers": {
+    "zhipuai": {
+      "prefix": "zhipuai-coding-plan",
+      "models": {
+        "glm-5": "zhipuai-coding-plan/glm-5",
+        "glm-4-plus": "zhipuai/glm-4-plus",
+        "glm-4": "zhipuai/glm-4"
+      },
+      "default": "glm-5"
+    },
+    "anthropic": {
+      "prefix": "anthropic",
+      "models": {
+        "claude-sonnet-4-5": "anthropic/claude-sonnet-4-5",
+        "claude-3-opus": "anthropic/claude-3-opus",
+        "claude-3-sonnet": "anthropic/claude-3-sonnet"
+      },
+      "default": "claude-sonnet-4-5"
+    }
+  },
+  
+  "categories": {
+    "planning": "glm-5",
+    "coding": "glm-5", 
+    "consulting": "glm-5",
+    "orchestration": "glm-5",
+    "debug": "claude-sonnet-4-5",
+    "review": "claude-3-opus",
+    "testing": "claude-sonnet-4-5",
+    "security": "claude-sonnet-4-5",
+    "refactor": "claude-sonnet-4-5",
+    "docs": "glm-5",
+    "skill": "glm-5",
+    "deps": "glm-5",
+    "perf": "glm-5",
+    "cicd": "glm-5"
+  },
+  
+  "agentMapping": {
+    "yinglong-init": "planning",
+    "cangjie-doc": "docs",
+    "fenghou-orchestrate": "orchestration",
+    "fenghou-plan": "planning",
+    "huodi-skill": "skill",
+    "huodi-deps": "deps",
+    "kuafu-debug": "debug",
+    "lishou-test": "testing",
+    "jianming-review": "review",
+    "mengzhang-security": "security",
+    "gonggu-refactor": "refactor",
+    "boyi-consult": "consulting",
+    "chisongzi-advise": "consulting",
+    "hengge-perf": "perf",
+    "hengge-cicd": "cicd"
+  },
+  
+  "agentOverrides": {}
+}
