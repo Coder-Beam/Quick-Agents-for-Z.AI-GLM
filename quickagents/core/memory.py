@@ -158,9 +158,10 @@ class MemoryManager:
         
         # 搜索事实记忆
         for key, value in self._flatten(self.factual).items():
-            if keyword.lower() in str(key).lower() or \
-               keyword.lower() in str(value).lower():
-                results.append({'type': 'factual', 'key': key, 'value': value})
+            if key is not None and value is not None:
+                if keyword.lower() in str(key).lower() or \
+                   keyword.lower() in str(value).lower():
+                    results.append({'type': 'factual', 'key': key, 'value': value})
         
         # 搜索经验记忆
         for entry in self.experiential:

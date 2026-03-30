@@ -1,45 +1,32 @@
-# Task Management (TASKS.md)
+# 任务管理 (TASKS.md)
 
-> Simplified version - Integrates TODO/ROADMAP/TASK_BOARD functionality
+> 更新时间: 2026-03-30 20:43
 
----
-
-## Current Iteration
-
-| Task ID | Task Name | Priority | Status | Assignee | Start Date | End Date |
-|---------|-----------|----------|--------|----------|------------|----------|
-| T001 | Project Initialization | P0 | Pending | AI | | |
+> 此文件由 SQLite 自动同步生成，作为辅助备份
+> 主存储: .quickagents/unified.db
 
 ---
 
-## Pending Tasks
+## 统计概览
 
-### P0 - Critical
-
-- [ ] Complete project initialization
-
-### P1 - High Priority
-
-- [ ] 
-
-### P2 - Medium Priority
-
-- [ ] 
+| 指标 | 数值 |
+|------|------|
+| 总任务数 | 0 |
+| 已完成 | 0 |
+| 进行中 | 0 |
+| 待开始 | 0 |
+| 阻塞中 | 0 |
+| 完成率 | 0.0% |
 
 ---
 
-## Completed Tasks
-
-- [x] - Completed on 
+## 当前迭代
 
 ---
 
-## Milestones
-
-| Milestone | Goal | Deadline | Status |
-|-----------|------|----------|--------|
-| M1 | MVP Release | | Pending |
+## 待办任务
 
 ---
 
-*This file will be automatically populated when you run "QuickAgent" initialization.*
+## 已完成任务
+

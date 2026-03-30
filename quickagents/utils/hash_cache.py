@@ -90,6 +90,21 @@ class HashCache:
         content_hash = self.db._calculate_hash(content)
         self.db.cache_file(file_path, content, content_hash)
     
+    def get_hash(self, file_path: str) -> str:
+        """获取文件的当前哈希"""
+        # 读取文件内容
+        with open(file_path, 'rb') as f:
+            content = f.read()
+        
+        # 尝试解码为UTF-8
+        try:
+            content_str = content.decode('utf-8')
+        except UnicodeDecodeError:
+            # 如果解码失败， 尝试其他常见编码
+            content_str = content.decode('gb18030', errors='ignore')
+        
+        return self.db._calculate_hash(content_str)
+    
     def get_cache_stats(self) -> Dict:
         """获取缓存统计"""
         return self.db.get_stats()['file_cache']
