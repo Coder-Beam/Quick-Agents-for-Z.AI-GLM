@@ -15,8 +15,7 @@ from .exceptions import (
     SyncError,
 )
 
-# Note: KnowledgeGraph will be added in Part 3
-# from .knowledge_graph import KnowledgeGraph
+from .knowledge_graph import KnowledgeGraph
 
 __all__ = [
     'NodeType',
@@ -24,6 +23,7 @@ __all__ = [
     'KnowledgeNode',
     'KnowledgeEdge',
     'SearchResult',
+    'KnowledgeGraph',
     # Exceptions
     'KnowledgeGraphError',
     'NodeNotFoundError',
@@ -36,5 +36,4 @@ __all__ = [
     'DatabaseIntegrityError',
     'ExtractionError',
     'SyncError',
-    # 'KnowledgeGraph',  # Will be added in Part 3
 ]
