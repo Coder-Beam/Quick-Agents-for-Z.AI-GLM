@@ -159,14 +159,18 @@ class MemoryManager:
         # 搜索事实记忆
         for key, value in self._flatten(self.factual).items():
             if key is not None and value is not None:
-                if keyword.lower() in str(key).lower() or \
-                   keyword.lower() in str(value).lower():
+                key_str = str(key)
+                value_str = str(value)
+                if keyword.lower() in key_str.lower() or \
+                   keyword.lower() in value_str.lower():
                     results.append({'type': 'factual', 'key': key, 'value': value})
         
         # 搜索经验记忆
         for entry in self.experiential:
-            if keyword.lower() in entry.get('content', '').lower():
-                results.append({'type': 'experiential', **entry})
+            if entry and isinstance(entry, dict):
+                content = entry.get('content', '')
+                if content and keyword.lower() in content.lower():
+                    results.append({'type': 'experiential', **entry})
         
         return results
     
@@ -192,10 +196,13 @@ class MemoryManager:
                 item = line.strip()[2:]
                 if ':' in item:
                     key, value = item.split(':', 1)
+                    # 移除markdown粗体标记
+                    key = key.strip().replace('**', '')
+                    value = value.strip()
                     if current_section == 'factual':
-                        self.factual[key.strip()] = value.strip()
+                        self.factual[key] = value
                     elif current_section == 'working':
-                        self.working[key.strip()] = value.strip()
+                        self.working[key] = value
                     elif current_section == 'experiential':
                         self.experiential.append({'content': item})
     

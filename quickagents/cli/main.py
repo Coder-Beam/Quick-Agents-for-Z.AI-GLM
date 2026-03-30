@@ -155,7 +155,11 @@ def cmd_memory(args):
         print(f"[OK] 已设置: {args.key} = {args.value}")
     
     elif args.action == 'search':
-        results = memory.search(args.keyword)
+        keyword = args.keyword or args.key  # 支持位置参数或选项
+        if not keyword:
+            print("[FAIL] 请提供搜索关键词")
+            return
+        results = memory.search(keyword)
         print(f"[Search] 搜索结果 ({len(results)} 条)")
         print("-" * 50)
         for r in results:
@@ -692,7 +696,8 @@ def cmd_models(args):
         print("[Models] 切换模型策略")
         print("=" * 50)
         
-        strategy = args.strategy_name
+        # 支持从位置参数或选项获取策略名称
+        strategy = args.strategy_name or args.model_name
         print(f"  目标策略: {strategy}")
         
         if strategy not in ['coding-plan', 'single-model', 'hybrid']:
