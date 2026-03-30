@@ -45,23 +45,18 @@ package-lock.json
 yarn-lock.yaml
 pnpm-lock.yaml
 
-# QuickAgents specific
+# QuickAgents specific - User data (generated at runtime)
 .quickagents/boulder.json
+.quickagents/unified.db
+.quickagents/cache.db
 
-# Python cache
+# === Reference/Learning files (local only) ===
+reference/
+skills/
+Docs/EXAMPLES.md
+Docs/API_REFERENCE.md
+
+# === Python cache ===
 __pycache__/
 *.pyc
 *.pyo
-.quickagents/cache.db
-.quickagents/unified.db
-
-# === Reference/Learning files (local only) ===
-# oh-my-openagent reference docs
-reference/
-
-# SkillHub downloaded skills cache
-skills/
-
-# Example and reference documentation
-Docs/EXAMPLES.md
-Docs/API_REFERENCE.md

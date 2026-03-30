@@ -1,99 +1,46 @@
-# 决策日志 (DECISIONS.md)
+# Decision Log (DECISIONS.md)
 
-> 记录项目中所有关键技术决策和业务决策
-
----
-
-## 决策索引
-
-| 决策ID | 标题 | 决策时间 | 影响范围 | 状态 |
-|--------|------|----------|----------|------|
-| D001 | 项目初始化决策 | 2026-03-22 | 架构 | 已确认 |
+> Record of important project decisions
 
 ---
 
-## D001 - 项目初始化决策
+## Decision Template
 
-| 属性 | 值 |
-|------|-----|
-| 决策ID | D001 |
-| 决策时间 | 2026-03-22 |
-| 决策者 | AI建议 |
-| 影响范围 | 架构/文档 |
-| 关联任务 | T001 |
+### D001 - [Decision Title]
 
-### 决策背景
+| Attribute | Value |
+|-----------|-------|
+| Decision ID | D001 |
+| Decision Date | |
+| Decision Maker | |
+| Impact Scope | |
+| Related Task | |
 
-项目初始化阶段，需要确定项目的基础架构和文档体系。
+#### Decision Background
 
-### 备选方案
+Describe why this decision was needed
 
-1. **方案A**：传统文档结构（TODO + ROADMAP + TASK_BOARD 分离）
-   - 优点：文档职责清晰
-   - 缺点：维护成本高，信息分散
+#### Alternative Options
 
-2. **方案B**：合并简化结构（TASKS.md 合并管理）
-   - 优点：信息集中，维护简单
-   - 缺点：文档较长
+1. Option A: Description + Pros/Cons
+2. Option B: Description + Pros/Cons
 
-### 最终决策
+#### Final Decision
 
-采用**方案B**：合并简化结构
+The chosen option and rationale
 
-**理由**：
-- 减少文档数量，降低维护成本
-- 信息集中便于查阅
-- 符合AGENTS.md v7.0规范
+#### Impact Assessment
 
-### 影响评估
-
-- 文档结构变更：TODO.md、ROADMAP.md、TASK_BOARD.md 合并为 TASKS.md
-- 记忆系统升级：采用三维记忆系统（Factual/Experiential/Working）
-- 索引系统升级：INDEX.md 改为知识图谱型
+Analysis of the impact on the project
 
 ---
 
-## 决策模板
+## Decision History
 
-> 以下是新决策的模板，复制后修改使用
-
-```markdown
-## D0XX - [决策标题]
-
-| 属性 | 值 |
-|------|-----|
-| 决策ID | D0XX |
-| 决策时间 | YYYY-MM-DD |
-| 决策者 | 用户/AI建议 |
-| 影响范围 | 架构/功能/性能/安全 |
-| 关联任务 | T0XX |
-
-### 决策背景
-描述为什么需要做这个决策
-
-### 备选方案
-1. **方案A**：描述 + 优缺点
-2. **方案B**：描述 + 优缺点
-3. **方案C**：描述 + 优缺点
-
-### 最终决策
-选择的方案及理由
-
-### 影响评估
-对项目的影响分析
-```
+| ID | Title | Date | Status |
+|----|-------|------|--------|
+| D001 | | | |
 
 ---
 
-## 决策统计
-
-| 指标 | 数值 |
-|------|------|
-| 总决策数 | 1 |
-| 架构决策 | 1 |
-| 技术决策 | 0 |
-| 业务决策 | 0 |
-
----
-
-*最后更新: 2026-03-22*
+*This file will be automatically populated when you run "QuickAgent" initialization.*
