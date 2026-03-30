@@ -847,7 +847,9 @@ def main():
     p_hooks.set_defaults(func=cmd_hooks)
     
  # ==================== 模型管理命令 ====================
+    
     # models 命令
+    p_models = subparsers.add_parser('models', help='模型配置管理')
     p_models.add_argument('action', choices=['show', 'list', 'check-updates', 'upgrade', 'strategy', 'lock', 'unlock'], help='操作')
     p_models.add_argument('--agent', '-a', help='查看特定Agent的模型')
     p_models.add_argument('--target', help='升级目标版本')
@@ -857,6 +859,13 @@ def main():
     p_models.add_argument('--model', dest='model_name', help='模型名称')
     p_models.add_argument('model_name', nargs='?', help='模型名称')
     p_models.set_defaults(func=cmd_models)
+    
+    args = parser.parse_args()
+    
+    if hasattr(args, 'func'):
+        args.func(args)
+    else:
+        parser.print_help()
 
 
 if __name__ == '__main__':
