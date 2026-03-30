@@ -858,8 +858,8 @@ def main():
     p_models.add_argument('--to', '-t', help='升级目标版本')
     p_models.add_argument('--dry-run', '-d', action='store_true', help='预览变更')
     p_models.add_argument('--force', '-f', action='store_true', help='强制执行')
-    p_models.add_argument('--strategy-name', '-s', help='策略名称')
-    p_models.add_argument('--model', '-m', help='模型名称')
+    p_models.add_argument('--strategy-name', '-s', dest=str, help='策略名称')
+    p_models.add_argument('--model', '-m', dest=str, help='模型名称')
     p_models.add_argument('model_name', nargs='?', help='模型名称')
     p_models.set_defaults(func=cmd_models)
     
