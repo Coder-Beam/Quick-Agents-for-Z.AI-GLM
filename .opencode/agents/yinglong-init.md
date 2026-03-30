@@ -20,6 +20,8 @@ permission:
 
 # QuickAgents 项目初始化代理
 
+> 专为 ZhipuAI GLM Coding Plan 优化
+
 ## 角色定位
 
 你是QuickAgents的核心代理，负责引导用户以最小干预完成项目初始化。你基于RSI（递归自改进）理念，能够智能分析用户需求，自适应地收集信息，并生成高质量的项目配置。
@@ -201,14 +203,14 @@ sudo pacman -S python python-pip
 
 | 方案 | 描述 | 适用场景 | 推荐度 |
 |------|------|----------|--------|
-| **[A] Coding Plan** | 使用智谱AI专门针对编程优化的模型组合包 | 编程开发、代码生成、架构设计 | ⭐⭐⭐⭐⭐ 推荐 |
+| **[A] Coding Plan** | 使用智谱AI GLM Coding Plan订阅套餐 | 编程开发、代码生成、架构设计 | ⭐⭐⭐⭐⭐ 推荐 |
 | **[B] 单一大模型** | 所有任务使用同一个模型 | 简单项目、新手用户、API成本控制 | ⭐⭐⭐⭐ |
-| **[C] 混合大模型** | 不同任务类型使用不同模型（如GLM规划+Claude审查） | 复杂项目、追求最优效果、多API Key | ⭐⭐⭐ |
+| **[C] 混合大模型** | 不同任务类型使用不同模型 | 复杂项目、追求最优效果、多API Key | ⭐⭐⭐ |
 
 💡 **方案说明**：
-- **Coding Plan**: 智谱AI官方针对编程场景深度优化的模型，代码生成更精准，理解更深入
+- **Coding Plan**: 智谱AI专为AI编码打造的订阅套餐，Coding能力对齐Claude Opus 4.5/Sonnet 4.5，支持MCP
 - **单一大模型**: 配置简单，一个API Key即可，适合快速上手
-- **混合大模型**: 根据任务智能路由，如规划用GLM-5，代码审查用Claude，需要多个API Key
+- **混合大模型**: 根据任务智能路由，需要多个API Key
 
 ---
 
@@ -216,38 +218,45 @@ sudo pacman -S python python-pip
 
 #### 如果选择 [A] Coding Plan：
 
-**Q2**: 选择Coding Plan版本：
-- [ ] GLM-5 Coding Plan（推荐，最新一代，编程深度优化）
-- [ ] GLM-4-Plus Coding Plan（稳定版本）
+**Q2**: 选择Coding Plan模型版本：
+
+| 模型 | 描述 | 能力 | 推荐 |
+|------|------|------|------|
+| GLM-5.1 | 最新旗舰，思考模式增强 | Coding, Agent, Thinking, Function-Call, MCP | ⭐⭐⭐⭐⭐ |
+| GLM-5 | 旗舰基座，Coding对齐Claude Opus 4.5 | Coding, Agent, Thinking, Function-Call, MCP | ⭐⭐⭐⭐⭐ |
+| GLM-4.7 | 旗舰版，Coding对齐Claude Sonnet 4.5 | Coding, Agent, Thinking, Function-Call, MCP | ⭐⭐⭐⭐ |
+| GLM-4.7-FlashX | 轻量高速版，适合简单任务 | Coding, Quick-Response | ⭐⭐⭐ |
 
 **Q3**: 是否启用快速响应模型？
-- [ ] 是，简单任务使用Flash版本（节省Token，响应更快）
-- [ ] 否，所有任务使用同一模型
+- [ ] 是，简单任务使用FlashX版本（节省Token，响应更快）
+- [ ] 否，所有任务使用旗舰模型
 
 #### 如果选择 [B] 单一大模型：
 
 **Q2**: 选择您要使用的模型：
-- [ ] GLM-5（推荐，智谱AI最新模型）
-- [ ] GLM-5-Flash（快速响应，适合简单任务）
-- [ ] Claude 4.5（需配置Anthropic API Key）
-- [ ] GPT-4o（需配置OpenAI API Key）
-- [ ] Gemini 2.0 Flash（需配置Google API Key）
+- [ ] GLM-5（推荐，智谱AI旗舰模型，Coding对齐Claude Opus 4.5）
+- [ ] GLM-4.7（智谱AI高性能模型，Coding对齐Claude Sonnet 4.5）
+- [ ] GLM-4.7-FlashX（快速响应，适合简单任务）
 - [ ] 其他（请手动配置）
 
 #### 如果选择 [C] 混合大模型：
 
-**Q2**: 配置任务类型模型映射：
+**Q2**: 配置任务类型模型映射（基于Coding Plan）：
 
-| 任务类型 | 推荐模型 | 您的选择 |
-|----------|----------|----------|
-| 规划 (planning) | GLM-5 | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
-| 编码 (coding) | GLM-5 | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
-| 调试 (debug) | Claude Sonnet | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
-| 审查 (review) | Claude Opus | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
-| 测试 (testing) | GLM-5-Flash | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
-| 文档 (docs) | GLM-5 | [ ] GLM-5 / [ ] Claude / [ ] 其他 |
+| 任务类型 | 推荐模型 | 原因 |
+|----------|----------|------|
+| 规划 (planning) | GLM-5 | 需要深度思考和长程规划 |
+| 编码 (coding) | GLM-5 | Coding能力对齐Claude Opus 4.5 |
+| 调试 (debug) | GLM-5 | 调试需要深度分析 |
+| 审查 (review) | GLM-5 | 审查需要深度理解 |
+| 安全 (security) | GLM-5 | 安全审计需要深度分析 |
+| 重构 (refactor) | GLM-5 | 重构需要强Coding能力 |
+| 文档 (docs) | GLM-4.7 | 文档生成需要通用能力 |
+| 测试 (testing) | GLM-4.7-FlashX | 重复性任务，轻量版效率更高 |
+| 依赖管理 (deps) | GLM-4.7-FlashX | 简单任务，轻量版即可 |
+| CI/CD (cicd) | GLM-4.7-FlashX | 标准化流程，轻量版效率更高 |
 
-💡 **说明**：混合方案需要配置多个API Key，系统会根据任务类型自动选择最合适的模型。
+💡 **说明**：Coding Plan方案下，所有任务都使用GLM系列模型，根据任务复杂度选择不同版本。
 
 ---
 
@@ -274,35 +283,52 @@ sudo pacman -S python python-pip
 
 根据您的选择，将生成以下配置：
 
-#### 方案 A: Coding Plan
+#### 方案 A: Coding Plan（推荐）
 
 **models.json**:
 ```json
 {
   "strategy": "coding-plan",
   "default": {
-    "primary": "glm-5",
-    "fallback": null
+    "primary": "GLM-5",
+    "fallback": "GLM-4.7"
   },
   "providers": {
-    "zhipuai": {
-      "plans": {
-        "coding-plan": {
-          "prefix": "zhipuai-coding-plan",
-          "models": {
-            "glm-5": "zhipuai-coding-plan/glm-5"
-          }
-        }
+    "zhipuai-coding-plan": {
+      "displayName": "智谱AI Coding Plan",
+      "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "anthropicBaseUrl": "https://open.bigmodel.cn/api/anthropic",
+      "models": {
+        "GLM-5.1": { "id": "GLM-5.1", "reasoning": true, "recommended": true },
+        "GLM-5": { "id": "GLM-5", "reasoning": true },
+        "GLM-4.7": { "id": "GLM-4.7", "reasoning": true },
+        "GLM-4.7-FlashX": { "id": "GLM-4.7-FlashX", "reasoning": false },
+        "GLM-4.5-Air": { "id": "GLM-4.5-Air", "reasoning": false }
       }
     }
   },
   "categories": {
-    "planning": "glm-5",
-    "coding": "glm-5",
-    "debug": "glm-5",
-    "review": "glm-5",
-    "testing": "glm-5-flash",
-    "docs": "glm-5"
+    "planning": "GLM-5",
+    "coding": "GLM-5",
+    "debug": "GLM-5",
+    "review": "GLM-5",
+    "security": "GLM-5",
+    "refactor": "GLM-5",
+    "consulting": "GLM-5",
+    "orchestration": "GLM-5",
+    "docs": "GLM-4.7",
+    "skill": "GLM-4.7",
+    "perf": "GLM-4.7",
+    "testing": "GLM-4.7-FlashX",
+    "deps": "GLM-4.7-FlashX",
+    "cicd": "GLM-4.7-FlashX"
+  },
+  "codingPlanConfig": {
+    "claudeCodeMapping": {
+      "opus": "GLM-5",
+      "sonnet": "GLM-4.7",
+      "haiku": "GLM-4.5-Air"
+    }
   }
 }
 ```
@@ -313,18 +339,18 @@ sudo pacman -S python python-pip
 ```json
 {
   "strategy": "single-model",
-  "lockModel": "glm-5",
+  "lockModel": "GLM-5",
   "default": {
-    "primary": "glm-5",
+    "primary": "GLM-5",
     "fallback": null
   },
   "categories": {
-    "planning": "glm-5",
-    "coding": "glm-5",
-    "debug": "glm-5",
-    "review": "glm-5",
-    "testing": "glm-5",
-    "docs": "glm-5"
+    "planning": "GLM-5",
+    "coding": "GLM-5",
+    "debug": "GLM-5",
+    "review": "GLM-5",
+    "testing": "GLM-5",
+    "docs": "GLM-5"
   }
 }
 ```
@@ -334,34 +360,22 @@ sudo pacman -S python python-pip
 **models.json**:
 ```json
 {
-  "strategy": "hybrid",
+  "strategy": "coding-plan",
   "default": {
-    "primary": "glm-5",
-    "fallback": "claude-sonnet-4-5"
-  },
-  "providers": {
-    "zhipuai": {
-      "prefix": "zhipuai-coding-plan",
-      "models": {
-        "glm-5": "zhipuai-coding-plan/glm-5",
-        "glm-5-flash": "zhipuai/glm-5-flash"
-      }
-    },
-    "anthropic": {
-      "prefix": "anthropic",
-      "models": {
-        "claude-sonnet-4-5": "anthropic/claude-sonnet-4-5",
-        "claude-3-opus": "anthropic/claude-3-opus"
-      }
-    }
+    "primary": "GLM-5",
+    "fallback": "GLM-4.7"
   },
   "categories": {
-    "planning": "glm-5",
-    "coding": "glm-5",
-    "debug": "claude-sonnet-4-5",
-    "review": "claude-3-opus",
-    "testing": "glm-5-flash",
-    "docs": "glm-5"
+    "planning": "GLM-5",
+    "coding": "GLM-5",
+    "debug": "GLM-5",
+    "review": "GLM-5",
+    "security": "GLM-5",
+    "refactor": "GLM-5",
+    "docs": "GLM-4.7",
+    "testing": "GLM-4.7-FlashX",
+    "deps": "GLM-4.7-FlashX",
+    "cicd": "GLM-4.7-FlashX"
   }
 }
 ```
@@ -396,28 +410,44 @@ sudo pacman -S python python-pip
 
 | 用户选择方案 | strategy | 说明 |
 |-------------|----------|------|
-| **[A] Coding Plan** | `"coding-plan"` | 使用智谱AI编程优化模型包 |
+| **[A] Coding Plan** | `"coding-plan"` | 使用智谱AI GLM Coding Plan订阅套餐 |
 | **[B] 单一大模型** | `"single-model"` | 所有任务使用同一模型，lockModel生效 |
-| **[C] 混合大模型** | `"hybrid"` | 不同任务类型使用不同模型 |
+| **[C] 混合大模型** | `"coding-plan"` | 基于Coding Plan，不同任务类型使用不同GLM版本 |
 
 **方案A (Coding Plan) 默认配置**：
 ```json
 {
   "strategy": "coding-plan",
-  "default": { "primary": "glm-5", "fallback": null },
+  "default": { "primary": "GLM-5", "fallback": "GLM-4.7" },
   "providers": {
-    "zhipuai": {
-      "plans": {
-        "coding-plan": {
-          "prefix": "zhipuai-coding-plan",
-          "models": { "glm-5": "zhipuai-coding-plan/glm-5" }
-        }
+    "zhipuai-coding-plan": {
+      "displayName": "智谱AI Coding Plan",
+      "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "anthropicBaseUrl": "https://open.bigmodel.cn/api/anthropic",
+      "models": {
+        "GLM-5.1": { "id": "GLM-5.1", "reasoning": true },
+        "GLM-5": { "id": "GLM-5", "reasoning": true },
+        "GLM-4.7": { "id": "GLM-4.7", "reasoning": true },
+        "GLM-4.7-FlashX": { "id": "GLM-4.7-FlashX" },
+        "GLM-4.5-Air": { "id": "GLM-4.5-Air" }
       }
     }
   },
   "categories": {
-    "planning": "glm-5", "coding": "glm-5", "debug": "glm-5",
-    "review": "glm-5", "testing": "glm-5-flash", "docs": "glm-5"
+    "planning": "GLM-5",
+    "coding": "GLM-5",
+    "debug": "GLM-5",
+    "review": "GLM-5",
+    "security": "GLM-5",
+    "refactor": "GLM-5",
+    "consulting": "GLM-5",
+    "orchestration": "GLM-5",
+    "docs": "GLM-4.7",
+    "skill": "GLM-4.7",
+    "perf": "GLM-4.7",
+    "testing": "GLM-4.7-FlashX",
+    "deps": "GLM-4.7-FlashX",
+    "cicd": "GLM-4.7-FlashX"
   }
 }
 ```
@@ -426,19 +456,25 @@ sudo pacman -S python python-pip
 ```json
 {
   "strategy": "single-model",
-  "lockModel": "glm-5",
-  "default": { "primary": "glm-5", "fallback": null },
-  "categories": { /* 所有类别都是 glm-5 */ }
+  "lockModel": "GLM-5",
+  "default": { "primary": "GLM-5", "fallback": null },
+  "categories": { /* 所有类别都是 GLM-5 */ }
 }
 ```
 
 **方案C (混合大模型) 默认配置**：
 ```json
 {
-  "strategy": "hybrid",
-  "default": { "primary": "glm-5", "fallback": "claude-sonnet-4-5" },
-  "providers": { /* 多个提供商 */ },
-  "categories": { /* 不同任务使用不同模型 */ }
+  "strategy": "coding-plan",
+  "default": { "primary": "GLM-5", "fallback": "GLM-4.7" },
+  "categories": {
+    "planning": "GLM-5",
+    "coding": "GLM-5",
+    "debug": "GLM-5",
+    "review": "GLM-5",
+    "docs": "GLM-4.7",
+    "testing": "GLM-4.7-FlashX"
+  }
 }
 ```
 
@@ -476,7 +512,7 @@ qa models check-updates
 # 输出示例：
 # 🔍 检测到新版本：
 # • GLM-5 → GLM-5.1 (可用)
-# • GLM-5-Flash → GLM-5.1-Flash (可用)
+# • GLM-4.7 → GLM-5 (可用)
 ```
 
 #### 升级命令
@@ -486,10 +522,7 @@ qa models check-updates
 qa models upgrade
 
 # 直接升级到指定版本
-qa models upgrade --to glm-5.1
-
-# 仅升级Coding Plan版本
-qa models upgrade --plan coding-plan --to glm-5.1
+qa models upgrade --to GLM-5.1
 
 # 预览升级变更（不实际执行）
 qa models upgrade --dry-run
@@ -503,11 +536,13 @@ qa models upgrade --dry-run
 {
   "versionUpgrade": {
     "autoDetect": true,
+    "checkUrl": "https://docs.bigmodel.cn/llms.txt",
     "upgradePath": {
-      "glm-4": "glm-5",
-      "glm-4-plus": "glm-5",
-      "glm-5": "glm-5.1",
-      "claude-3-opus": "claude-sonnet-4-5"
+      "GLM-4": "GLM-4.7",
+      "GLM-4.5": "GLM-4.7",
+      "GLM-4.6": "GLM-4.7",
+      "GLM-4.7": "GLM-5",
+      "GLM-5": "GLM-5.1"
     },
     "notifications": true
   }
@@ -528,7 +563,6 @@ qa models upgrade --dry-run
 1. `default.primary` - 默认主模型
 2. `categories` - 各任务类型的模型分配
 3. `agentOverrides` - 单个Agent的模型覆盖
-4. Coding Plan前缀（如 `zhipuai-coding-plan/glm-5` → `zhipuai-coding-plan/glm-5.1`）
 
 #### 注意事项
 
