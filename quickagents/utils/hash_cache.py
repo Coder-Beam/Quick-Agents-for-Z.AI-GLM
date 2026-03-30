@@ -14,6 +14,7 @@ HashCache - 哈希缓存系统 (SQLite后端)
 
 from typing import Dict, Optional, Tuple
 from ..core.cache_db import CacheDB, get_cache_db
+from ..utils.encoding import safe_decode, DEFAULT_ENCODING
 
 
 class HashCache:
@@ -62,6 +63,7 @@ class HashCache:
             (内容, 是否改变)
         """
         import os
+        from ..utils.encoding import read_file_utf8
         
         # 检查变化
         changed, current_hash = self.db.check_file_changed(file_path)
@@ -72,9 +74,14 @@ class HashCache:
             if cached:
                 return cached['content'], False
         
-        # 读取文件
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # 读取文件（使用UTF-8编码）
+        try:
+            content = read_file_utf8(file_path)
+        except Exception as e:
+            # 如果读取失败，尝试二进制模式
+            with open(file_path, 'rb') as f:
+                from ..utils.encoding import safe_decode
+                content = safe_decode(f.read())
         
         # 更新缓存
         self.db.cache_file(file_path, content, current_hash)
@@ -92,18 +99,11 @@ class HashCache:
     
     def get_hash(self, file_path: str) -> str:
         """获取文件的当前哈希"""
-        # 读取文件内容
-        with open(file_path, 'rb') as f:
-            content = f.read()
+        from ..utils.encoding import read_file_utf8
         
-        # 尝试解码为UTF-8
-        try:
-            content_str = content.decode('utf-8')
-        except UnicodeDecodeError:
-            # 如果解码失败， 尝试其他常见编码
-            content_str = content.decode('gb18030', errors='ignore')
-        
-        return self.db._calculate_hash(content_str)
+        # 使用统一的UTF-8读取
+        content = read_file_utf8(file_path)
+        return self.db._calculate_hash(content)
     
     def get_cache_stats(self) -> Dict:
         """获取缓存统计"""
