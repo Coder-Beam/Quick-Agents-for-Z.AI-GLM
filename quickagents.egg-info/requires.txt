@@ -1,10 +1,12 @@
-psutil>=5.9.0
+psutil
+playwright
 
 [full]
-pywin32>=305
-wmi>=1.5.1
-psutil>=5.9.0
+pywin32
+wmi
+psutil
+playwright
 
 [windows]
-pywin32>=305
-wmi>=1.5.1
+pywin32
+wmi
