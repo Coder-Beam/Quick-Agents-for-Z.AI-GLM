@@ -1,6 +1,6 @@
 # MEMORY.md
 
-> 更新时间: 2026-03-30 23:45
+> 更新时间: 2026-03-31 01:15
 
 ---
 
@@ -20,20 +20,19 @@
 - **SkillEvolution**: Skills自我进化（34项测试通过）
 - **KnowledgeGraph**: 知识图谱（204项测试通过）
 - **GitHooks**: Git钩子（14项测试通过）
+- **CLI Commands**: 命令行工具（42项测试通过）
 - **Browser**: 浏览器自动化
 - **Encoding**: 统一UTF-8编码（跨平台）
-- **状态**: 系统测试中
-- **完成时间**: 2026-03-30
+- **状态**: 系统测试完成
+- **完成时间**: 2026-03-31
 - **模型配置**: `.opencode/config/models.json`
 - **支持模型**: GLM-5.1, GLM-5, GLM-4.7, GLM-4.7-FlashX, GLM-4.5-Air
-- **CLI命令**: `qa models show/list/check-updates/upgrade/strategy/lock/unlock`
-- **位置**: `quickagents/utils/encoding.py`
-- **测试进度**: 7/7 核心模块 (100%)
-- **已测试**: UnifiedDB, FileManager, MemoryManager, LoopDetector, KnowledgeGraph, SkillEvolution, GitHooks
-- **待测试**: CLI Commands
+- **测试进度**: 8/8 模块 (100%)
+- **总测试数**: 331项测试
 
 ## Experiential Memory (经验记忆)
 
+- **2026-03-31**: 完成CLI Commands 42项端到端测试（100%通过）
 - **2026-03-30**: 完成ZhipuAI GLM Coding Plan集成
 - **2026-03-30**: 创建统一UTF-8编码系统
 - **2026-03-30**: 修复CLI命令bug
@@ -46,6 +45,6 @@
 
 ## Working Memory (工作记忆)
 
-- **当前任务**: 系统测试
-- **下一步**: 完成 CLI Commands 端到端测试
-
+- **当前任务**: 系统测试完成
+- **状态**: 所有测试100%通过
+- **下一步**: 项目发布准备

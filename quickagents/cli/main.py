@@ -143,6 +143,9 @@ def cmd_memory(args):
     memory = MemoryManager()
     
     if args.action == 'get':
+        if not args.key:
+            print("[FAIL] 请提供键名")
+            return
         value = memory.get(args.key)
         if value is not None:
             print(f"{args.key}: {value}")
