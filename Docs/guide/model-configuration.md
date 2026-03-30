@@ -308,14 +308,50 @@ QuickAgents 会自动检测智谱AI发布的新版本：
 # 查看可用升级
 qa models check-updates
 
+# 或使用 GLM 专用命令（推荐）
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py check
+
 # 升级指定模型
 qa models upgrade GLM-5 GLM-5.1
 
-# 升级特定类别
-qa models upgrade --category debug GLM-5 GLM-5.1
+# 预览升级（不实际执行）
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgrade --dry-run
 
-# 自动升级到最新版本
-qa models upgrade --auto
+# 实际升级
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgrade
+
+# 查看当前状态
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py status
+```
+
+### GLM 版本自动同步 Skill
+
+QuickAgents 提供了 `glm-version-sync-skill` 用于自动检测 GLM 模型更新：
+
+**功能**：
+- 从 `https://docs.bigmodel.cn/llms.txt` 获取最新 GLM 模型信息
+- 与当前 `models.json` 配置比较
+- 自动备份配置文件
+- 支持升级预览（dry-run）
+- 支持回滚到上一个版本
+
+**使用方式**：
+
+```bash
+# 检查更新
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py check
+
+# 查看当前状态
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py status
+
+# 预览升级（推荐先执行）
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgrade --dry-run
+
+# 执行升级
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgrade
+
+# 升级到指定版本
+python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgrade GLM-5.1
 ```
 
 ### 升级路径配置
