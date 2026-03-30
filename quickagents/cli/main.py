@@ -51,18 +51,18 @@ import os
 import argparse
 from pathlib import Path
 
-from quickagents.core.file_manager import FileManager
-from quickagents.core.memory import MemoryManager
-from quickagents.core.loop_detector import LoopDetector
-from quickagents.core.reminder import Reminder
-from quickagents.core.cache_db import CacheDB
-from quickagents.core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType
-from quickagents.core.markdown_sync import MarkdownSync
-from quickagents.core.evolution import SkillEvolution, EvolutionTrigger, get_evolution
-from quickagents.core.git_hooks import GitHooks
-from quickagents.skills.feedback_collector import FeedbackCollector
-from quickagents.skills.tdd_workflow import TDDWorkflow, TDDPhase
-from quickagents.skills.git_commit import GitCommit
+from ..core.file_manager import FileManager
+from ..core.memory import MemoryManager
+from ..core.loop_detector import LoopDetector
+from ..core.reminder import Reminder
+from ..core.cache_db import CacheDB
+from ..core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType
+from ..core.markdown_sync import MarkdownSync
+from ..core.evolution import SkillEvolution, EvolutionTrigger, get_evolution
+from ..core.git_hooks import GitHooks
+from ..skills.feedback_collector import FeedbackCollector
+from ..skills.tdd_workflow import TDDWorkflow, TDDPhase
+from ..skills.git_commit import GitCommit
 
 
 def cmd_read(args):

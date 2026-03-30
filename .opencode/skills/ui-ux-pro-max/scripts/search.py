@@ -20,7 +20,7 @@ import io
 from core import CSV_CONFIG, AVAILABLE_STACKS, MAX_RESULTS, search, search_stack
 from design_system import generate_design_system, persist_design_system
 
-# Force UTF-8 for stdout/stderr to handle emojis on Windows (cp1252 default)
+# Force UTF-8 for stdout/stderr on Windows (cp1252 default)
 if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 if sys.stderr.encoding and sys.stderr.encoding.lower() != 'utf-8':
@@ -83,17 +83,16 @@ if __name__ == "__main__":
         )
         print(result)
         
-        # Print persistence confirmation
         if args.persist:
             project_slug = args.project_name.lower().replace(' ', '-') if args.project_name else "default"
             print("\n" + "=" * 60)
-            print(f"✅ Design system persisted to design-system/{project_slug}/")
-            print(f"   📄 design-system/{project_slug}/MASTER.md (Global Source of Truth)")
+            print(f"[OK] Design system persisted to design-system/{project_slug}/")
+            print(f"   [FILE] design-system/{project_slug}/MASTER.md (Global Source of Truth)")
             if args.page:
                 page_filename = args.page.lower().replace(' ', '-')
-                print(f"   📄 design-system/{project_slug}/pages/{page_filename}.md (Page Overrides)")
+                print(f"   [FILE] design-system/{project_slug}/pages/{page_filename}.md (Page Overrides)")
             print("")
-            print(f"📖 Usage: When building a page, check design-system/{project_slug}/pages/[page].md first.")
+            print(f"[DOCS] Usage: When building a page, check design-system/{project_slug}/pages/[page].md first.")
             print(f"   If exists, its rules override MASTER.md. Otherwise, use MASTER.md.")
             print("=" * 60)
     # Stack search
