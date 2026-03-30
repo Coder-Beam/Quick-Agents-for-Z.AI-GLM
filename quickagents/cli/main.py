@@ -288,14 +288,14 @@ def cmd_feedback(args):
             print("[INFO] 重复记录已忽略")
     
     elif args.action == 'improve':
-        success = collector.record('improve', args.description, scenario=args.scenario)
+        success = collector.record('improvement', args.description, scenario=args.scenario)
         if success:
             print(f"[OK] 已记录改进建议: {args.description}")
         else:
             print("[INFO] 重复记录已忽略")
     
     elif args.action == 'best':
-        success = collector.record('best', args.description, scenario=args.scenario)
+        success = collector.record('best_practice', args.description, scenario=args.scenario)
         if success:
             print(f"[OK] 已记录最佳实践: {args.description}")
         else:

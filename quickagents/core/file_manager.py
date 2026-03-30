@@ -120,7 +120,7 @@ class FileManager:
         write_file_utf8(file_path, content)
         
         # 更新缓存
-        self.cache.update(file_path, content)
+        self.cache.update_after_write(file_path, content)
         
         return True
     
