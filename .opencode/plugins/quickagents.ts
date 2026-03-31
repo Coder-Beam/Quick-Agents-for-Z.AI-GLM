@@ -85,10 +85,10 @@ export const QuickAgentsPlugin: Plugin = async (ctx) => {
     timestamp: number;
   }
   const callSequence: ToolCall[] = [];
-  const MAX_SEQUENCE_LENGTH = 20;
-  const STUCK_THRESHOLD = 3;      // Same call 3+ times in a row
-  const OSCILLATION_MIN = 2;      // A→B→A→B pattern (2 cycles)
-  const PATTERN_WINDOW = 60000;   // 60 second window
+const MAX_SEQUENCE_LENGTH = 20;
+const STUCK_THRESHOLD = 5;      // Same call 5+ times in a row (incre阈值)
+const OSCILLATION_MIN = 3;      // A→ B→A→ B pattern (3 cycles) (增加阈值)
+const PATTERN_WINDOW = 60000;   // 60 second window
   
   let toolCallCount = 0;
   let sessionStartTime = Date.now();
