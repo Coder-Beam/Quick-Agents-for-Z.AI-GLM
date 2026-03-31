@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 
 from .unified_db import UnifiedDB, FeedbackType
+from ..utils.encoding import write_file_utf8
 
 
 class EvolutionTrigger(Enum):
@@ -171,8 +172,10 @@ class SkillEvolution:
                     title=f"发现可复用模式: {pattern['name']}",
                     description=pattern['description'],
                     project_name=self.project_name,
-                    context=pattern['context'],
-                    tags=['auto-detected', 'pattern']
+                    metadata={
+                        'context': pattern['context'],
+                        'tags': ['auto-detected', 'pattern']
+                    }
                 )
                 result['feedback_added'].append(pattern['name'])
         
@@ -223,21 +226,25 @@ class SkillEvolution:
                     title=imp['title'],
                     description=imp['description'],
                     project_name=self.project_name,
-                    context=f"Commit: {commit_info.get('hash', '')[:8]}",
-                    tags=['git-commit', 'auto-detected']
+                    metadata={
+                        'context': f"Commit: {commit_info.get('hash', '')[:8]}",
+                        'tags': ['git-commit', 'auto-detected']
+                    }
                 )
                 result['improvements_found'].append(imp['title'])
         
         # 3. 检测是否有Bug修复
         if 'fix' in commit_info.get('message', '').lower():
-            self.db.add_feedback(
-                FeedbackType.BUG,
-                title=f"Bug修复: {commit_info.get('message', '')[:50]}",
-                description=commit_info.get('message', ''),
-                project_name=self.project_name,
-                context=f"Commit: {commit_info.get('hash', '')}",
-                tags=['git-commit', 'bug-fix']
-            )
+                self.db.add_feedback(
+                    FeedbackType.BUG,
+                    title=f"Bug修复: {commit_info.get('message', '')[:50]}",
+                    description=commit_info.get('message', ''),
+                    project_name=self.project_name,
+                    metadata={
+                        'context': f"Commit: {commit_info.get('hash', '')}",
+                        'tags': ['git-commit', 'bug-fix']
+                    }
+                )
         
         return result
     
@@ -268,9 +275,11 @@ class SkillEvolution:
             title=f"[{error_info.get('error_type', 'Unknown')}] {error_info.get('error_message', '')[:100]}",
             description=error_info.get('error_message', ''),
             project_name=self.project_name,
-            context=error_info.get('context', ''),
-            suggestion=self._suggest_fix(error_info),
-            tags=['error', 'auto-detected']
+            metadata={
+                'context': error_info.get('context', ''),
+                'suggestion': self._suggest_fix(error_info),
+                'tags': ['error', 'auto-detected']
+            }
         )
         result['logged'] = True
         
@@ -353,6 +362,7 @@ class SkillEvolution:
         
         # 3. 更新优化时间
         self._update_last_optimization_time()
+        result['optimization_time'] = datetime.now().isoformat()
         
         # 4. 重置任务计数
         self._reset_task_count()
@@ -362,35 +372,54 @@ class SkillEvolution:
     # ==================== Skill管理 ====================
     
     def record_skill_creation(self, skill_name: str, reason: str, 
-                              expected_use: str = None) -> int:
+                              expected_use: str = None) -> Dict:
         """记录Skill创建"""
-        return self._add_evolution_record(
+        record_id = self._add_evolution_record(
             skill_name=skill_name,
             trigger_type=EvolutionTrigger.MANUAL.value,
             change_type='created',
             description=reason,
             details={'expected_use': expected_use}
         )
+        return {
+            'skill_name': skill_name,
+            'change_type': 'creation',
+            'id': record_id,
+            'details': {'expected_use': expected_use}
+        }
     
     def record_skill_update(self, skill_name: str, version: str,
-                           changes: List[str], reason: str) -> int:
+                            changes: List[str], reason: str) -> Dict:
         """记录Skill更新"""
-        return self._add_evolution_record(
+        record_id = self._add_evolution_record(
             skill_name=skill_name,
             trigger_type=EvolutionTrigger.MANUAL.value,
             change_type='updated',
             description=reason,
             details={'version': version, 'changes': changes}
         )
+        return {
+            'skill_name': skill_name,
+            'change_type': 'update',
+            'id': record_id,
+            'version': version,
+            'changes': changes
+        }
     
-    def record_skill_archive(self, skill_name: str, reason: str) -> int:
+    def record_skill_archive(self, skill_name: str, reason: str) -> Dict:
         """记录Skill归档"""
-        return self._add_evolution_record(
+        record_id = self._add_evolution_record(
             skill_name=skill_name,
             trigger_type=EvolutionTrigger.MANUAL.value,
             change_type='archived',
             description=reason
         )
+        return {
+            'skill_name': skill_name,
+            'change_type': 'archive',
+            'id': record_id,
+            'reason': reason
+        }
     
     def get_skill_history(self, skill_name: str) -> List[Dict]:
         """获取Skill进化历史"""
@@ -438,7 +467,7 @@ class SkillEvolution:
             
             return {
                 'skill_name': skill_name,
-                'total_usage': total,
+                'usage_count': total,
                 'success_count': success,
                 'failure_count': total - success,
                 'success_rate': success / total if total > 0 else 0,
@@ -518,9 +547,11 @@ class SkillEvolution:
             title=f"任务失败分析: {task_info.get('task_name', '')}",
             description=f"错误: {error}",
             project_name=self.project_name,
-            context=f"Skills使用: {', '.join(skills_used)}",
-            suggestion="检查相关Skills的错误处理逻辑",
-            tags=['failure-analysis', 'auto-detected']
+            metadata={
+                'context': f"Skills使用: {', '.join(skills_used)}",
+                'suggestion': "检查相关Skills的错误处理逻辑",
+                'tags': ['failure-analysis', 'auto-detected']
+            }
         )
         
         return {
@@ -700,6 +731,18 @@ class SkillEvolution:
                     updated_at = excluded.updated_at
             ''', (datetime.now().isoformat(), datetime.now().isoformat()))
     
+    def _set_last_optimization_time(self, dt: datetime) -> None:
+        """Set last optimization time (for testing)"""
+        with self.db._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO evolution_config (key, value, updated_at)
+                VALUES ('last_optimization', ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = excluded.updated_at
+            ''', (dt.isoformat(), dt.isoformat()))
+    
     def _get_skill_statistics(self) -> Dict[str, Dict]:
         """获取所有Skills统计"""
         return self.get_all_skills_stats()
@@ -739,11 +782,18 @@ class SkillEvolution:
             md_content = self._generate_skill_md(skill_name, history, stats)
             
             file_path = output_dir / f'{skill_name}.md'
-            from ..utils.encoding import write_file_utf8
             write_file_utf8(str(file_path), md_content)
             
             result['files_created'].append(str(file_path))
             result['skills_synced'] += 1
+        
+        # 生成统计汇总文件
+        all_stats = self.get_all_skills_stats()
+        if all_stats:
+            stats_content = self._generate_stats_md(all_stats)
+            stats_file = output_dir / 'skill_stats.md'
+            write_file_utf8(str(stats_file), stats_content)
+            result['files_created'].append(str(stats_file))
         
         return result
     
@@ -778,6 +828,36 @@ class SkillEvolution:
             lines.append('')
         
         return '\n'.join(lines)
+    
+    def _generate_stats_md(self, all_stats: Dict[str, Dict]) -> str:
+        """生成统计汇总Markdown文档"""
+        lines = [
+            '# Skills 统计汇总',
+            '',
+            '## 概览',
+            '',
+            f'- 总Skills数: {len(all_stats)}',
+            ''
+        ]
+        
+        if all_stats:
+            lines.append('## 详细统计')
+            lines.append('')
+            
+            for skill_name, stats in sorted(all_stats.items()):
+                success_rate = stats.get('success_rate', 0)
+                lines.extend([
+                    f'### {skill_name}',
+                    '',
+                    f'- 使用次数: {stats.get("count", 0)}',
+                    f'- 成功次数: {stats.get("success_count", 0)}',
+                    f'- 失败次数: {stats.get("failure_count", 0)}',
+                    f'- 成功率: {success_rate:.1%}',
+                    f'- 平均耗时: {stats.get("avg_duration_ms", 0):.0f}ms',
+                    ''
+                ])
+        
+        return '\n'.join(lines)
 
 
 # 全局实例
@@ -793,3 +873,11 @@ def get_evolution(db_path: str = '.quickagents/unified.db',
         db = get_unified_db(db_path)
         _global_evolution = SkillEvolution(db, project_name)
     return _global_evolution
+
+
+def reset_evolution() -> None:
+    """重置全局进化系统实例（主要用于测试）"""
+    global _global_evolution
+    _global_evolution = None
+    from .unified_db import reset_global_db
+    reset_global_db()

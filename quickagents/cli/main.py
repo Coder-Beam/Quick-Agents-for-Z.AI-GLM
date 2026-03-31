@@ -171,30 +171,46 @@ def cmd_memory(args):
 
 def cmd_loop(args):
     """循环检测命令"""
-    detector = LoopDetector()
+    from ..core.loop_detector import get_loop_detector
+    
+    detector = get_loop_detector()
     
     if args.action == 'check':
-        patterns = detector.get_loop_patterns()
-        if patterns:
-            print("[WARN] 检测到循环模式")
+        # V3: 使用 analyze_patterns() 获取模式分析
+        patterns = detector.analyze_patterns()
+        if patterns.get('failure_distribution'):
+            print("[WARN] 检测到失败模式")
             print("-" * 50)
-            for p in patterns:
-                print(f"  {p['tool_name']}: {p['count']}次")
-                print(f"    首次: {p['first_seen']}")
-                print(f"    最后: {p['last_seen']}")
+            for tool, count in patterns['failure_distribution'].items():
+                print(f"  {tool}: {count}次失败")
         else:
-            print("[OK] 未检测到循环模式")
+            print("[OK] 未检测到失败模式")
+        
+        # 显示状态
+        status = detector.get_status()
+        print(f"\n[状态] {status['state']}")
+        print(f"  总调用: {status['total_calls']}")
+        print(f"  连续失败: {status['consecutive_failures']}")
     
     elif args.action == 'reset':
         detector.reset()
         print("[OK] 已重置循环检测")
     
     elif args.action == 'stats':
-        stats = detector.get_stats()
-        print("[Loop] 循环检测统计")
-        print(f"  检测阈值: {stats['threshold']}")
-        print(f"  窗口大小: {stats['window_size']}")
-        print(f"  循环模式: {stats['total_patterns']}")
+        # V3: 使用 get_status() 获取统计信息
+        stats = detector.get_status()
+        print("[Loop] 循环检测统计 (V3)")
+        print("=" * 50)
+        print(f"  当前状态: {stats['state']}")
+        print(f"  总调用数: {stats['total_calls']}")
+        print(f"  连续失败: {stats['consecutive_failures']}")
+        print(f"  失败记录: {stats['failure_count']}")
+        print(f"\n[阈值配置]")
+        print(f"  相同失败阈值: {stats['thresholds']['same_failure']}")
+        print(f"  连续失败阈值: {stats['thresholds']['consecutive_failure']}")
+        print(f"  策略: {stats['config']['strategy']}")
+        print(f"  最大调用: {stats['config']['max_tool_calls']}")
+        print(f"  最大时间: {stats['config']['max_time_seconds']}s")
 
 
 def cmd_stats(args):

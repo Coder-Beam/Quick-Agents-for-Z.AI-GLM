@@ -23,6 +23,15 @@ from datetime import datetime
 from .unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType, get_unified_db
 
 
+def _get_attr(obj, key, default=None):
+    """Get attribute from either dataclass or dict"""
+    if hasattr(obj, key):
+        return getattr(obj, key)
+    elif isinstance(obj, dict):
+        return obj.get(key, default)
+    return default
+
+
 class MarkdownSync:
     """
     Markdown同步器
@@ -150,9 +159,9 @@ class MarkdownSync:
             print(f"同步记忆失败: {e}")
             return False
     
-    def _generate_memory_md(self, factual: List[Dict], 
-                           experiential: List[Dict],
-                           working: List[Dict]) -> str:
+    def _generate_memory_md(self, factual: List, 
+                           experiential: List,
+                           working: List) -> str:
         """生成MEMORY.md内容"""
         lines = [
             '# MEMORY.md',
@@ -170,10 +179,10 @@ class MarkdownSync:
             ''
         ]
         
-        # 事实记忆
+        # 事实记忆 (支持 Memory 对象和字典)
         for item in factual:
-            key = item['key']
-            value = item['value']
+            key = _get_attr(item, 'key')
+            value = _get_attr(item, 'value')
             try:
                 parsed = json.loads(value)
                 if isinstance(parsed, (dict, list)):
@@ -184,19 +193,19 @@ class MarkdownSync:
         
         lines.extend(['', '---', '', '## Experiential Memory (经验记忆)', ''])
         
-        # 经验记忆
+        # 经验记忆 (支持 Memory 对象和字典)
         for item in experiential[-50:]:  # 最近50条
-            category = item.get('category', 'general')
-            content = item['value']
-            timestamp = item.get('updated_at', '')[:10]
+            category = _get_attr(item, 'category', 'general') or 'general'
+            content = _get_attr(item, 'value')
+            timestamp = _get_attr(item, 'updated_at', '') or ''
             lines.append(f'- [{timestamp}] **{category}**: {content}')
         
         lines.extend(['', '---', '', '## Working Memory (工作记忆)', ''])
         
-        # 工作记忆
+        # 工作记忆 (支持 Memory 对象和字典)
         for item in working:
-            key = item['key']
-            value = item['value']
+            key = _get_attr(item, 'key')
+            value = _get_attr(item, 'value')
             lines.append(f'- **{key}**: {value}')
         
         lines.append('')
@@ -247,10 +256,10 @@ class MarkdownSync:
         try:
             # 获取所有任务
             all_tasks = self.db.get_tasks()
-            completed = [t for t in all_tasks if t['status'] == 'completed']
-            in_progress = [t for t in all_tasks if t['status'] == 'in_progress']
-            pending = [t for t in all_tasks if t['status'] == 'pending']
-            blocked = [t for t in all_tasks if t['status'] == 'blocked']
+            completed = [t for t in all_tasks if _get_attr(t, 'status') == 'completed']
+            in_progress = [t for t in all_tasks if _get_attr(t, 'status') == 'in_progress']
+            pending = [t for t in all_tasks if _get_attr(t, 'status') == 'pending']
+            blocked = [t for t in all_tasks if _get_attr(t, 'status') == 'blocked']
             
             # 生成Markdown
             content = self._generate_tasks_md(completed, in_progress, pending, blocked)
@@ -306,47 +315,61 @@ class MarkdownSync:
             lines.append('| 任务ID | 任务名称 | 优先级 | 状态 | 开始时间 |')
             lines.append('|--------|----------|--------|------|----------|')
             for task in in_progress:
-                lines.append(f"| {task['task_id']} | {task['name']} | {task['priority']} | 进行中 | {task.get('started_at', '-')[:10]} |")
+                task_id = _get_attr(task, 'id') or _get_attr(task, 'task_id')
+                name = _get_attr(task, 'name')
+                priority = _get_attr(task, 'priority')
+                started_at = _get_attr(task, 'started_at', '-')
+                lines.append(f"| {task_id} | {name} | {priority} | 进行中 | {started_at[:10] if started_at else '-'} |")
             lines.append('')
         
         lines.extend(['---', '', '## 待办任务', ''])
         
         # 按优先级分组
-        p0_tasks = [t for t in pending if t['priority'] == 'P0']
-        p1_tasks = [t for t in pending if t['priority'] == 'P1']
-        p2_tasks = [t for t in pending if t['priority'] == 'P2']
+        p0_tasks = [t for t in pending if _get_attr(t, 'priority') == 'P0']
+        p1_tasks = [t for t in pending if _get_attr(t, 'priority') == 'P1']
+        p2_tasks = [t for t in pending if _get_attr(t, 'priority') == 'P2']
         
         if p0_tasks:
             lines.append('### P0 - 紧急')
             for task in p0_tasks:
-                lines.append(f"- [ ] {task['task_id']}: {task['name']}")
+                task_id = _get_attr(task, 'id') or _get_attr(task, 'task_id')
+                name = _get_attr(task, 'name')
+                lines.append(f"- [ ] {task_id}: {name}")
             lines.append('')
         
         if p1_tasks:
             lines.append('### P1 - 高优先级')
             for task in p1_tasks:
-                lines.append(f"- [ ] {task['task_id']}: {task['name']}")
+                task_id = _get_attr(task, 'id') or _get_attr(task, 'task_id')
+                name = _get_attr(task, 'name')
+                lines.append(f"- [ ] {task_id}: {name}")
             lines.append('')
         
         if p2_tasks:
             lines.append('### P2 - 中优先级')
             for task in p2_tasks:
-                lines.append(f"- [ ] {task['task_id']}: {task['name']}")
+                task_id = _get_attr(task, 'id') or _get_attr(task, 'task_id')
+                name = _get_attr(task, 'name')
+                lines.append(f"- [ ] {task_id}: {name}")
             lines.append('')
         
         # 阻塞任务
         if blocked:
             lines.append('### 阻塞中')
             for task in blocked:
-                notes = task.get('notes', '')
-                lines.append(f"- [ ] {task['task_id']}: {task['name']} {f'({notes})' if notes else ''}")
+                task_id = _get_attr(task, 'id') or _get_attr(task, 'task_id')
+                name = _get_attr(task, 'name')
+                notes = _get_attr(task, 'notes', '')
+                lines.append(f"- [ ] {task_id}: {name} {f'({notes})' if notes else ''}")
             lines.append('')
         
         lines.extend(['---', '', '## 已完成任务', ''])
         
         for task in completed[-20:]:  # 最近20个
-            completed_at = task.get('completed_at', '')[:10]
-            lines.append(f"- [x] {task['task_id']}: {task['name']} - 完成于 {completed_at}")
+            task_id = _get_attr(task, 'id') or _get_attr(task, 'task_id')
+            name = _get_attr(task, 'name')
+            completed_at = _get_attr(task, 'completed_at', '')
+            lines.append(f"- [x] {task_id}: {name} - 完成于 {completed_at[:10] if completed_at else ''}")
         
         lines.append('')
         return '\n'.join(lines)
@@ -395,27 +418,41 @@ class MarkdownSync:
         ]
         
         for d in decisions:
-            lines.append(f"| {d['decision_id']} | {d['title']} | {d['created_at'][:10]} | {d.get('impact', '-')} | {d['status']} |")
+            decision_id = _get_attr(d, 'decision_id') or _get_attr(d, 'id')
+            title = _get_attr(d, 'title')
+            created_at = _get_attr(d, 'created_at', '')
+            impact = _get_attr(d, 'impact', '-')
+            status = _get_attr(d, 'status')
+            lines.append(f"| {decision_id} | {title} | {created_at[:10] if created_at else ''} | {impact} | {status} |")
         
         lines.extend(['', '---', ''])
         
         # 详细决策
         for d in decisions:
+            decision_id = _get_attr(d, 'decision_id') or _get_attr(d, 'id')
+            title = _get_attr(d, 'title')
+            created_at = _get_attr(d, 'created_at', '')
+            decision_maker = _get_attr(d, 'decision_maker', 'AI建议')
+            status = _get_attr(d, 'status')
+            background = _get_attr(d, 'background', '无')
+            final_decision = _get_attr(d, 'final_decision', '无')
+            rationale = _get_attr(d, 'rationale', '无')
+            
             lines.extend([
-                f"## {d['decision_id']} - {d['title']}",
+                f"## {decision_id} - {title}",
                 '',
-                f"**决策时间**: {d['created_at'][:10]}",
-                f"**决策者**: {d.get('decision_maker', 'AI建议')}",
-                f"**状态**: {d['status']}",
+                f"**决策时间**: {created_at[:10] if created_at else ''}",
+                f"**决策者**: {decision_maker}",
+                f"**状态**: {status}",
                 '',
                 '### 决策背景',
-                d.get('background', '无'),
+                background,
                 '',
                 '### 最终决策',
-                d.get('final_decision', '无'),
+                final_decision,
                 '',
                 '### 理由',
-                d.get('rationale', '无'),
+                rationale,
                 '',
                 '---',
                 ''
@@ -439,32 +476,33 @@ class MarkdownSync:
             
             # 获取笔记本条目
             notepads = {'learnings': [], 'decisions': [], 'issues': [], 'gotchas': []}
-            if progress.get('plan_name'):
+            plan_name = _get_attr(progress, 'plan_name')
+            if plan_name:
                 for entry_type in notepads.keys():
-                    entries = self.db.get_notepad_entries(progress['plan_name'], entry_type)
-                    notepads[entry_type] = [e['content'] for e in entries]
+                    entries = self.db.get_notepad_entries(plan_name, entry_type)
+                    notepads[entry_type] = [_get_attr(e, 'content') for e in entries]
             
             # 获取检查点
-            checkpoints = self.db.get_checkpoints(progress.get('plan_name', ''))
+            checkpoints = self.db.get_checkpoints(plan_name or '')
             
             # 生成兼容格式的JSON
             boulder_data = {
                 'version': '2.0.0',
-                'plan_name': progress.get('plan_name'),
-                'plan_path': progress.get('plan_path'),
-                'session_id': progress.get('session_id'),
-                'started_at': progress.get('started_at'),
-                'updated_at': progress.get('updated_at'),
-                'status': progress.get('status'),
-                'total_tasks': progress.get('total_tasks', 0),
-                'completed_tasks': progress.get('completed_tasks', 0),
-                'current_task': progress.get('current_task'),
+                'plan_name': plan_name,
+                'plan_path': _get_attr(progress, 'plan_path'),
+                'session_id': _get_attr(progress, 'session_id'),
+                'started_at': _get_attr(progress, 'started_at'),
+                'updated_at': _get_attr(progress, 'updated_at'),
+                'status': _get_attr(progress, 'status'),
+                'total_tasks': _get_attr(progress, 'total_tasks', 0),
+                'completed_tasks': _get_attr(progress, 'completed_tasks', 0),
+                'current_task': _get_attr(progress, 'current_task'),
                 'notepads': notepads,
                 'checkpoints': [
                     {
-                        'id': cp['id'],
-                        'description': cp['description'],
-                        'created_at': cp['created_at']
+                        'id': _get_attr(cp, 'id'),
+                        'description': _get_attr(cp, 'description'),
+                        'created_at': _get_attr(cp, 'created_at')
                     }
                     for cp in checkpoints
                 ]
@@ -545,21 +583,29 @@ class MarkdownSync:
         ]
         
         for fb in feedbacks:
-            lines.append(f"## {fb['created_at'][:16]} - {fb.get('project_name', '未知项目')}")
+            created_at = _get_attr(fb, 'created_at', '')
+            project_name = _get_attr(fb, 'project_name', '未知项目')
+            title = _get_attr(fb, 'title')
+            description = _get_attr(fb, 'description')
+            context = _get_attr(fb, 'context')
+            suggestion = _get_attr(fb, 'suggestion')
+            rating = _get_attr(fb, 'rating')
+            
+            lines.append(f"## {created_at[:16] if created_at else ''} - {project_name}")
             lines.append('')
-            lines.append(f"**标题**: {fb['title']}")
+            lines.append(f"**标题**: {title}")
             
-            if fb.get('description'):
-                lines.append(f"**描述**: {fb['description']}")
+            if description:
+                lines.append(f"**描述**: {description}")
             
-            if fb.get('context'):
-                lines.append(f"**场景**: {fb['context']}")
+            if context:
+                lines.append(f"**场景**: {context}")
             
-            if fb.get('suggestion'):
-                lines.append(f"**建议**: {fb['suggestion']}")
+            if suggestion:
+                lines.append(f"**建议**: {suggestion}")
             
-            if fb.get('rating'):
-                lines.append(f"**评分**: {fb['rating']}/5")
+            if rating:
+                lines.append(f"**评分**: {rating}/5")
             
             lines.extend(['', '---', ''])
         

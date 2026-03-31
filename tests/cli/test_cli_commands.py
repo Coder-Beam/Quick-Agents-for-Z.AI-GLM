@@ -385,6 +385,9 @@ class TestSyncCommand(unittest.TestCase):
     
     def tearDown(self):
         """测试后清理"""
+        # 关闭数据库连接 (Windows文件锁定)
+        if hasattr(self, 'db') and self.db:
+            self.db.close()
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
     
@@ -574,6 +577,9 @@ class TestEvolutionCommand(unittest.TestCase):
     
     def tearDown(self):
         """测试后清理"""
+        # 关闭数据库连接 (Windows文件锁定)
+        if hasattr(self, 'db') and self.db:
+            self.db.close()
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
     
