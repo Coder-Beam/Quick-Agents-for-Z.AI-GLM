@@ -6,8 +6,8 @@ version: 1.0.0
 
 # Background Agents Skill
 
-> 基于 Oh-My-OpenAgent 的后台执行架构
 > QuickAgents 的并行任务处理系统
+> 系统化任务编排与协调
 
 ---
 
@@ -246,12 +246,11 @@ task({
 });
 
 // 普通优先级任务
-task({
-  subagent_type: "librarian",
-  run_in_background: true,
-  priority: "medium",
-  prompt: "分析代码库结构"
-});
+      task({
+        subagent_type: "cangjie-doc",
+        run_in_background: true,
+        prompt: "为模块生成文档"
+      });
 
 // 低优先级任务
 task({

@@ -1,7 +1,5 @@
 # Todo Continuation Enforcer Hook
-
-> 强制Todo完成机制 - 确保Agent不会中途停止
-> 基于 Oh-My-OpenAgent 的 Todo Enforcer 设计
+> QuickAgents 强制完成机制 - 确保代理不会中途停止
 
 ---
 
@@ -17,19 +15,19 @@
 
 ### 为什么需要 Todo Enforcer？
 
-**问题**：
+**问题**:
 - Agent 可能在完成部分任务后停止
 - 用户需要手动提醒继续
 - 工作流程被打断
 
-**解决方案**：
+**解决方案**:
 - 自动检测未完成的 Todo
 - 注入系统提醒，强制继续
 - 直到所有 Todo 标记为完成
 
-### "推石上山"（Sisyphus）精神
+### "精卫填海"般的执着精神
 
-就像希腊神话中的西西弗斯，不断推石上山，永不停止。Todo Enforcer 确保 Agent 也会持续工作，直到所有任务完成。
+就像上古神话中的精卫鸟，衔石填海，永不放弃。Todo Enforcer 确保 Agent 也会持续工作，直到所有任务完成。
 
 ---
 
@@ -71,7 +69,7 @@
 - [ ] 添加验证逻辑
 - [ ] 编写测试用例
 
-**重要**：在所有待办事项标记为完成前，不要响应！
+**重要**：在所有待办事项标记为完成前，不要响应！\/Todo\>
 ```
 
 ---
@@ -102,9 +100,9 @@
     "strict_mode": true,
     
     "excluded_agents": [
-      "oracle",           // Oracle agent 只读，不强制
-      "librarian",        // Librarian agent 可能不需要 Todo
-      "explore"           // Explore agent 快速探索
+      "chisongzi-advise",    // 赤松子-顾问 agent 只读，不强制
+      "cangjie-doc",         // 仓颉-文档 agent 可能不需要 Todo
+      "explore"               // Explore agent 快速探索
     ],
     
     "reminder_template": "custom_template.md",
@@ -124,7 +122,7 @@
 
 ### 示例1：基本任务执行
 
-**Agent 创建 Todo**：
+**Agent 创建 Todo**:
 ```markdown
 ## 当前任务
 - [ ] 读取配置文件
@@ -133,20 +131,20 @@
 - [ ] 应用配置
 ```
 
-**第一次响应**：
+**第一次响应**:
 ```
 我已读取配置文件，开始解析...
 ```
 
-**系统检测**：
+**系统检测**:
 - 4个 Todo，0个完成
 - 注入提醒
 
-**系统提醒**：
+**系统提醒**:
 ```markdown
 [SYSTEM REMINDER - TODO CONTINUATION]
 
-你有未完成的待办事项！在响应前必须完成所有待办：
+你有未完成的待办事项！在响应前必须完成所有待办:
 
 - [ ] 读取配置文件 ← 当前进行中
 - [ ] 解析配置项
@@ -156,7 +154,7 @@
 **重要**：在所有待办事项标记为完成前，不要响应！
 ```
 
-**Agent 继续工作**：
+**Agent 继续工作**:
 ```markdown
 ✅ 读取配置文件完成
 ✅ 解析配置项完成
@@ -172,13 +170,13 @@
 所有任务已完成！
 ```
 
-**系统检测**：
+**系统检测**:
 - 4个 Todo，4个完成
 - 允许响应
 
 ### 示例2：长时间任务
 
-**Agent 创建 Todo**：
+**Agent 创建 Todo**:
 ```markdown
 ## 重构任务
 - [ ] 分析现有代码
@@ -188,7 +186,7 @@
 - [ ] 更新文档
 ```
 
-**多次循环**：
+**多次循环**:
 1. 完成分析 → 系统提醒 → 继续设计
 2. 完成设计 → 系统提醒 → 继续实现
 3. 完成实现 → 系统提醒 → 继续测试
@@ -201,7 +199,7 @@
 
 ### 1. 与 Orchestrator 配合
 
-**Orchestrator 使用 Todo 驱动**：
+**Orchestrator 使用 Todo 驱动**:
 ```markdown
 ## 执行计划
 - [ ] T001: 任务1
@@ -209,25 +207,25 @@
 - [ ] T003: 任务3
 ```
 
-**Todo Enforcer 确保**：
+**Todo Enforcer 确保**:
 - Orchestrator 不会在 T001 后停止
 - 必须完成所有任务才能响应
 
 ### 2. 与 UltraWork 配合
 
-**UltraWork 模式**：
+**UltraWork 模式**:
 ```bash
 ulw 实现用户认证系统
 ```
 
-**Todo 自动创建 + 强制完成**：
+**Todo 自动创建 + 强制完成**:
 1. UltraWork 创建 Todo
 2. Todo Enforcer 强制完成
 3. 直到所有任务完成
 
 ### 3. 与 boulder.json 配合
 
-**跨会话恢复**：
+**跨会话恢复**:
 ```json
 {
   "completed_tasks": ["T001", "T002"],
@@ -236,7 +234,7 @@ ulw 实现用户认证系统
 }
 ```
 
-**Todo Enforcer**：
+**Todo Enforcer**:
 - 新会话读取 boulder.json
 - 创建剩余 Todo
 - 强制完成所有剩余任务
@@ -247,18 +245,18 @@ ulw 实现用户认证系统
 
 ### 1. 用户干预
 
-**用户明确停止**：
+**用户明确停止**:
 ```bash
 /stop-continuation
 ```
 
-**行为**：
+**行为**:
 - Todo Enforcer 停止提醒
 - Agent 可以响应
 
 ### 2. 错误状态
 
-**遇到无法恢复的错误**：
+**遇到无法恢复的错误**:
 ```markdown
 [ERROR] 无法继续：缺少关键依赖
 
@@ -267,37 +265,37 @@ ulw 实现用户认证系统
 - [ ] 安装依赖3 ← 失败：网络错误
 ```
 
-**行为**：
+**行为**:
 - 检测到错误状态
 - 暂停强制机制
 - 等待用户决策
 
 ### 3. 超时
 
-**运行超过配置的时间**：
+**运行超过配置的时间**:
 ```json
 {
   "timeout_minutes": 30
 }
 ```
 
-**行为**：
+**行为**:
 - 超过30分钟后停止提醒
 - 生成超时报告
 - 保存当前进度
 
 ### 4. 排除的 Agent
 
-**某些 Agent 不需要强制**：
+**某些 Agent 不需要强制**:
 ```json
 {
-  "excluded_agents": ["oracle", "librarian", "explore"]
+  "excluded_agents": ["chisongzi-advise", "cangjie-doc", "explore"]
 }
 ```
 
-**原因**：
-- Oracle: 只读咨询，可能不需要 Todo
-- Librarian: 文档查找，快速返回
+**原因**:
+- chisongzi-advise: 只读咨询，可能不需要 Todo
+- cangjie-doc: 文档查找，快速返回
 - Explore: 快速探索，不需要完整流程
 
 ---
@@ -337,12 +335,12 @@ grep "所有Todo完成" .quickagents/logs/todo-enforcer.log | wc -l
 
 ### 1. 合理创建 Todo
 
-❌ **不好**：
+❌ **不好**:
 ```markdown
 - [ ] 做所有事情
 ```
 
-✅ **好**：
+✅ **好**:
 ```markdown
 - [ ] 读取配置文件
 - [ ] 解析配置
@@ -396,8 +394,8 @@ grep "所有Todo完成" .quickagents/logs/todo-enforcer.log | wc -l
     "reminder_interval": 1,
     "strict_mode": true,
     "excluded_agents": [
-      "oracle",
-      "librarian", 
+      "chisongzi-advise",
+      "cangjie-doc", 
       "explore"
     ],
     "break_conditions": {
@@ -456,7 +454,6 @@ grep "所有Todo完成" .quickagents/logs/todo-enforcer.log | wc -l
 
 ---
 
-*基于 Oh-My-OpenAgent Todo Continuation Enforcer*
-*适配 QuickAgents 强制完成机制*
+*QuickAgents 强制完成机制*
 *版本: v1.0.0*
 *创建时间: 2026-03-25*
