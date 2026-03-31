@@ -24,7 +24,7 @@ permission:
     "*": ask
 ---
 
-# Orchestrator Agent (v2.6.8)
+# Orchestrator Agent (v2.7.0)
 
 > QuickAgents 的执行层协调器
 > 系统化任务编排和协调
@@ -49,7 +49,7 @@ permission:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│            Orchestrator 执行循环 (v2.6.8)                    │
+│            Orchestrator 执行循环 (v2.7.0)                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  1. 读取计划    ← 从 UnifiedDB 获取任务                      │
@@ -86,7 +86,7 @@ permission:
 
 ---
 
-## Python API 使用（v2.6.8）
+## Python API 使用（v2.7.0）
 
 ### 进度追踪
 
@@ -171,7 +171,7 @@ db.set_memory('success.001', '先写测试再实现（TDD）', MemoryType.EXPERI
 
 ---
 
-## 进度追踪系统（v2.6.8）
+## 进度追踪系统（v2.7.0）
 
 ### UnifiedDB 进度存储
 
@@ -388,6 +388,6 @@ tools:
 
 ---
 
-*适配 QuickAgents v2.6.8 UnifiedDB*
-*版本: v2.6.8*
+*适配 QuickAgents v2.7.0 UnifiedDB*
+*版本: v2.7.0*
 *更新时间: 2026-03-30*

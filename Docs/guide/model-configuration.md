@@ -1,6 +1,6 @@
 # QuickAgents 模型配置指南
 
-> 版本: 2.6.8 | 更新时间: 2026-03-30
+> 版本: 2.7.0 | 更新时间: 2026-03-30
 > 专为 ZhipuAI GLM Coding Plan 优化
 
 ---
@@ -182,7 +182,7 @@ qa models lock GLM-5
 ```json
 {
   "$schema": "./models-schema.json",
-  "version": "2.6.8",
+  "version": "2.7.0",
   "description": "QuickAgents model configuration optimized for ZhipuAI GLM Coding Plan",
   
   "strategy": "coding-plan",
@@ -544,4 +544,4 @@ agentOverrides > categories > default > Agent配置文件
 
 ---
 
-*版本: 2.6.8 | 适用于 QuickAgents v2.6.8+*
+*版本: 2.7.0 | 适用于 QuickAgents v2.7.0+*

@@ -1,8 +1,8 @@
-# QuickAgents v2.6.8 Release Notes
+# QuickAgents v2.7.0 Release Notes
 
 > **Release Date**: 2026-03-30 | **Author**: Coder-Beam
 
-[![Version](https://img.shields.io/badge/Version-2.6.8-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/releases/tag/v2.6.8)
+[![Version](https://img.shields.io/badge/Version-2.7.0-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/releases/tag/v2.7.0)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/Tests-254%20passing-brightgreen.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
@@ -11,7 +11,7 @@
 
 ## 🎉 Overview
 
-QuickAgents v2.6.8 is a **major documentation and quality release** that brings:
+QuickAgents v2.7.0 is a **major documentation and quality release** that brings:
 
 - ✅ **Pattern-based Loop Detection** - Intelligent stuck/oscillation detection
 - ✅ **Python Environment Detection** - Automated Python 3.9+ verification
@@ -58,7 +58,7 @@ pip install -e .
 - False positives on legitimate repeated operations
 - No distinction between exploration and stuck patterns
 
-**Now (v2.6.8):**
+**Now (v2.7.0):**
 - **Stuck Pattern Detection**: A→A→A (3+ identical calls)
 - **Oscillation Pattern Detection**: A→B→A→B (2+ cycles)
 - **Intelligent Allowlist**: A→B→C (normal exploration allowed)
@@ -130,7 +130,7 @@ Step 0: Python环境检测（必需）
 - Module descriptions
 
 **CHANGELOG.md:**
-- Version history from 1.0.0 to 2.6.8
+- Version history from 1.0.0 to 2.7.0
 - Upgrade guides
 - Breaking changes documented
 
@@ -216,7 +216,7 @@ Step 0: Python环境检测（必需）
 ### Minor Fixes
 
 - Fixed 24 SKILL.md files missing YAML front matter
-- Fixed plugin version mismatch (2.2.0 → 2.6.8)
+- Fixed plugin version mismatch (2.2.0 → 2.7.0)
 - Fixed installation guide referencing non-existent `qa init` command
 
 ---
@@ -371,7 +371,7 @@ qa tdd coverage               # Check coverage
 
 ## 🔄 Upgrade Guide
 
-### From v2.4.x to v2.6.8
+### From v2.4.x to v2.7.0
 
 ```bash
 # 1. Update Python package
@@ -379,13 +379,13 @@ pip install --upgrade quickagents
 
 # 2. Verify version
 python -c "from quickagents import __version__; print(__version__)"
-# Output: 2.6.8
+# Output: 2.7.0
 
 # 3. No breaking changes in API
 # All existing code continues to work
 ```
 
-### From v2.x to v2.6.8
+### From v2.x to v2.7.0
 
 ```bash
 # 1. Backup database
@@ -456,9 +456,9 @@ Special thanks to:
 
 ---
 
-**Full Changelog**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/compare/v2.4.0...v2.6.8
+**Full Changelog**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/compare/v2.4.0...v2.7.0
 
 ---
 
-*QuickAgents v2.6.8 - Making AI agent development easier*
+*QuickAgents v2.7.0 - Making AI agent development easier*
 *Released with ❤️ by Coder-Beam*

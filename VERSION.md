@@ -8,8 +8,8 @@
 
 | Property | Value |
 |-----------|-------|
-| Version | 2.6.8 |
-| Git Tag | v2.6.8 |
+| Version | 2.7.0 |
+| Git Tag | v2.7.0 |
 | Release Date | 2026-03-30 |
 | Minimum Compatible | 2.0.0 |
 | Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -38,7 +38,7 @@ qa hooks install
 
 ---
 
-## What's New (v2.6.8) | 本次更新
+## What's New (v2.7.0) | 本次更新
 
 **Major Update - Complete Documentation, Pattern Detection & Bilingual Support**
 
@@ -259,7 +259,7 @@ db.search_memory(
 | Glob null pointer | `.opencode/plugins/quickagents.ts` | Added null check for pattern parameter |
 | Duplicate code | `.opencode/plugins/quickagents.ts` | Removed duplicate glob interception logic |
 | Package.json formatting | `.opencode/plugins/package.json` | Fixed repository field indentation |
-| Version inconsistency | Multiple files | Unified to 2.6.8 |
+| Version inconsistency | Multiple files | Unified to 2.7.0 |
 
 ---
 
@@ -296,7 +296,7 @@ pytest tests/ -v
 
 ## Version History | 版本历史
 
-### v2.6.8 (2026-03-30)
+### v2.7.0 (2026-03-30)
 - Pattern-based LoopDetector
 - Python environment detection
 - Bilingual documentation
@@ -336,7 +336,7 @@ pytest tests/ -v
 
 > 每次版本更新时，所有Agent必须与当前版本的功能对齐
 
-### v2.6.8 Agent更新要求
+### v2.7.0 Agent更新要求
 
 #### 必须包含的Python API
 
@@ -430,6 +430,6 @@ pip install --upgrade quickagents
 
 ---
 
-*QuickAgents v2.6.8 - Making AI agent development easier*
+*QuickAgents v2.7.0 - Making AI agent development easier*
 
-*QuickAgents v2.6.8 - 让AI代理开发更简单*
+*QuickAgents v2.7.0 - 让AI代理开发更简单*

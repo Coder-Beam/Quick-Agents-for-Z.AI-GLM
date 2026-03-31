@@ -1,6 +1,6 @@
 {
   "$schema": "./models-schema.json",
-  "version": "2.6.8",
+  "version": "2.7.0",
   "description": "QuickAgents model configuration optimized for ZhipuAI GLM Coding Plan",
   
   "strategy": "coding-plan",

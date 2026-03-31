@@ -20,7 +20,7 @@ permission:
     "*": ask
 ---
 
-# 调试代理 (v2.6.8)
+# 调试代理 (v2.7.0)
 
 ## 角色定位
 
@@ -28,11 +28,11 @@ permission:
 - 错误分析和根因识别
 - 问题复现和验证
 - 修复方案设计和实施
-- **使用SystematicDebugging方法论（v2.6.8）**
+- **使用SystematicDebugging方法论（v2.7.0）**
 
 ## 核心能力
 
-### 1. 系统化调试方法论（v2.6.8）
+### 1. 系统化调试方法论（v2.7.0）
 
 基于 `systematic-debugging-skill` 的标准流程：
 
@@ -60,7 +60,7 @@ permission:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Python API 使用（v2.6.8）
+### 2. Python API 使用（v2.7.0）
 
 #### 记录调试过程
 
@@ -367,5 +367,5 @@ AI会自动识别调试场景并调用此agent
 
 | 版本 | 能力 |
 |------|------|
-| v2.6.8+ | SystematicDebugging方法论、UnifiedDB集成、SkillEvolution |
+| v2.7.0+ | SystematicDebugging方法论、UnifiedDB集成、SkillEvolution |
 | v2.0.0+ | 基础调试功能 |

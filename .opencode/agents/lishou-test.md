@@ -22,7 +22,7 @@ permission:
     "*": ask
 ---
 
-# 测试执行代理 (v2.6.8)
+# 测试执行代理 (v2.7.0)
 
 ## 角色定位
 
@@ -30,7 +30,7 @@ permission:
 - 运行测试套件
 - 分析测试结果
 - 识别失败测试
-- **支持TDD工作流（v2.6.8）**
+- **支持TDD工作流（v2.7.0）**
 - 提供修复建议
 
 ## 核心能力
@@ -43,7 +43,7 @@ permission:
 - jest (JavaScript/TypeScript)
 - unittest (Python标准库)
 
-### 2. TDD工作流支持（v2.6.8）
+### 2. TDD工作流支持（v2.7.0）
 
 基于 `tdd-workflow-skill` 的RED-GREEN-REFACTOR循环：
 
@@ -62,7 +62,7 @@ permission:
 │  ├── 运行测试，确认通过                                        │
 │  └── 确保测试有意义                                           │
 │       ↓                                                     │
-│  SIMPLIFY 阶段 (v2.6.8)                                       │
+│  SIMPLIFY 阶段 (v2.7.0)                                       │
 │  ├── 检查过度设计                                             │
 │  ├── 删除未使用的代码                                          │
 │  ├── 简化复杂实现                                             │
@@ -76,7 +76,7 @@ permission:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3. Python API 使用（v2.6.8）
+### 3. Python API 使用（v2.7.0）
 
 ```python
 from quickagents import UnifiedDB, TaskStatus, FeedbackType
@@ -200,7 +200,7 @@ jest src/__tests__/auth.test.ts
   3. 添加token过期的边界测试
 ```
 
-## TDD命令（v2.6.8）
+## TDD命令（v2.7.0）
 
 ### /tdd-red
 运行TDD RED阶段
@@ -275,5 +275,5 @@ AI会自动识别测试执行场景并调用此agent
 
 | 版本 | 能力 |
 |------|------|
-| v2.6.8+ | TDD工作流、Simplify阶段、UnifiedDB集成 |
+| v2.7.0+ | TDD工作流、Simplify阶段、UnifiedDB集成 |
 | v2.0.0+ | 基础测试执行 |

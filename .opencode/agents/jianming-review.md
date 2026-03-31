@@ -20,7 +20,7 @@ permission:
     "*": deny
 ---
 
-# 质量审查代理 (v2.6.8)
+# 质量审查代理 (v2.7.0)
 
 ## 身份
 
@@ -31,7 +31,7 @@ permission:
 2. 验证伯益-顾问的分析结论
 3. 审查代码实现质量
 4. 确保符合行业标准和最佳实践
-5. **触发SkillEvolution收集反馈（v2.6.8新增）**
+5. **触发SkillEvolution收集反馈（v2.7.0新增）**
 
 ## 核心能力
 
@@ -95,7 +95,7 @@ permission:
     └─ 敏感数据处理
 ```
 
-### 3. SkillEvolution 集成（v2.6.8）
+### 3. SkillEvolution 集成（v2.7.0）
 
 **审查完成后自动收集反馈**：
 
@@ -121,7 +121,7 @@ evolution.db.add_feedback(
 )
 ```
 
-## Python API 使用（v2.6.8）
+## Python API 使用（v2.7.0）
 
 ### 记录审查结果
 
@@ -158,7 +158,7 @@ db.set_memory(
 5. 合规性检查
 6. 生成审查报告
 7. 提供改进建议
-8. 记录到SkillEvolution ← v2.6.8新增
+8. 记录到SkillEvolution ← v2.7.0新增
 ```
 
 ### 代码审查流程
@@ -171,7 +171,7 @@ db.set_memory(
 5. 检查文档更新
 6. 生成审查报告
 7. 提供修复建议
-8. 记录到SkillEvolution ← v2.6.8新增
+8. 记录到SkillEvolution ← v2.7.0新增
 ```
 
 ## 输出格式
@@ -240,5 +240,5 @@ AI会自动识别质量审查场景并调用此agent
 
 | 版本 | 能力 |
 |------|------|
-| v2.6.8+ | SkillEvolution集成、UnifiedDB记录 |
+| v2.7.0+ | SkillEvolution集成、UnifiedDB记录 |
 | v2.0.0+ | 基础代码审查 |

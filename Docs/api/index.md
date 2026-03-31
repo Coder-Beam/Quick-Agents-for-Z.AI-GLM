@@ -1,4 +1,4 @@
-# QuickAgents API Reference v2.6.8
+# QuickAgents API Reference v2.7.0
 
 > Complete API documentation for QuickAgents toolkit
 
@@ -849,7 +849,7 @@ class SearchResult:
 
 ## Migration Guide
 
-### From 2.x to 2.6.8
+### From 2.x to 2.7.0
 
 1. **Update imports**: No changes required
 2. **New LoopDetector**: Pattern-based detection is automatic
@@ -905,6 +905,6 @@ CREATE TABLE knowledge_edges (
 
 ---
 
-**API Version**: 2.6.8
+**API Version**: 2.7.0
 **Last Updated**: 2026-03-30
 **Documentation**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM

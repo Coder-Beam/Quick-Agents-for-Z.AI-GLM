@@ -553,7 +553,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Stats
 
-- **Version**: 2.6.8
+- **Version**: 2.7.0
 - **Python Support**: 3.8+
 - **Test Coverage**: 254 tests passing
 - **License**: MIT

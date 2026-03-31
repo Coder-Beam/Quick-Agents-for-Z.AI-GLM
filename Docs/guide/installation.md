@@ -1,6 +1,6 @@
 # QuickAgents Installation Guide
 
-> Version: 2.6.8 | Updated: 2026-03-30 | Author: Coder-Beam
+> Version: 2.7.0 | Updated: 2026-03-30 | Author: Coder-Beam
 
 [中文](#quickagents-安装指南) | [English](#quickagents-installation-guide)
 

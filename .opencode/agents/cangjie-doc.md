@@ -17,7 +17,7 @@ permission:
     "*": ask
 ---
 
-# 文档管理代理 (v2.6.8)
+# 文档管理代理 (v2.7.0)
 
 ## 角色定位
 
@@ -52,7 +52,7 @@ permission:
 - 优化文档结构
 - 保持文档一致性
 
-### 3. 三向同步（v2.6.8新增）
+### 3. 三向同步（v2.7.0新增）
 
 **同步架构**：
 ```
@@ -79,7 +79,7 @@ permission:
 2. **SQLite → Markdown**：使用 `MarkdownSync.restore_all_from_md()`
 3. **Docs/ ↔ .opencode/memory/**：文件复制同步
 
-## Python API 使用（v2.6.8）
+## Python API 使用（v2.7.0）
 
 ### 初始化
 
@@ -324,6 +324,6 @@ AI会自动识别文档管理场景并调用此agent
 
 | 版本 | 能力 |
 |------|------|
-| v2.6.8+ | 三向同步、UnifiedDB集成、MarkdownSync |
+| v2.7.0+ | 三向同步、UnifiedDB集成、MarkdownSync |
 | v2.3.0+ | SQLite主存储 |
 | v2.0.0+ | 基础文档管理 |

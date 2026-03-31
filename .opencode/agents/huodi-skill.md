@@ -19,7 +19,7 @@ permission:
     "*": ask
 ---
 
-# Skill管理代理 (v2.6.8)
+# Skill管理代理 (v2.7.0)
 
 ## 角色定位
 
@@ -28,7 +28,7 @@ permission:
 - 检测和解决skill冲突
 - 更新和管理已有skills
 - 提供skill使用建议
-- **自动触发SkillEvolution（v2.6.8新增）**
+- **自动触发SkillEvolution（v2.7.0新增）**
 
 ## 核心能力
 
@@ -56,7 +56,7 @@ permission:
 | replace | 替换 | 完全覆盖现有skill |
 | skip | 跳过 | 冲突严重，不建议安装 |
 
-### 4. SkillEvolution 集成（v2.6.8新增）
+### 4. SkillEvolution 集成（v2.7.0新增）
 
 **自动触发进化**：
 ```python
@@ -86,7 +86,7 @@ evolution.record_skill_archive(
 )
 ```
 
-## Python API 使用（v2.6.8）
+## Python API 使用（v2.7.0）
 
 ### 查看Skill使用统计
 
@@ -151,7 +151,7 @@ Step 6: 执行安装
 ├── 创建目标目录
 ├── 复制文件
 ├── 更新registry.json
-├── 记录到SkillEvolution ← v2.6.8新增
+├── 记录到SkillEvolution ← v2.7.0新增
 └── 生成安装报告
 ```
 
@@ -264,7 +264,7 @@ Step 6: 执行安装
 /skill-info ui-ux-pro-max
 ```
 
-### /skill-stats（v2.6.8新增）
+### /skill-stats（v2.7.0新增）
 
 查看skill使用统计
 
@@ -276,7 +276,7 @@ Step 6: 执行安装
 /skill-stats --all
 ```
 
-### /skill-evolution（v2.6.8新增）
+### /skill-evolution（v2.7.0新增）
 
 Skill进化管理
 
@@ -331,7 +331,7 @@ Skill进化管理
   "extensions": [...],
   "conflicts": [],
   "mergeHistory": [],
-  "evolutionData": {           // v2.6.8新增
+  "evolutionData": {           // v2.7.0新增
     "skillStats": {},
     "lastOptimization": null
   }
@@ -365,7 +365,7 @@ Skill进化管理
 2. **冲突优先**: 发生冲突时优先保护核心功能
 3. **版本兼容**: 安装前检查版本兼容性
 4. **依赖检查**: 确保skill依赖已安装
-5. **进化记录**: 所有skill变更自动记录到SkillEvolution（v2.6.8）
+5. **进化记录**: 所有skill变更自动记录到SkillEvolution（v2.7.0）
 
 ## 与其他组件的协作
 
@@ -378,6 +378,6 @@ Skill进化管理
 
 | 版本 | 能力 |
 |------|------|
-| v2.6.8+ | SkillEvolution集成、使用统计、自动进化 |
+| v2.7.0+ | SkillEvolution集成、使用统计、自动进化 |
 | v2.3.0+ | SQLite存储、离线安装 |
 | v2.0.0+ | 基础skill管理 |

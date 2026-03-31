@@ -12,7 +12,7 @@
 | --------- | -------------------- |
 | 项目名称     | `<PROJECT_NAME>`     |
 | 项目路径     | `<PROJECT_PATH>`     |
-| 语言策略     | 中文交互，代码英文            |
+| 语言策略     | `<LANGUAGE_POLICY>`（启动时用户选择：中文/English） |
 | 当前状态     | 初始化阶段                |
 | 技术栈      | `<TECH_STACK>`       |
 | 启动时间     | `<START_DATE>`       |
@@ -21,10 +21,14 @@
 
 ## 语言策略
 
-- **交互语言**: 中文（简体）
+> 💡 **启动时选择**：LLM始终用什么语言进行对话、回复以及结果输出与展示？
+> - **选项**：[English] [中文]（默认：中文）
+> - 用户选择后，AI全程使用该语言进行交互
+
+- **交互语言**: 根据用户选择（中文/English）
 - **代码语言**: 英文（变量名、函数名、技术术语）
-- **代码注释**: 中文注释（推荐 >=15% 代码覆盖率）
-- **文档输出**: 中文文档
+- **代码注释**: 与交互语言一致（推荐 >=15% 代码覆盖率）
+- **文档输出**: 与交互语言一致
 
 ---
 
@@ -114,7 +118,7 @@ add_experiential_memory('避免过度工程', category='pitfalls')
 # 批量更新
 update_memories({
     'project.name': 'QuickAgents',
-    'project.version': '2.6.8',
+    'project.version': '2.7.0',
     'current.task': '实现认证'
 })
 
@@ -314,16 +318,22 @@ evolution.check_periodic_trigger()  # 等同于 qa evolution status
 │     │   └─ 失败 → 显示安装引导（见下方）                      │
 │     └─ AI输出：「Python环境检测通过」或显示安装引导           │
 │                                                              │
-│  1. 读取并确认理解 AGENTS.md                                  │
+│  1. 【必需】语言策略选择                                      │
+│     ├─ 询问：「LLM始终用什么语言进行对话、回复以及结果输出与展示？」│
+│     ├─ 选项：[English] [中文]（默认：中文）                  │
+│     ├─ 用户选择后，AI全程使用该语言进行交互                   │
+│     └─ 记录到项目信息中的「语言策略」字段                     │
+│                                                              │
+│  2. 读取并确认理解 AGENTS.md                                  │
 │     └─ AI输出：「已读取AGENTS.md，准备启动项目初始化流程」        │
 │                                                              │
-│  2. 【关键】安装QuickAgents插件                               │
+│  3. 【关键】安装QuickAgents插件                               │
 │     ├─ 检查 .opencode/plugins/quickagents.ts 是否存在        │
 │     ├─ 不存在 → 从QuickAgents仓库复制                         │
 │     ├─ 执行 pip install quickagents（确保Python API可用）     │
 │     └─ AI输出：「QuickAgents插件已安装」                      │
 │                                                              │
-│  3. 智能判断项目场景                                          │
+│  4. 智能判断项目场景                                          │
 │     ├─ 检查「项目需求.md」                                    │
 │     │   └─ 存在 → 新项目模式                                  │
 │     └─ 检查目录内容                                           │
@@ -332,30 +342,30 @@ evolution.check_periodic_trigger()  # 等同于 qa evolution status
 │             ├─ 检测项目类型和技术栈                           │
 │             └─ 询问用户意图（继续开发/重新开始）                │
 │                                                              │
-│  4. 根据场景执行相应流程                                       │
+│  5. 根据场景执行相应流程                                       │
 │     ├─ 新项目模式 → 7层互动询问卡                             │
 │     └─ 继续开发模式 → 加载现有文档和任务                       │
 │                                                              │
-│  5. 填充AGENTS.md中的项目信息占位符                           │
+│  6. 填充AGENTS.md中的项目信息占位符                           │
 │                                                              │
-│  6. 同步更新MEMORY.md中的Factual记忆                         │
+│  7. 同步更新MEMORY.md中的Factual记忆                         │
 │                                                              │
-│  7. AI分析所需Skills并搜索/创建                               │
+│  8. AI分析所需Skills并搜索/创建                               │
 │     ├─ 按优先级搜索5个来源                                    │
 │     ├─ 找到适配Skills → 确认后使用                            │
 │     └─ 未找到 → 确认后创建                                    │
 │                                                              │
-│  8. 初始化项目目录结构                                        │
+│  9. 初始化项目目录结构                                        │
 │     └─ 创建 Docs/ 及必需文档                                 │
 │                                                              │
-│  9. 分解需求为功能/模块（用户确认粒度）                        │
+│  10. 分解需求为功能/模块（用户确认粒度）                       │
 │                                                              │
-│  10. 为每个功能/模块创建文档                                  │
+│  11. 为每个功能/模块创建文档                                  │
 │     └─ TASKS.md / DESIGN.md / INDEX.md / MEMORY.md          │
 │                                                              │
-│  11. 输出跨会话衔接提示词                                     │
+│  12. 输出跨会话衔接提示词                                     │
 │                                                              │
-│  12. 开始执行第一个任务                                       │
+│  13. 开始执行第一个任务                                       │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -1055,12 +1065,119 @@ related_files: [file1.md, file2.md]
 
 ### （三）Doom-Loop防护
 
+基于OpenDev论文：**Doom-Loop检测** 髡止指令遗忘(Instruction Fade-out)，保持长期目标一致性。
+
+## 核心常量
+
 ```python
 DOOM_LOOP_CONFIG = {
-    "THRESHOLD": 3,              # 重复次数阈值
-    "WINDOW_SIZE": 20,           # 检测窗口大小
-    "ACTION": "approval_pause"   # 触发用户确认
+    # V3 配置（2026-03-31 更新）
+    "threshold_strategy": "normal",  # strict/normal/relaxed/aggressive
+    "same_failure_threshold": 3,    # 相同失败次数阈值
+    "consecutive_failure_threshold": 5,  # 连续失败次数阈值
+    "max_tool_calls": 100,             # 单会话最大工具调用
+    "max_time_seconds": 600,       # 最大运行时间
+    "max_retries": 5,                # 最大重试次数
+    "backoff_base_ms": 2000,       # 匇数退避基础时间
+    "backoff_multiplier": 2,            # 退避倍数
+    "max_backoff_ms": 30000,         # 最大退避时间
+    "deep_check_interval": 5,             # 每5次调用触发一次深度检测
 }
+```
+
+## 指纹计算算法
+
+```python
+def calculate_fingerprint(tool_name: str, tool_args: dict) -> str:
+    """计算工具调用的唯一指纹"""
+    设计原则:
+    1. 相同工具+相同参数 = 相同指纹
+    2. 参数顺序不影响指纹
+    3. 敏感参数需要脱敏
+    
+    Args:
+        tool_name: 工具名称
+        tool_args: 工具参数
+        
+    Returns:
+        16位指纹字符串
+    """
+    
+    # ...
+    
+    # 检测循环
+    is_loop, patterns = detector.is_looping()
+    
+    if is_loop:
+        # 触发用户确认暂停
+        message = """
+🚨 检测到重复工具调用循环
+
+以下工具调用已重复超过阈值：
+
+{patterns}
+
+可能的原因：
+1. 工具参数不正确
+2. 目标文件/资源不存在
+3. 权限不足
+4. 需要更换策略
+
+建议操作：
+1. 检查工具参数是否正确
+2. 尝试不同的工具或方法
+3. 向用户确认目标是否可达
+4. 考虑跳过此步骤或标记为阻塞
+
+是否继续执行？[y/N]
+        """
+        detector.reset()
+    
+    # 执行工具
+    results = execute_tools(response.tool_calls)
+    messages.append(results)
+    ```
+    
+    def get_status(self) -> dict:
+        window = list(self.fingerprints)[-self.config["WINDOW_SIZE"]:]
+        counter = Counter(window)
+        
+        return {
+            "total_calls": len(self.fingerprints),
+            "window_size": self.config["WINDOW_SIZE"],
+            "threshold": self.config["THRESHOLD"],
+            "unique_in_window": len(counter),
+            "most_common": counter.most_common(5),
+            "loop_detected": self.loop_detected,
+            "detected_patterns": self.detected_patterns
+        }
+    
+    def reset(self):
+        """重置检测器状态"""
+        self.fingerprints.clear()
+        self.loop_detected = False
+        self.detected_patterns = []
+    
+    def get_loop_patterns(self) -> List[Dict]:
+        获取检测到的循环模式
+        return self.detected_patterns
+    
+    def get_tool_call_history(self, limit: int = 20) -> List[Dict]:
+        获取工具调用历史
+        
+        Args:
+            limit: 返回记录数量限制
+        """
+        history = self._tool_call_history[-limit:]
+        return [
+            {
+                "tool": record.tool_name,
+                "args": record.tool_args,
+                "success": record.success,
+                "timestamp": record.timestamp
+            }
+            for record in history
+        ]
 ```
 
 检测到重复工具调用模式时：
