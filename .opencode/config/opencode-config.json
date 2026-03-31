@@ -5,7 +5,7 @@
   
   "doomLoop": {
     "enabled": true,
-    "stuckThreshold": 5,
+    "stuckThreshold": 10,
     "oscillationThreshold": 3,
     "repeatThreshold": 3,
     "windowSize": 20,
