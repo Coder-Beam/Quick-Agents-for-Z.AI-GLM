@@ -278,6 +278,29 @@ qa reminder check             # 检查提醒
 qa reminder stats             # 提醒统计
 ```
 
+### 版本管理
+
+```bash
+qa version                    # 查看版本信息
+qa version --check            # 检查所有模块完整性
+qa update                     # 从PyPI升级到最新版
+qa update --target 2.7.6      # 升级到指定版本
+qa update --source github     # 从GitHub源码安装
+qa update --dry-run           # 仅预览升级
+```
+
+### 卸载
+
+```bash
+qa uninstall                  # 交互式卸载
+qa uninstall --dry-run        # 预览卸载内容
+qa uninstall --keep-data      # 卸载但保留项目数据
+qa uninstall --keep-config    # 卸载但保留全局配置
+qa uninstall --force          # 跳过确认直接卸载
+```
+
+> 老版本（v2.7.5及更早）没有 `qa uninstall` 命令，请参考 [卸载指导文档](Docs/guides/UNINSTALL_GUIDE.md)
+
 ## ⌨️ Slash命令（OpenCode内）
 
 ### 工作流命令
@@ -621,6 +644,29 @@ qa models strategy coding-plan # Switch to Coding Plan
 qa models lock GLM-5          # Lock single model
 qa models unlock              # Unlock
 ```
+
+### Version Management
+
+```bash
+qa version                    # Show version info
+qa version --check            # Check all modules
+qa update                     # Upgrade from PyPI (latest)
+qa update --target 2.7.6      # Upgrade to specific version
+qa update --source github     # Install from GitHub
+qa update --dry-run           # Preview upgrade only
+```
+
+### Uninstall
+
+```bash
+qa uninstall                  # Interactive uninstall
+qa uninstall --dry-run        # Preview what will be removed
+qa uninstall --keep-data      # Uninstall but keep project data
+qa uninstall --keep-config    # Uninstall but keep global config
+qa uninstall --force          # Skip confirmation
+```
+
+> For older versions (v2.7.5 and earlier) without `qa uninstall`, see [Uninstall Guide](Docs/guides/UNINSTALL_GUIDE.md)
 
 ## 🏗️ Architecture
 

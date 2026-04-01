@@ -8,8 +8,8 @@
 
 | Property | Value |
 |-----------|-------|
-| Version | 2.7.5 |
-| Git Tag | v2.7.5 |
+| Version | 2.7.6 |
+| Git Tag | v2.7.6 |
 | Release Date | 2026-04-01 |
 | Minimum Compatible | 2.0.0 |
 | Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -38,7 +38,7 @@ qa hooks install
 
 ---
 
-## What's New (v2.7.5) | 本次更新
+## What's New (v2.7.6) | 本次更新
 
 **Core Architecture Upgrade — 6-Phase Enhancement, 568 Tests**
 
@@ -182,14 +182,19 @@ pytest tests/ -v
 
 ## Version History | 版本历史
 
-### v2.7.5 (2026-04-01)
+### v2.7.6 (2026-04-01)
 - Core architecture upgrade: 6-phase enhancement
 - Dynamic connection pool with pre_ping
 - Exponential backoff retry
 - Django-style QueryBuilder
 - External migration files
 - Session interface unification
-- 568 tests passing (232 new)
+- `qa version` and `qa update` CLI commands
+- `qa uninstall` command with dry-run/keep-data/keep-config
+- 580 tests passing (244 new)
+
+### v2.7.5 (2026-04-01)
+- Initial core architecture upgrade release (superseded by v2.7.6)
 
 ### v2.7.0 (2026-03-30)
 - Pattern-based LoopDetector
@@ -325,6 +330,6 @@ pip install --upgrade quickagents
 
 ---
 
-*QuickAgents v2.7.5 - Making AI agent development easier*
+*QuickAgents v2.7.6 - Making AI agent development easier*
 
-*QuickAgents v2.7.5 - 让AI代理开发更简单*
+*QuickAgents v2.7.6 - 让AI代理开发更简单*

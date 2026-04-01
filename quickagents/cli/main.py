@@ -20,9 +20,13 @@ QuickAgents CLI - 命令行工具
     qa version               # 查看当前版本
     qa version --check       # 检查所有模块完整性
     qa update                # 从PyPI升级到最新版
-    qa update --target 2.7.5 # 升级到指定版本
+    qa update --target 2.7.6 # 升级到指定版本
     qa update --source github # 从GitHub源码安装
     qa update --dry-run      # 仅预览升级，不执行
+    qa uninstall             # 交互式卸载QuickAgents
+    qa uninstall --dry-run   # 预览卸载内容
+    qa uninstall --keep-data # 卸载但保留项目数据
+    qa uninstall --force     # 跳过确认直接卸载
     
     # 模型配置命令
     qa models status         # 查看当前模型配置
@@ -808,6 +812,181 @@ def cmd_models(args):
         print("[OK] 已解除锁定")
 
 
+def cmd_uninstall(args):
+    """卸载QuickAgents命令
+
+    清理范围:
+        1. Git Hooks (项目级 .git/hooks/ 中的qa相关钩子)
+        2. 项目数据 (项目级 .quickagents/ 目录)
+        3. 全局数据 (用户级 ~/.quickagents/ 目录)
+        4. pip包卸载
+
+    用法:
+        qa uninstall                # 交互式卸载
+        qa uninstall --dry-run      # 预览将被清理的内容
+        qa uninstall --keep-data    # 保留项目数据 (.quickagents/)
+        qa uninstall --keep-config  # 保留全局数据 (~/.quickagents/)
+        qa uninstall --force        # 跳过确认提示
+    """
+    import subprocess
+    import shutil
+
+    from .. import __version__
+
+    dry_run = getattr(args, 'dry_run', False)
+    keep_data = getattr(args, 'keep_data', False)
+    keep_config = getattr(args, 'keep_config', False)
+    force = getattr(args, 'force', False)
+
+    print(f"[Uninstall] QuickAgents v{__version__}")
+    print("=" * 60)
+
+    # --- 1. 收集需要清理的内容 ---
+    items_to_clean = []
+
+    # 1a. Git Hooks
+    git_hooks_dir = Path('.git/hooks')
+    qa_hooks = []
+    if git_hooks_dir.exists():
+        for hook_file in git_hooks_dir.iterdir():
+            if hook_file.is_file() and not hook_file.name.endswith('.sample'):
+                try:
+                    content = hook_file.read_text(encoding='utf-8', errors='ignore')
+                    if 'quickagents' in content.lower() or 'qa ' in content:
+                        qa_hooks.append(hook_file)
+                except Exception:
+                    pass
+    if qa_hooks:
+        items_to_clean.append(('git_hooks', qa_hooks, 'Git Hooks (qa相关)'))
+
+    # 1b. 项目数据
+    project_data = Path('.quickagents')
+    if project_data.exists():
+        # 计算大小
+        total_size = sum(f.stat().st_size for f in project_data.rglob('*') if f.is_file())
+        size_str = _format_size(total_size)
+        items_to_clean.append(('project_data', [project_data], f'项目数据 (.quickagents/) [{size_str}]'))
+
+    # 1c. 全局数据
+    global_data = Path.home() / '.quickagents'
+    if global_data.exists():
+        total_size = sum(f.stat().st_size for f in global_data.rglob('*') if f.is_file())
+        size_str = _format_size(total_size)
+        items_to_clean.append(('global_data', [global_data], f'全局数据 (~/.quickagents/) [{size_str}]'))
+
+    # 1d. pip包
+    items_to_clean.append(('pip_package', [], 'pip包 (quickagents)'))
+
+    # --- 2. 显示清理计划 ---
+    print("\n将要清理以下内容:\n")
+
+    action_plan = []
+    for item_type, paths, description in items_to_clean:
+        if item_type == 'project_data' and keep_data:
+            print(f"  [SKIP] {description} (--keep-data)")
+            continue
+        if item_type == 'global_data' and keep_config:
+            print(f"  [SKIP] {description} (--keep-config)")
+            continue
+        print(f"  [REMOVE] {description}")
+        if paths and item_type != 'pip_package':
+            for p in paths:
+                if isinstance(p, list):
+                    for sub in p:
+                        print(f"           - {sub}")
+                else:
+                    print(f"           - {p}")
+        action_plan.append(item_type)
+
+    if not action_plan:
+        print("\n[INFO] 没有需要清理的内容")
+        return
+
+    # --- 3. dry-run 模式 ---
+    if dry_run:
+        print(f"\n[DRY-RUN] 以上是预览，未执行任何操作")
+        print(f"  移除 --dry-run 参数以执行实际卸载")
+        return
+
+    # --- 4. 确认 ---
+    if not force:
+        print()
+        try:
+            answer = input("确认卸载? [y/N]: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\n[INFO] 已取消卸载")
+            return
+        if answer not in ('y', 'yes'):
+            print("[INFO] 已取消卸载")
+            return
+
+    # --- 5. 执行清理 ---
+    print("\n[执行] 开始卸载...")
+
+    # 5a. 移除 Git Hooks
+    if 'git_hooks' in action_plan:
+        for hook_file in qa_hooks:
+            try:
+                hook_file.unlink()
+                print(f"  [OK] 已删除: {hook_file}")
+            except Exception as e:
+                print(f"  [WARN] 无法删除 {hook_file}: {e}")
+
+    # 5b. 移除项目数据
+    if 'project_data' in action_plan and project_data.exists():
+        try:
+            shutil.rmtree(str(project_data))
+            print(f"  [OK] 已删除: .quickagents/")
+        except Exception as e:
+            print(f"  [WARN] 无法删除 .quickagents/: {e}")
+            print(f"         请手动删除: rmdir /s /q .quickagents  (Windows)")
+            print(f"                   rm -rf .quickagents          (Linux/Mac)")
+
+    # 5c. 移除全局数据
+    if 'global_data' in action_plan and global_data.exists():
+        try:
+            shutil.rmtree(str(global_data))
+            print(f"  [OK] 已删除: ~/.quickagents/")
+        except Exception as e:
+            print(f"  [WARN] 无法删除 ~/.quickagents/: {e}")
+            print(f"         请手动删除: rmdir /s /q %USERPROFILE%\\.quickagents  (Windows)")
+            print(f"                   rm -rf ~/.quickagents                   (Linux/Mac)")
+
+    # 5d. pip 卸载
+    if 'pip_package' in action_plan:
+        print(f"\n  [执行] pip uninstall quickagents...")
+        cmd = [sys.executable, '-m', 'pip', 'uninstall', '-y', 'quickagents']
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                print(f"  [OK] pip包已卸载")
+            else:
+                print(f"  [WARN] pip卸载返回非零: {result.stderr.strip()}")
+                print(f"         请手动执行: pip uninstall quickagents")
+        except Exception as e:
+            print(f"  [WARN] pip卸载失败: {e}")
+            print(f"         请手动执行: pip uninstall quickagents")
+
+    print("\n" + "=" * 60)
+    print("[OK] QuickAgents 卸载完成!")
+    print()
+    print("如需重新安装:")
+    print("  pip install quickagents")
+    print()
+    print("如需查看卸载指导文档:")
+    print("  https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/blob/main/Docs/guides/UNINSTALL_GUIDE.md")
+
+
+def _format_size(size_bytes):
+    """格式化文件大小"""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
 def cmd_version(args):
     """版本信息命令"""
     from .. import __version__
@@ -1064,6 +1243,18 @@ def main():
     p_update.add_argument('--target', '-t', help='指定目标版本 (如 2.7.5)')
     p_update.add_argument('--dry-run', '-d', action='store_true', help='仅预览，不执行升级')
     p_update.set_defaults(func=cmd_update)
+    
+    # uninstall 命令
+    p_uninstall = subparsers.add_parser('uninstall', help='卸载QuickAgents')
+    p_uninstall.add_argument('--dry-run', '-d', action='store_true',
+                             help='仅预览，不执行卸载')
+    p_uninstall.add_argument('--keep-data', action='store_true',
+                             help='保留项目数据 (.quickagents/)')
+    p_uninstall.add_argument('--keep-config', action='store_true',
+                             help='保留全局数据 (~/.quickagents/)')
+    p_uninstall.add_argument('--force', '-f', action='store_true',
+                             help='跳过确认提示')
+    p_uninstall.set_defaults(func=cmd_uninstall)
     
     args = parser.parse_args()
     
