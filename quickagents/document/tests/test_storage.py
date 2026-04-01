@@ -13,7 +13,6 @@ Covers:
 import pytest
 import tempfile
 import os
-from pathlib import Path
 
 from quickagents.document.models import (
     DocumentResult,

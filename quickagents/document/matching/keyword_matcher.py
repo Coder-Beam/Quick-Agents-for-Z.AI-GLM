@@ -9,14 +9,11 @@ Matches requirements to code via:
 """
 
 import re
-from typing import List, Dict, Set, Tuple, Optional
+from typing import List, Dict, Set, Optional
 
 from ..models import (
-    DocumentSection,
     DocumentResult,
     SourceCodeResult,
-    CodeModule,
-    CodeFunction,
     TraceEntry,
 )
 from .synonym_table import SynonymTable

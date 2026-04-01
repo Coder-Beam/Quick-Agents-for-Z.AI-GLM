@@ -5,16 +5,12 @@ Converts DocumentResult and SourceCodeResult into KnowledgeGraph nodes and edges
 """
 
 import logging
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 
 from ..models import (
     DocumentResult,
-    DocumentSection,
     DocumentTable,
     SourceCodeResult,
-    CodeModule,
-    CodeClass,
-    CodeFunction,
     CrossReferenceResult,
     TraceEntry,
 )

@@ -10,7 +10,6 @@ Covers:
 """
 
 import pytest
-from pathlib import Path
 
 from quickagents.document.models import (
     DocumentResult,
@@ -19,16 +18,9 @@ from quickagents.document.models import (
     SourceCodeResult,
     CodeModule,
     CodeFunction,
-    CodeClass,
-    CrossReferenceResult,
-    TraceEntry,
-    DiffEntry,
     RefinedDocumentResult,
     RefinedCodeResult,
     KnowledgeExtractionResult,
-    ExtractedRequirement,
-    ExtractedDecision,
-    ExtractedFact,
 )
 from quickagents.document.validators import (
     CrossValidator,

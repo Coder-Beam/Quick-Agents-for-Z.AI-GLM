@@ -6,7 +6,7 @@ reject, or modify analysis results from each pipeline layer.
 """
 
 import logging
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional
 from enum import Enum
 
 logger = logging.getLogger(__name__)

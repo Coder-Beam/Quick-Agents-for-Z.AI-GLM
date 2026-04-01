@@ -11,7 +11,7 @@ import tempfile
 import shutil
 
 from quickagents.document.parsers.pdf_parser import PDFParser
-from quickagents.document.models import DocumentResult, DocumentSection
+from quickagents.document.models import DocumentResult
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 SAMPLE_PDF = FIXTURES_DIR / "test_sample.pdf"

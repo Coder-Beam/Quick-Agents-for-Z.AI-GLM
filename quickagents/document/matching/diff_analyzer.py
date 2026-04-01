@@ -7,7 +7,7 @@ Compares document requirements against source code to find:
 - inconsistency: mismatched details between requirement and implementation
 """
 
-from typing import List, Dict, Optional, Set
+from typing import List, Set
 
 from ..models import (
     DocumentResult,

@@ -9,7 +9,7 @@ from pathlib import Path
 import tempfile
 
 from quickagents.document.parsers.word_parser import WordParser
-from quickagents.document.models import DocumentResult, DocumentTable
+from quickagents.document.models import DocumentResult
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SAMPLE_DOCX = FIXTURES / "test_sample.docx"

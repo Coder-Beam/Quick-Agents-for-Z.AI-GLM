@@ -14,13 +14,7 @@ import pytest
 from pathlib import Path
 
 from quickagents.document.parsers.source_code_parser import SourceCodeParser
-from quickagents.document.models import (
-    SourceCodeResult,
-    CodeModule,
-    CodeClass,
-    CodeFunction,
-    CodeDependency,
-)
+from quickagents.document.models import SourceCodeResult
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 SOURCE_FIXTURE = FIXTURES_DIR / "source_sample"

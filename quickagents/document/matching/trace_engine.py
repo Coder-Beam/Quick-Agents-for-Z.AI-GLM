@@ -13,7 +13,6 @@ from ..models import (
     SourceCodeResult,
     CrossReferenceResult,
     TraceEntry,
-    DiffEntry,
 )
 from .convention_matcher import ConventionMatcher
 from .keyword_matcher import KeywordMatcher

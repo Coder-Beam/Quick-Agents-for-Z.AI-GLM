@@ -4,7 +4,7 @@ Synonym table for keyword matching between Chinese requirements and code.
 Maps Chinese business terms to English code naming conventions.
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 import re
 
 

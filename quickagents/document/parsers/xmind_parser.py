@@ -6,7 +6,7 @@ Uses the xmind library for structured parsing.
 """
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List
 import logging
 
 from . import BaseParser

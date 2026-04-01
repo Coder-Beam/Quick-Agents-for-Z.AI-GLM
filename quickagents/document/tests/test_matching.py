@@ -12,19 +12,15 @@ Tests cover:
 """
 
 import pytest
-from pathlib import Path
 
 from quickagents.document.models import (
     DocumentResult,
     DocumentSection,
     DocumentTable,
-    DocumentImage,
-    DocumentFormula,
     SourceCodeResult,
     CodeModule,
     CodeFunction,
     CodeClass,
-    CodeDependency,
     TraceEntry,
     DiffEntry,
     CrossReferenceResult,

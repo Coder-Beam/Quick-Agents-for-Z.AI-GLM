@@ -11,7 +11,6 @@ Covers:
 
 import pytest
 from pathlib import Path
-from dataclasses import asdict
 
 from quickagents.document.parsers.excel_parser import ExcelParser
 from quickagents.document.models import DocumentResult, DocumentFormula

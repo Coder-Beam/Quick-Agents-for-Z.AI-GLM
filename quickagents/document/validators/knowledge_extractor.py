@@ -10,7 +10,6 @@ from typing import List, Dict, Optional, Callable
 
 from ..models import (
     DocumentResult,
-    DocumentSection,
     SourceCodeResult,
     ExtractedRequirement,
     ExtractedDecision,

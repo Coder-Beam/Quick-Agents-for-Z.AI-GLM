@@ -6,8 +6,7 @@ a unified output with corrections, supplements, and confidence scores.
 """
 
 import logging
-from typing import List, Dict, Optional, Tuple
-from copy import deepcopy
+from typing import List, Dict, Optional
 
 from ..models import (
     DocumentResult,
@@ -16,8 +15,6 @@ from ..models import (
     RefinedDocumentResult,
     RefinedCodeResult,
     KnowledgeExtractionResult,
-    TraceEntry,
-    DiffEntry,
 )
 
 logger = logging.getLogger(__name__)

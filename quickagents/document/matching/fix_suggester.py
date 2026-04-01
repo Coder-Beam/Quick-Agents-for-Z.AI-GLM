@@ -5,7 +5,7 @@ Produces actionable suggestions for each diff entry,
 with both "by doc" and "by code" perspectives.
 """
 
-from typing import List, Dict, Optional
+from typing import List
 
 from ..models import DiffEntry
 

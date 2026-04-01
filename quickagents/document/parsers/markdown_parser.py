@@ -5,7 +5,7 @@ Parses heading hierarchy into a tree structure.
 """
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List
 import logging
 import re
 

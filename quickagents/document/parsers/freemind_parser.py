@@ -6,7 +6,7 @@ Uses xml.etree.ElementTree for parsing.
 """
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List
 import logging
 import xml.etree.ElementTree as ET
 

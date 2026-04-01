@@ -12,10 +12,7 @@ from typing import List, Dict, Optional, Callable
 
 from ..models import (
     DocumentResult,
-    DocumentSection,
     SourceCodeResult,
-    CodeModule,
-    CodeFunction,
     RefinedDocumentResult,
     RefinedCodeResult,
 )

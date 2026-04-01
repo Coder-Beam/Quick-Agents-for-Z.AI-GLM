@@ -9,10 +9,9 @@ Matches requirements to code via structured conventions:
 """
 
 import re
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict
 
 from ..models import (
-    DocumentSection,
     DocumentResult,
     SourceCodeResult,
     CodeModule,
