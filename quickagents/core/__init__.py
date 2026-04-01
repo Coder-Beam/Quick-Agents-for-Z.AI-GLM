@@ -15,7 +15,7 @@ QuickAgents Core - 核心模块
 """
 
 # V2 核心组件
-from .connection_manager import ConnectionManager
+from .connection_manager import ConnectionManager, PoolConfig
 from .transaction_manager import TransactionManager, TransactionError, RetryConfig
 from .migration_manager import MigrationManager, Migration, MigrationResult
 from .session import Session
@@ -60,12 +60,14 @@ from .evolution import SkillEvolution
 __all__ = [
     # V2 核心组件
     'ConnectionManager',
+    'PoolConfig',
     'TransactionManager',
     'TransactionError',
     'RetryConfig',
     'MigrationManager',
     'Migration',
     'MigrationResult',
+    'Session',
     'Session',
     
     # V2 UnifiedDB

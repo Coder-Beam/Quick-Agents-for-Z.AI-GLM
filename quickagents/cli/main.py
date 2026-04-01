@@ -16,6 +16,14 @@ QuickAgents CLI - 命令行工具
     qa stats                 # 查看整体统计
     qa sync [table]          # 同步SQLite到Markdown
     
+    # 版本与升级命令
+    qa version               # 查看当前版本
+    qa version --check       # 检查所有模块完整性
+    qa update                # 从PyPI升级到最新版
+    qa update --target 2.7.5 # 升级到指定版本
+    qa update --source github # 从GitHub源码安装
+    qa update --dry-run      # 仅预览升级，不执行
+    
     # 模型配置命令
     qa models status         # 查看当前模型配置
     qa models check          # 检查GLM版本更新
@@ -800,6 +808,135 @@ def cmd_models(args):
         print("[OK] 已解除锁定")
 
 
+def cmd_version(args):
+    """版本信息命令"""
+    from .. import __version__
+    
+    print(f"QuickAgents v{__version__}")
+    print(f"Python: {sys.version.split()[0]}")
+    
+    if args.check:
+        # 检查所有核心模块
+        modules = [
+            ('quickagents', 'QuickAgents Core'),
+            ('quickagents.core', 'Core Module'),
+            ('quickagents.core.session', 'Session'),
+            ('quickagents.core.connection_manager', 'ConnectionManager'),
+            ('quickagents.core.transaction_manager', 'TransactionManager'),
+            ('quickagents.core.migration_manager', 'MigrationManager'),
+            ('quickagents.core.repositories.query_builder', 'QueryBuilder'),
+            ('quickagents.core.unified_db', 'UnifiedDB'),
+            ('quickagents.core.evolution', 'SkillEvolution'),
+            ('quickagents.core.markdown_sync', 'MarkdownSync'),
+            ('quickagents.core.file_manager', 'FileManager'),
+            ('quickagents.core.loop_detector', 'LoopDetector'),
+            ('quickagents.core.reminder', 'Reminder'),
+            ('quickagents.knowledge_graph', 'KnowledgeGraph'),
+            ('quickagents.skills', 'Skills'),
+        ]
+        
+        print("\nModule Check:")
+        all_ok = True
+        for module_path, display_name in modules:
+            try:
+                __import__(module_path)
+                print(f"  [OK] {display_name}")
+            except ImportError as e:
+                print(f"  [FAIL] {display_name}: {e}")
+                all_ok = False
+        
+        # 检查关键类
+        classes = [
+            ('quickagents.core', 'Session'),
+            ('quickagents.core', 'QueryBuilder'),
+            ('quickagents.core', 'PoolConfig'),
+            ('quickagents.core', 'RetryConfig'),
+            ('quickagents.core', 'MigrationResult'),
+        ]
+        
+        print("\nClass Check:")
+        for module_path, class_name in classes:
+            try:
+                mod = __import__(module_path, fromlist=[class_name])
+                getattr(mod, class_name)
+                print(f"  [OK] {class_name}")
+            except (ImportError, AttributeError) as e:
+                print(f"  [FAIL] {class_name}: {e}")
+                all_ok = False
+        
+        if all_ok:
+            print(f"\nAll checks passed! QuickAgents v{__version__}")
+        else:
+            print(f"\nSome checks failed! Consider: pip install --upgrade quickagents")
+            sys.exit(1)
+
+
+def cmd_update(args):
+    """升级命令"""
+    import subprocess
+    from .. import __version__
+    
+    print(f"Current version: v{__version__}")
+    
+    # 确定安装源
+    source = getattr(args, 'source', 'pypi') or 'pypi'
+    target_version = getattr(args, 'target', None)
+    
+    if source == 'github':
+        package_spec = "git+https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git@main"
+        print(f"Source: GitHub (main branch)")
+    elif target_version:
+        package_spec = f"quickagents=={target_version}"
+        print(f"Source: PyPI (version {target_version})")
+    else:
+        package_spec = "quickagents"
+        print(f"Source: PyPI (latest)")
+    
+    # dry-run 模式
+    if getattr(args, 'dry_run', False):
+        cmd = [sys.executable, '-m', 'pip', 'install', '--dry-run', '--upgrade', package_spec]
+        print(f"\nDry run: {' '.join(cmd)}")
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            print(result.stdout)
+            if result.returncode != 0:
+                print(f"Error: {result.stderr}")
+        except Exception as e:
+            print(f"Error: {e}")
+        return
+    
+    # 执行升级
+    cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade', package_spec]
+    print(f"\nUpgrading: {' '.join(cmd)}")
+    print("-" * 50)
+    
+    try:
+        result = subprocess.run(cmd, capture_output=False, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            # 重新检查版本
+            try:
+                # 重新导入获取新版本
+                import importlib
+                import quickagents
+                importlib.reload(quickagents)
+                new_version = quickagents.__version__
+                print("-" * 50)
+                print(f"[OK] Upgraded: v{__version__} -> v{new_version}")
+            except Exception:
+                print("-" * 50)
+                print(f"[OK] Upgrade completed. Please restart to see new version.")
+        else:
+            print(f"\n[FAIL] Upgrade failed with exit code {result.returncode}")
+            sys.exit(1)
+    except subprocess.TimeoutExpired:
+        print("\n[FAIL] Upgrade timed out (120s)")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n[FAIL] Upgrade error: {e}")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description='QuickAgents CLI')
     subparsers = parser.add_subparsers(dest='command', help='命令')
@@ -912,6 +1049,21 @@ def main():
     p_models.add_argument('--model', dest='model_name', help='模型名称')
     p_models.add_argument('model_name', nargs='?', help='模型名称')
     p_models.set_defaults(func=cmd_models)
+    
+    # ==================== 版本与升级命令 ====================
+    
+    # version 命令
+    p_version = subparsers.add_parser('version', help='查看版本信息')
+    p_version.add_argument('--check', '-c', action='store_true', help='检查所有模块完整性')
+    p_version.set_defaults(func=cmd_version)
+    
+    # update 命令
+    p_update = subparsers.add_parser('update', help='升级QuickAgents')
+    p_update.add_argument('--source', '-s', choices=['pypi', 'github'], default='pypi',
+                          help='安装源 (pypi/github, 默认pypi)')
+    p_update.add_argument('--target', '-t', help='指定目标版本 (如 2.7.5)')
+    p_update.add_argument('--dry-run', '-d', action='store_true', help='仅预览，不执行升级')
+    p_update.set_defaults(func=cmd_update)
     
     args = parser.parse_args()
     
