@@ -18,6 +18,10 @@ class NodeType(Enum):
     FACT = "fact"
     CONCEPT = "concept"
     SOURCE = "source"
+    DOCUMENT = "document"
+    SECTION = "section"
+    MODULE = "module"
+    FUNCTION = "function"
 
 
 class EdgeType(Enum):
@@ -33,6 +37,10 @@ class EdgeType(Enum):
     SUPPORTS = "supports"
     RELATED_TO = "related_to"
     INDIRECTLY_RELATED_TO = "indirectly_related_to"
+    CONTAINS = "contains"
+    IMPLEMENTS = "implements"
+    CALLS = "calls"
+    EXTRACTED_FROM = "extracted_from"
 
 
 @dataclass

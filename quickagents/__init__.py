@@ -59,7 +59,7 @@ CLI Usage:
     qa progress              # 当前进度
 """
 
-__version__ = '2.7.9'
+__version__ = '2.8.0'
 __author__ = 'Coder-Beam'
 
 from .core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType, get_unified_db

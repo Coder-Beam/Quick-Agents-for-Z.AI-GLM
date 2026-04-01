@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+<head>
+<title>Project Requirements</title>
+</head>
+<body>
+<outline text="Requirements">
+<outline text="Functional Requirements" _note="Core features needed">
+<outline text="User Authentication">
+<outline text="JWT Login"/>
+<outline text="Role-based Access"/>
+</outline>
+<outline text="Order Management">
+<outline text="Create Order"/>
+<outline text="Track Status"/>
+</outline>
+</outline>
+<outline text="Non-Functional Requirements">
+<outline text="Performance: &lt; 200ms response"/>
+<outline text="Security: HTTPS only"/>
+</outline>
+</outline>
+</body>
+</opml>

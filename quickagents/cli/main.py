@@ -69,6 +69,11 @@ QuickAgents CLI - 命令行工具
     qa git check             # Pre-commit检查
     qa git commit <type> <scope> <subject> # 执行提交
     qa git push              # 推送到远程
+    
+    # 文档导入命令
+    qa import PALs/           # 导入PALs目录下的文档
+    qa import PALs/ --with-source  # 同时导入源码
+    qa import PALs/ --dry-run # 预览导入
 """
 
 import sys
@@ -1589,6 +1594,280 @@ def cmd_update(args):
         sys.exit(1)
 
 
+def cmd_import(args):
+    """Import documents and source code from PALs directory."""
+    import time
+    from pathlib import Path
+
+    pals_dir = getattr(args, "pals_dir", "PALs")
+    pals_path = Path(pals_dir)
+
+    if not pals_path.exists():
+        print(f"[ERROR] PALs directory not found: {pals_dir}")
+        print("Create it and place your documents there:")
+        print(f"  mkdir {pals_dir}")
+        print(f"  # Then copy your .pdf/.docx/.xlsx/.xmind/.mm/.opml/.md files into it")
+        sys.exit(1)
+
+    with_source = getattr(args, "with_source", False)
+    dry_run = getattr(args, "dry_run", False)
+    output_dir = getattr(args, "output", None)
+    verbose = getattr(args, "verbose", False)
+    no_validate = getattr(args, "no_validate", False)
+    no_knowledge = getattr(args, "no_knowledge", False)
+
+    print("=" * 60)
+    print("QuickAgents Document Import")
+    print("=" * 60)
+
+    try:
+        from ..document import DocumentPipeline
+        from ..document.parsers import get_missing_dependencies
+    except ImportError as e:
+        print(f"[ERROR] Document module not available: {e}")
+        sys.exit(1)
+
+    pipeline = DocumentPipeline(project_root=str(Path.cwd()))
+
+    # --- Phase: Scan ---
+    print(f"\n[SCAN] Scanning {pals_dir}/ ...")
+    doc_files, source_files = pipeline._scan_files(pals_dir, with_source)
+
+    if not doc_files and not source_files:
+        print("[WARN] No supported files found in PALs directory.")
+        sys.exit(0)
+
+    print(f"  Documents: {len(doc_files)} files")
+    print(f"  Source:    {len(source_files)} files")
+
+    for f in doc_files:
+        print(f"    [DOC] {f.name}")
+    for f in source_files[:20]:
+        print(f"    [SRC] {f.name}")
+    if len(source_files) > 20:
+        print(f"    ... and {len(source_files) - 20} more source files")
+
+    # --- Check dependencies ---
+    all_formats = set()
+    for f in doc_files:
+        all_formats.add(f.suffix.lower().lstrip("."))
+    if with_source:
+        for f in source_files:
+            all_formats.add(f.suffix.lower().lstrip("."))
+
+    missing_map = {}
+    for fmt in all_formats:
+        missing = get_missing_dependencies(fmt)
+        if missing:
+            missing_map[fmt] = missing
+
+    if missing_map:
+        print("\n[ERROR] Missing dependencies:")
+        install_pkgs = []
+        for fmt, deps in missing_map.items():
+            print(f"  .{fmt}: requires {', '.join(deps)}")
+            install_pkgs.extend(deps)
+        install_pkgs = list(set(install_pkgs))
+        print(f"\nInstall with:")
+        print(f"  pip install {' '.join(install_pkgs)}")
+        print(f"  # or: pip install quickagents[document]")
+        sys.exit(1)
+
+    if dry_run:
+        print("\n[DRY-RUN] Dependencies OK. Would process:")
+        print(f"  {len(doc_files)} document(s)")
+        if with_source:
+            print(f"  {len(source_files)} source file(s)")
+        print("\nRun without --dry-run to execute.")
+        return
+
+    # --- Layer 1: Parse documents ---
+    start_time = time.time()
+    print(f"\n[L1] Parsing documents ...")
+
+    doc_results = []
+    errors = []
+    for file_path in doc_files:
+        try:
+            result = pipeline.parse(file_path)
+            doc_results.append(result)
+            title = result.title or file_path.name
+            sections = len(result.sections)
+            tables = len(result.tables)
+            print(f"  [OK] {file_path.name} - \"{title}\" ({sections} sections, {tables} tables)")
+        except Exception as e:
+            errors.append((str(file_path), str(e)))
+            print(f"  [FAIL] {file_path.name}: {e}")
+
+    # --- Layer 1: Parse source code ---
+    code_result = None
+    source_dir = pals_path
+    if with_source and source_files:
+        source_dir = pals_path / "SourceReference"
+        if not source_dir.exists():
+            source_dir = pals_path
+        print(f"\n[L1] Parsing source code from {source_dir} ...")
+        try:
+            code_result = pipeline.parse_source(source_dir)
+            modules = len(code_result.modules)
+            funcs = sum(len(m.functions) for m in code_result.modules)
+            classes = sum(len(m.classes) for m in code_result.modules)
+            print(f"  [OK] {modules} modules, {classes} classes, {funcs} functions")
+        except Exception as e:
+            errors.append((str(source_dir), str(e)))
+            print(f"  [FAIL] Source parse: {e}")
+
+    # --- Layer 1.5: Cross-reference ---
+    cross_ref = None
+    if with_source and doc_results and code_result:
+        print("\n[L1.5] Cross-referencing documents <-> source code ...")
+        try:
+            cross_ref = pipeline.cross_reference(doc_results, code_result)
+            traces = len(cross_ref.trace_matrix)
+            gaps = len(cross_ref.diff_report)
+            coverage = cross_ref.coverage_report.get("overall_coverage", 0)
+            print(f"  [OK] {traces} trace entries, {gaps} diffs, coverage: {coverage:.0%}")
+        except Exception as e:
+            errors.append(("cross_reference", str(e)))
+            print(f"  [FAIL] Cross-reference: {e}")
+
+    # --- Layer 2: Cross-validation ---
+    if not no_validate and doc_results:
+        print("\n[L2] Cross-validating ...")
+        for doc_result in doc_results:
+            try:
+                validated = pipeline.cross_validate(doc_result, code_result)
+                issues = len(validated.corrections) + len(validated.supplements)
+                print(f"  [OK] {Path(doc_result.source_file).name} - {issues} issues found")
+            except Exception as e:
+                errors.append((f"validate:{doc_result.source_file}", str(e)))
+                print(f"  [FAIL] Validation: {e}")
+
+    # --- Layer 3: Knowledge extraction ---
+    knowledge_result = None
+    if not no_knowledge and doc_results:
+        print("\n[L3] Extracting knowledge ...")
+        try:
+            knowledge_result = pipeline.extract_knowledge(doc_results, code_result)
+            reqs = len(knowledge_result.requirements)
+            decisions = len(knowledge_result.decisions)
+            facts = len(knowledge_result.facts)
+            print(f"  [OK] {reqs} requirements, {decisions} decisions, {facts} facts")
+        except Exception as e:
+            errors.append(("knowledge", str(e)))
+            print(f"  [FAIL] Knowledge extraction: {e}")
+
+    # --- Save results ---
+    print("\n[SAVE] Exporting results ...")
+
+    out_root = Path(output_dir) if output_dir else Path.cwd() / "Docs" / "PALs"
+    out_root.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from ..document.storage import MarkdownExporter, KnowledgeSaver
+
+        exporter = MarkdownExporter()
+
+        # Export trace matrix
+        if cross_ref:
+            md = exporter.export_trace_matrix(
+                cross_ref,
+                doc_sources=[r.source_file for r in doc_results],
+                code_dir=str(source_dir) if source_files else None,
+            )
+            trace_path = out_root / "_trace_matrix.md"
+            trace_path.write_text(md, encoding="utf-8")
+            print(f"  [OK] Trace matrix: {trace_path}")
+
+        # Export diff report
+        if cross_ref and cross_ref.diff_report:
+            md = exporter.export_diff_report(cross_ref)
+            diff_path = out_root / "_diff_report.md"
+            diff_path.write_text(md, encoding="utf-8")
+            print(f"  [OK] Diff report: {diff_path}")
+
+        # Export coverage report
+        if cross_ref:
+            md = exporter.export_coverage_report(cross_ref)
+            cov_path = out_root / "_coverage.md"
+            cov_path.write_text(md, encoding="utf-8")
+            print(f"  [OK] Coverage report: {cov_path}")
+
+        # Save per-document analysis
+        for doc_result in doc_results:
+            doc_md = exporter.export_document_summary(doc_result)
+            stem = Path(doc_result.source_file).stem
+            fmt_suffix = doc_result.source_format
+            doc_path = out_root / f"{stem}.{fmt_suffix}.analysis.md"
+            doc_path.write_text(doc_md, encoding="utf-8")
+            if verbose:
+                print(f"  [OK] Doc analysis: {doc_path}")
+
+        # Save source overview
+        if code_result:
+            src_md = exporter.export_source_overview(code_result)
+            src_path = out_root / "SourceReference" / "_overview.md"
+            src_path.parent.mkdir(parents=True, exist_ok=True)
+            src_path.write_text(src_md, encoding="utf-8")
+            print(f"  [OK] Source overview: {src_path}")
+
+        # Save to Knowledge Graph
+        try:
+            from ..knowledge_graph import KnowledgeGraph
+
+            kg = KnowledgeGraph()
+
+            saver = KnowledgeSaver(kg)
+
+            doc_ids_map = {}
+            for doc_result in doc_results:
+                ids = saver.save_document(doc_result)
+                doc_ids_map.update(ids)
+                if verbose:
+                    print(f"  [OK] KG saved: {Path(doc_result.source_file).name}")
+
+            code_ids_map = {}
+            if code_result:
+                code_ids_map = saver.save_source(code_result)
+                print(f"  [OK] KG saved: source code ({len(code_result.modules)} modules)")
+
+            if cross_ref and doc_ids_map and code_ids_map:
+                edge_count = saver.save_traces(cross_ref, doc_ids_map, code_ids_map)
+                print(f"  [OK] KG saved: trace ({edge_count} edges)")
+        except Exception as e:
+            print(f"  [WARN] Knowledge Graph save skipped: {e}")
+
+    except Exception as e:
+        errors.append(("export", str(e)))
+        print(f"  [FAIL] Export error: {e}")
+
+    # --- Summary ---
+    elapsed = time.time() - start_time
+    print("\n" + "=" * 60)
+    print("Import Summary")
+    print("=" * 60)
+    print(f"  Documents parsed:  {len(doc_results)}/{len(doc_files)}")
+    if with_source:
+        src_status = "parsed" if code_result else "skipped/failed"
+        print(f"  Source code:       {src_status}")
+    if cross_ref:
+        print(f"  Trace entries:     {len(cross_ref.trace_matrix)}")
+    if knowledge_result:
+        print(f"  Requirements:      {len(knowledge_result.requirements)}")
+        print(f"  Decisions:         {len(knowledge_result.decisions)}")
+        print(f"  Facts:             {len(knowledge_result.facts)}")
+    if errors:
+        print(f"  Errors:            {len(errors)}")
+        for err_path, err_msg in errors:
+            print(f"    - {err_path}: {err_msg}")
+    print(f"  Output directory:  {out_root}")
+    print(f"  Time:              {elapsed:.1f}s")
+    print("=" * 60)
+
+    if errors and not doc_results:
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description='QuickAgents CLI')
     subparsers = parser.add_subparsers(dest='command', help='命令')
@@ -1688,6 +1967,26 @@ def main():
     p_hooks.add_argument('action', choices=['install', 'uninstall', 'status'], help='操作')
     p_hooks.set_defaults(func=cmd_hooks)
     
+    # ==================== 文档导入命令 ====================
+
+    # import 命令
+    p_import = subparsers.add_parser('import', help='Import documents from PALs/ directory',
+                                     usage='qa import [pals_dir] [options]')
+    p_import.add_argument('pals_dir', nargs='?', default='PALs',
+                          help='PALs directory path (default: PALs)')
+    p_import.add_argument('--with-source', '-s', action='store_true',
+                          help='Include source code from SourceReference/')
+    p_import.add_argument('--output', '-o', help='Output directory (default: Docs/PALs)')
+    p_import.add_argument('--dry-run', '-d', action='store_true',
+                          help='Preview files without processing')
+    p_import.add_argument('--verbose', '-v', action='store_true',
+                          help='Verbose output')
+    p_import.add_argument('--no-validate', action='store_true',
+                          help='Skip Layer 2 cross-validation')
+    p_import.add_argument('--no-knowledge', action='store_true',
+                          help='Skip Layer 3 knowledge extraction')
+    p_import.set_defaults(func=cmd_import)
+
  # ==================== 模型管理命令 ====================
     
     # models 命令

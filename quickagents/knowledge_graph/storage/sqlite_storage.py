@@ -442,6 +442,42 @@ class SQLiteGraphStorage(GraphStorageInterface):
             rows = cursor.fetchall()
             return [self._row_to_edge(row) for row in rows]
     
+    def search_fts(
+        self,
+        query: str,
+        node_type: Optional[str] = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> List[KnowledgeNode]:
+        """Full-text search using FTS5 knowledge_index."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            safe_query = query.replace('"', '""')
+            
+            if node_type:
+                sql = (
+                    "SELECT kn.* FROM knowledge_nodes kn "
+                    "JOIN knowledge_index ki ON kn.id = ki.node_id "
+                    "WHERE knowledge_index MATCH ? "
+                    "AND kn.node_type = ? "
+                    "ORDER BY rank "
+                    "LIMIT ? OFFSET ?"
+                )
+                cursor.execute(sql, (safe_query, node_type, limit, offset))
+            else:
+                sql = (
+                    "SELECT kn.* FROM knowledge_nodes kn "
+                    "JOIN knowledge_index ki ON kn.id = ki.node_id "
+                    "WHERE knowledge_index MATCH ? "
+                    "ORDER BY rank "
+                    "LIMIT ? OFFSET ?"
+                )
+                cursor.execute(sql, (safe_query, limit, offset))
+            
+            rows = cursor.fetchall()
+            return [self._row_to_node(row) for row in rows]
+    
     def find_path(
         self,
         from_node: str,

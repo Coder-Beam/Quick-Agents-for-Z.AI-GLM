@@ -48,7 +48,7 @@ def get_parser_registry():
     from .parsers import ParserRegistry
     return ParserRegistry()
 
-    
+
 def get_supported_formats():
     """获取支持的文档格式"""
     return [

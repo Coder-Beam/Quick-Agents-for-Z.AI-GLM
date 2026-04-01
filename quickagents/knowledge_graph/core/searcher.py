@@ -41,52 +41,48 @@ class KnowledgeSearcher:
         """
         Unified search method.
         
-        Args:
-            query: Search query string
-            node_types: Optional list of NodeType to filter by
-            filters: Optional dict of additional filters
-            sort_by: Sort field (relevance, importance, created_at)
-            limit: Maximum number of results
-            offset: Number of results to skip
-            expand_relations: Whether to expand related nodes
-            relation_depth: Depth of relation expansion
-            
-        Returns:
-            SearchResult with nodes and metadata
+        Uses FTS5 full-text index for efficient search.
+        Falls back to Python-side filtering when needed.
         """
         start_time = time.time()
         filters = filters or {}
         
-        db_filters = {}
-        
-        if node_types:
-            if len(node_types) == 1:
-                db_filters['node_type'] = node_types[0].value
-        
-        for key in ['project_name', 'feature_id']:
-            if key in filters:
-                db_filters[key] = filters[key]
-        
-        all_nodes = self._storage.query_nodes(db_filters, limit=1000, offset=0)
-        
-        query_lower = query.lower()
-        matched_nodes = []
-        for node in all_nodes:
-            if (query_lower in node.title.lower() or 
-                query_lower in node.content.lower() or
-                any(query_lower in tag.lower() for tag in node.tags)):
-                if node_types and len(node_types) > 1:
-                    if node.node_type not in node_types:
-                        continue
-                matched_nodes.append(node)
+        try:
+            node_type_val = None
+            if node_types and len(node_types) == 1:
+                node_type_val = node_types[0].value
+            
+            matched_nodes = self._storage.search_fts(
+                query=query,
+                node_type=node_type_val,
+                limit=limit,
+                offset=offset,
+            )
+            
+            if node_types and len(node_types) > 1:
+                type_set = set(node_types)
+                matched_nodes = [
+                    n for n in matched_nodes if n.node_type in type_set
+                ]
+            
+            for key in ['project_name', 'feature_id']:
+                if key in filters:
+                    matched_nodes = [
+                        n for n in matched_nodes
+                        if n.metadata.get(key) == filters[key]
+                    ]
+        except Exception:
+            matched_nodes = self._fallback_search(
+                query, node_types, filters, limit, offset
+            )
         
         if sort_by == "importance":
             matched_nodes.sort(key=lambda n: n.importance, reverse=True)
         elif sort_by == "created_at":
-            matched_nodes.sort(key=lambda n: n.created_at or time.time(), reverse=True)
+            matched_nodes.sort(key=lambda n: n.created_at or 0, reverse=True)
         
         total = len(matched_nodes)
-        paginated_nodes = matched_nodes[offset:offset + limit]
+        paginated_nodes = matched_nodes[offset:offset + limit] if offset else matched_nodes[:limit]
         
         related_nodes = []
         if expand_relations and paginated_nodes:
@@ -183,6 +179,36 @@ class KnowledgeSearcher:
             matched_nodes.append(node)
         
         return matched_nodes
+    
+    def _fallback_search(
+        self,
+        query: str,
+        node_types: Optional[List[NodeType]],
+        filters: Optional[Dict],
+        limit: int,
+        offset: int,
+    ) -> List:
+        """Fallback Python-side search when FTS5 is unavailable."""
+        db_filters = {}
+        if node_types and len(node_types) == 1:
+            db_filters['node_type'] = node_types[0].value
+        if filters:
+            for key in ['project_name', 'feature_id']:
+                if key in filters:
+                    db_filters[key] = filters[key]
+        
+        all_nodes = self._storage.query_nodes(db_filters, limit=1000, offset=0)
+        query_lower = query.lower()
+        matched = []
+        for node in all_nodes:
+            if (query_lower in node.title.lower() or
+                query_lower in node.content.lower() or
+                any(query_lower in tag.lower() for tag in node.tags)):
+                if node_types and len(node_types) > 1:
+                    if node.node_type not in node_types:
+                        continue
+                matched.append(node)
+        return matched[offset:offset + limit]
     
     def _expand_relations(
         self,

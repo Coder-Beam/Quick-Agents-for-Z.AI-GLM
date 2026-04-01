@@ -5,6 +5,46 @@ All notable changes to QuickAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-04-01
+
+### Added - Document Understanding Module
+
+#### Three-Layer Document Pipeline
+- **Layer 1 (Local Parse)**: PDF (PyMuPDF+pdfplumber), Word (python-docx), Excel (openpyxl), XMind, FreeMind (.mm), OPML, Markdown outline parsers
+- **Layer 1.5 (Joint Analysis)**: Three-level trace matching engine — convention (L1), keyword+synonym (L2), semantic/heuristic (L3)
+- **Layer 2 (Cross-Validation)**: Document-code cross-validation, duplicate detection, broken reference detection
+- **Layer 3 (Knowledge Extraction)**: Automatic extraction of requirements, decisions, facts, tech-stack, concepts
+
+#### Source Code Parser
+- Python `ast` module for `.py` files
+- Optional `tree-sitter` for JS/TS/Java/Go/Rust/C/C++
+- Regex fallback for unsupported languages
+- Directory structure scanning, config file parsing (JSON/YAML/TOML)
+
+#### CLI: `qa import`
+- `qa import PALs/` — parse all documents in PALs/ directory
+- `qa import PALs/ --with-source` — also parse source code from SourceReference/
+- `--dry-run`, `--output`, `--verbose`, `--no-validate`, `--no-knowledge` flags
+- Auto-dependency check with install instructions
+- Exports to Docs/PALs/ (Markdown reports + Knowledge Graph)
+
+#### Storage & Knowledge Graph
+- Extended `NodeType` (+DOCUMENT, SECTION, MODULE, FUNCTION)
+- Extended `EdgeType` (+CONTAINS, IMPLEMENTS, CALLS, EXTRACTED_FROM)
+- `KnowledgeSaver` — save DocumentResult/SourceCodeResult/TraceEntries to KG
+- `MarkdownExporter` — export trace matrix, coverage, diff reports, document summaries
+- `ResultCache` — in-memory cache with TTL and hash validation
+- FTS5-powered full-text search with Python fallback
+
+#### Optional Dependencies
+- `[document]` — PyMuPDF, pdfplumber, python-docx, openpyxl, xmind
+- `[source-code]` — tree-sitter>=0.23.0
+- `[ocr]` — paddleocr, paddlepaddle
+
+#### Tests
+- 340 tests across 9 test files, all passing
+- Test fixtures: PDF, DOCX, XLSX, XMind, FreeMind, OPML, Markdown, Python/JS source
+
 ## [2.7.8] - 2026-04-01
 
 ### Added - Project Isolation & Clean Export

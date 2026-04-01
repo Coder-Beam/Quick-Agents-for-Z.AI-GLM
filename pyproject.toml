@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quickagents"
-version = "2.7.9"
-description = "QuickAgents - AI Agent Enhancement Toolkit with Self-Evolution and Unified UTF-8 Encoding"
+version = "2.8.0"
+description = "QuickAgents - AI Agent Enhancement Toolkit with Document Understanding, Self-Evolution and Unified UTF-8 Encoding"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     {name = "Coder-Beam"}
 ]
-keywords = ["ai", "agent", "cache", "memory", "tdd", "windows", "automation", "evolution", "self-improving", "encoding", "utf-8", "zhipuai", "glm", "coding-plan"]
+keywords = ["ai", "agent", "cache", "memory", "tdd", "windows", "automation", "evolution", "self-improving", "encoding", "utf-8", "zhipuai", "glm", "coding-plan", "document", "knowledge-graph", "traceability"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -22,6 +22,9 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
@@ -39,12 +42,35 @@ windows = [
     "pywin32",          # Windows功能 (latest)
     "wmi",              # WMI (latest)
 ]
+# 文档解析 - PDF/Word/Excel/XMind等
+document = [
+    "PyMuPDF",          # PDF解析 (fitz)
+    "pdfplumber",       # PDF表格提取
+    "python-docx",      # Word文档解析
+    "openpyxl",         # Excel解析
+    "xmind",            # XMind脑图解析
+]
+# 源码分析 - 多语言源码解析
+source-code = [
+    "tree-sitter>=0.23.0",  # 多语言源码解析引擎
+]
+# OCR - PDF扫描件/图片文字识别
+ocr = [
+    "paddleocr",        # OCR识别
+    "paddlepaddle",     # PaddleOCR依赖
+]
 # 完整安装（包含所有功能）
 full = [
     "pywin32",          # Windows功能 (latest)
     "wmi",              # WMI (latest)
     "psutil",           # 系统工具 (latest)
     "playwright",       # 浏览器自动化 (latest)
+    "PyMuPDF",
+    "pdfplumber",
+    "python-docx",
+    "openpyxl",
+    "xmind",
+    "tree-sitter>=0.23.0",
 ]
 
 [project.scripts]

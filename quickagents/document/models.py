@@ -10,10 +10,8 @@ Based on v2.8.0 implementation plan:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Enum
-from datetime import datetime
-
-
+from typing import List, Optional, Dict, Any
+from enum import Enum
 import hashlib
 
 
@@ -24,9 +22,9 @@ class DocumentSection:
     """文档章节"""
     section_id: str
     title: str
-    level: int                    # 层级深度 (1=H1, 2=H2, ...)
-    content: str = ""               # 该章节下的文本内容
+    level: int
     page_number: int
+    content: str = ""
     parent_id: Optional[str] = None
     children_ids: List[str] = field(default_factory=list)
     
@@ -34,14 +32,18 @@ class DocumentSection:
         """添加子章节"""
         self.children_ids.append(child_id)
     
-    def get_full_path(self) -> str:
-        """获取完整路径（如 "1.1.2.3"）"""
+    def get_full_path(self, sections: "List[DocumentSection]" = None) -> str:
+        """获取完整路径（如 "Section > Subsection > Title"）"""
         parts = [self.title]
-        current = self
-        while current.parent_id:
-            parts.insert(0, current.title)
-            current = self._find_section(current.parent_id)
-        return ".".join(reversed(parts))
+        if sections is None:
+            return self.title
+        sec_map = {s.section_id: s for s in sections}
+        current_id = self.parent_id
+        while current_id and current_id in sec_map:
+            parent = sec_map[current_id]
+            parts.insert(0, parent.title)
+            current_id = parent.parent_id
+        return " > ".join(parts)
     
     def to_dict(self) -> Dict:
         """转换为字典"""
@@ -86,11 +88,11 @@ class DocumentSection:
 class DocumentTable:
     """文档表格"""
     table_id: str
+    page_number: int
     caption: Optional[str] = None
     headers: List[str] = field(default_factory=list)
     rows: List[List[str]] = field(default_factory=list)
     section_id: Optional[str] = None
-    page_number: int
     
     def to_dict(self) -> Dict:
         """转换为字典"""
@@ -128,6 +130,7 @@ class DocumentTable:
         if not self.headers:
             return ""
         lines = ["| " + " | ".join(self.headers) + " |"]
+        lines.append("| " + " | ".join("---" for _ in self.headers) + " |")
         for row in self.rows:
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
@@ -148,11 +151,11 @@ class DocumentTable:
 class DocumentImage:
     """文档图片"""
     image_id: str
+    image_type: str
+    page_number: int
     caption: Optional[str] = None
-    image_type: str              # png/jpeg/svg等
     description: Optional[str] = None
     section_id: Optional[str] = None
-    page_number: int
     
     def to_dict(self) -> Dict:
         """转换为字典"""
@@ -193,9 +196,9 @@ class DocumentImage:
 class DocumentFormula:
     """Excel公式 / 计算逻辑"""
     formula_id: str
-    cell_ref: Optional[str] = None
     formula_text: str
-    description: str = ""          # 公式含义的自然语言描述
+    description: str = ""
+    cell_ref: Optional[str] = None
     dependencies: List[str] = field(default_factory=list)
     sheet_name: Optional[str] = None
     
@@ -344,13 +347,13 @@ class CodeFunction:
     func_id: str
     name: str
     signature: str
+    start_line: int
+    end_line: int
     docstring: Optional[str] = None
     parameters: List[Dict] = field(default_factory=list)
     return_type: Optional[str] = None
     decorators: List[str] = field(default_factory=list)
     calls: List[str] = field(default_factory=list)
-    start_line: int
-    end_line: int
     
     def to_dict(self) -> Dict:
         """转换为字典"""
@@ -464,12 +467,12 @@ class CodeModule:
     module_id: str
     file_path: str
     language: str
+    loc: int
     module_docstring: Optional[str] = None
     imports: List[str] = field(default_factory=list)
     classes: List[CodeClass] = field(default_factory=list)
     functions: List[CodeFunction] = field(default_factory=list)
     variables: List[str] = field(default_factory=list)
-    loc: int                     # 代码行数
     
     def to_dict(self) -> Dict:
         """转换为字典"""
@@ -1107,14 +1110,5 @@ class KnowledgeExtractionResult:
     def __repr__(self) -> str:
         return (f"KnowledgeExtractionResult(reqs={len(self.requirements)}, "
                 f"decisions={len(self.decisions)}, facts={len(self.facts)})")
-
-
-# ============== 工具函数 ==============
-def generate_id(prefix: str = "") -> str:
-    """生成唯一ID"""
-    import uuid
-    if prefix:
-        return f"{prefix}-{uuid.uuid4().hex[:8]}"
-    return uuid.uuid4().hex
 
 

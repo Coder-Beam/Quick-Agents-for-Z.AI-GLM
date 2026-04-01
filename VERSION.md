@@ -8,8 +8,8 @@
 
 | Property | Value |
 |-----------|-------|
-| Version | 2.7.8 |
-| Git Tag | v2.7.8 |
+| Version | 2.8.0 |
+| Git Tag | v2.8.0 |
 | Release Date | 2026-04-01 |
 | Minimum Compatible | 2.0.0 |
 | Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -38,129 +38,95 @@ qa hooks install
 
 ---
 
-## What's New (v2.7.8) | 本次更新
+## What's New (v2.8.0) | 本次更新
 
-**Project Isolation & Clean Export — 安全卸载与干净发布**
+**Document Understanding & Source Code Analysis — 文档理解与源码分析**
 
-**项目级隔离与干净导出 — 卸载不跨项目，发布不含QA文件**
+**三层管道：本地解析 → 交叉验证 → 知识提取**
 
 ---
 
-### 1. Dynamic Connection Pool | 动态连接池
+### 1. Document Pipeline | 文档管道
 
-**Problem Solved | 解决的问题:**
-- Fixed-size pool wastes resources when idle
-- No validation for stale connections
-- 固定连接池空闲时浪费资源
-- 无过期连接验证
+**Supported Formats | 支持格式:**
+- PDF (PyMuPDF + pdfplumber)
+- Word (.docx via python-docx)
+- Excel (.xlsx via openpyxl, formulas + requirement matrix detection)
+- XMind / FreeMind (.mm) / OPML / Markdown outlines
+- Source code: Python (ast), JS/TS/Java/Go/Rust/C/C++ (tree-sitter)
 
-**Solution | 解决方案:**
-- `PoolConfig(min_size, max_size)` — dynamic scaling
-- `pre_ping=True` — validate before reuse
-- PRAGMA tuning: `mmap_size=256MB`, `temp_store=MEMORY`
-- Pool metrics: `hit_rate`, `avg_wait_ms`, `evicted_count`
-- WAL auto-checkpoint: interval + threshold based
+```bash
+# Import all documents from PALs/ directory
+qa import PALs/
 
-```python
-from quickagents.core import ConnectionManager, PoolConfig
+# Include source code analysis
+qa import PALs/ --with-source
 
-config = PoolConfig(min_size=2, max_size=10, pre_ping=True)
-mgr = ConnectionManager('.quickagents/unified.db', pool_config=config)
-metrics = mgr.get_pool_metrics()
+# Preview without processing
+qa import PALs/ --dry-run
 ```
 
 ---
 
-### 2. Exponential Backoff Retry | 指数退避重试
+### 2. Three-Level Trace Matching | 三级追踪匹配
 
-- `RetryConfig(max_retries=5, backoff_base_ms=2000)`
-- Thread-local transactions — independent depth per thread
-- Read-only transaction separation
-- 指数退避消除 `database is locked` 错误
+- **L1 Convention**: REQ-ID, feature tags, section numbers (confidence: 1.0)
+- **L2 Keyword**: Synonym table (45+ bilingual pairs), Chinese bigram tokenization (confidence: 0.7-0.9)
+- **L3 Semantic**: LLM or Jaccard+synonym heuristic matching (confidence: 0.6+)
+
+Output: Trace matrix + diff report + fix suggestions
 
 ---
 
-### 3. Django-style QueryBuilder | Django风格查询构建器
+### 3. Knowledge Extraction | 知识提取
 
-```python
-from quickagents.core import QueryBuilder
+Automatic extraction from documents:
+- Functional / non-functional requirements
+- Technical decisions
+- Business facts and constraints
+- Tech-stack and concepts
 
-results = (
-    QueryBuilder('memory')
-    .filter(memory_type='factual')
-    .filter(importance_score__gte=0.7)
-    .exclude(category='internal')
-    .order_by('-importance_score')
-    .limit(10)
-    .build()
-)
+---
+
+### 4. Storage | 存储
+
+- Knowledge Graph: 10+ NodeType, 15+ EdgeType
+- FTS5 full-text search
+- Markdown export: trace matrix, coverage, diff reports
+- `Docs/PALs/` output directory
+
+---
+
+### 5. Optional Dependencies | 可选依赖
+
+```bash
+# Document parsing
+pip install quickagents[document]
+
+# Source code analysis
+pip install quickagents[source-code]
+
+# OCR (scanned PDFs)
+pip install quickagents[ocr]
+
+# Everything
+pip install quickagents[full]
 ```
 
-- Immutable cloning, parameterized queries
-- Batch INSERT optimization (5-10x faster)
-- 不可变克隆，参数化查询，批量插入优化
-
 ---
 
-### 4. External Migration Files | 外部迁移文件
+### Module Overview | 模块概览
 
-- Load SQL from `migrations/` directory
-- `MigrationResult` tracking with duration_ms
-- Enhanced logging per migration
-- 从 `migrations/` 目录加载SQL，增强日志
-
----
-
-### 5. Session Interface Unification | Session接口统一
-
-```python
-session = db.session
-
-with session.query() as conn:          # Read-only
-    rows = conn.execute("SELECT ...").fetchall()
-
-with session.transaction() as conn:    # Read-write
-    conn.execute("INSERT INTO ...")
-
-row = session.query_one("SELECT ...")  # Convenience
-rows = session.query_all("SELECT ...")
-session.execute("UPDATE ...")          # Auto-commit
-```
-
-- Single entry point for all database access
-- All modules delegate through Session
-- 所有模块通过 Session 统一访问数据库
-
----
-
-### 6. Complete Command Reference | 完整命令参考
-
-**CLI Commands (35+ subcommands):**
-- `qa stats/sync/memory/tasks/progress/evolution/hooks/git/tdd/feedback/models/cache/loop/reminder`
-
-**Slash Commands (30+ commands):**
-- `/ultrawork` `/start-work` `/run-workflow` `/add-skill` `/list-skills` `/tdd-red/green/refactor` `/qa-update` `/feedback` `/debug` `/handoff`
-
-**Upgrade Commands | 升级命令:**
-- `/qa-update` — detect and update
-- `/qa-update --check` — check only
-- `/qa-update --rollback` — rollback
-- `/qa-check-alignment` — version alignment check
-
----
-
-## Module Overview | 模块概览
-
-| Module | Function | Token Savings |
-|--------|----------|---------------|
-| UnifiedDB | Unified database management | 60%+ |
-| MarkdownSync | Auto-sync to Markdown | 100% |
-| FileManager | Smart file read/write (hash detection) | 90%+ |
-| LoopDetector | Pattern-based loop detection | 100% |
-| Reminder | Event reminders | 100% |
-| SkillEvolution | Skills self-evolution | 0 |
-| KnowledgeGraph | Knowledge graph | 80%+ |
-| Browser | Browser automation | 50%+ |
+| Module | Function | Status |
+|--------|----------|--------|
+| DocumentPipeline | Three-layer pipeline orchestration | New |
+| Parsers (7) | PDF/Word/Excel/XMind/FreeMind/OPML/MD | New |
+| SourceCodeParser | Python ast + tree-sitter | New |
+| TraceMatchEngine | Three-level matching | New |
+| CrossValidator | Layer 2 cross-validation | New |
+| KnowledgeExtractor | Layer 3 extraction | New |
+| KnowledgeSaver | KG node+edge persistence | New |
+| MarkdownExporter | MD report generation | New |
 
 ---
 
@@ -168,8 +134,8 @@ session.execute("UPDATE ...")          # Auto-commit
 
 | Test Type | Pass Rate | Details |
 |-----------|-----------|---------|
-| Unit Tests | 100% | 580/580 passing |
-| Integration Tests | 100% | All passing |
+| Unit Tests | 100% | 340/340 document tests passing |
+| Integration Tests | 100% | All passing, 580+ total |
 | Code Quality | 100% | All syntax checks pass |
 
 **Test Command | 测试命令:**
@@ -181,6 +147,17 @@ pytest tests/ -v
 ---
 
 ## Version History | 版本历史
+
+### v2.8.0 (2026-04-01)
+- Document Understanding module: 3-layer pipeline (parse → validate → extract)
+- 7 document parsers: PDF, Word, Excel, XMind, FreeMind, OPML, Markdown
+- Source code parser: Python ast + tree-sitter (optional)
+- Three-level trace matching engine with bilingual synonym table
+- `qa import` CLI command for batch document processing
+- Knowledge Graph extension: 4 new NodeTypes, 4 new EdgeTypes
+- Markdown export: trace matrix, coverage, diff reports
+- Optional dependency groups: [document], [source-code], [ocr]
+- 340 document tests, all passing
 
 ### v2.7.8 (2026-04-01)
 - `qa uninstall` redesign: project-level only, no global side effects
@@ -280,7 +257,7 @@ pytest tests/ -v
 
 ## Roadmap | 路线图
 
-### v2.8.0 (Planned | 计划中)
+### v2.9.0 (Planned | 计划中)
 - Multi-model routing with intelligent fallback
 - Async database operations support
 - Performance profiling dashboard
@@ -327,6 +304,6 @@ pip install --upgrade quickagents
 
 ---
 
-*QuickAgents v2.7.8 - Making AI agent development easier*
+*QuickAgents v2.8.0 - Making AI agent development easier*
 
-*QuickAgents v2.7.8 - 让AI代理开发更简单*
+*QuickAgents v2.8.0 - 让AI代理开发更简单*
