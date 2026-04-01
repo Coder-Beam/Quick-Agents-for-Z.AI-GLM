@@ -1,8 +1,8 @@
-# QuickAgents v2.7.6 Release Notes
+# QuickAgents v2.7.8 Release Notes
 
 > **Release Date**: 2026-04-01 | **Author**: Coder-Beam
 
-[![Version](https://img.shields.io/badge/Version-2.7.6-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/releases/tag/v2.7.6)
+[![Version](https://img.shields.io/badge/Version-2.7.8-green.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/releases/tag/v2.7.8)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/Tests-580%20passing-brightgreen.svg)](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM)
@@ -11,21 +11,19 @@
 
 ## 🎉 Overview
 
-QuickAgents v2.7.6 is a **core architecture upgrade** that delivers:
+QuickAgents v2.7.8 is a **project safety release** that delivers:
 
-- ✅ **Dynamic Connection Pool** — pre_ping validation, PRAGMA tuning (mmap/temp_store), pool metrics
-- ✅ **Exponential Backoff Retry** — eliminates `database is locked` errors
-- ✅ **Django-style QueryBuilder** — chainable, immutable, parameterized queries
-- ✅ **External Migration Files** — load migrations from `migrations/` directory
-- ✅ **Session Unification** — single entry point for all database access
-- ✅ **`qa uninstall` Command** — complete uninstall with dry-run/keep-data/keep-config
-- ✅ **580 Tests Passing** — 256 new tests added (324→580), 100% pass rate
+- ✅ **`qa uninstall` Project Isolation** — only cleans current project, never touches other projects or pip
+- ✅ **`qa export` Clean Export** — exports to `Output/<version>/` with git commit binding
+- ✅ **Git Commit Enforcement** — export requires clean working tree, manifest records commit hash
+- ✅ **`.gitignore` Injection** — `qa export --inject-gitignore` prevents QA files from being published
+- ✅ **580 Tests Passing** — all passing, 100% pass rate
 
 ---
 
 ## 🚀 Installation & Upgrade
 
-### Upgrade from v2.7.0
+### Upgrade from v2.7.6
 
 ```bash
 # Update package
@@ -33,7 +31,7 @@ pip install --upgrade quickagents
 
 # Verify version
 python -c "from quickagents import __version__; print(__version__)"
-# Output: 2.7.6
+# Output: 2.7.8
 
 # No breaking changes — all v2.7.0 API fully compatible
 ```

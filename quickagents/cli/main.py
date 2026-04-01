@@ -23,10 +23,17 @@ QuickAgents CLI - 命令行工具
     qa update --target 2.7.6 # 升级到指定版本
     qa update --source github # 从GitHub源码安装
     qa update --dry-run      # 仅预览升级，不执行
-    qa uninstall             # 交互式卸载QuickAgents
+    qa uninstall             # 卸载当前项目的QuickAgents文件（项目级）
     qa uninstall --dry-run   # 预览卸载内容
     qa uninstall --keep-data # 卸载但保留项目数据
     qa uninstall --force     # 跳过确认直接卸载
+    
+    # 导出命令
+    qa export                # 导出到 Output/<版本号>/（自动检测版本+git commit）
+    qa export --version 1.0  # 指定版本号
+    qa export --dry-run      # 预览导出内容
+    qa export --inject-gitignore  # 将QA排除规则注入 .gitignore
+    qa export --list-excludes     # 列出所有排除规则
     
     # 模型配置命令
     qa models status         # 查看当前模型配置
@@ -813,38 +820,41 @@ def cmd_models(args):
 
 
 def cmd_uninstall(args):
-    """卸载QuickAgents命令
+    """卸载QuickAgents命令（项目级）
+
+    仅清理当前项目中的 QuickAgents 相关文件，不影响其他项目。
+    不卸载 pip 包，不删除全局数据。
 
     清理范围:
         1. Git Hooks (项目级 .git/hooks/ 中的qa相关钩子)
         2. 项目数据 (项目级 .quickagents/ 目录)
-        3. 全局数据 (用户级 ~/.quickagents/ 目录)
-        4. pip包卸载
+        3. 项目配置 (.opencode/ 目录中的qa相关文件)
 
     用法:
-        qa uninstall                # 交互式卸载
+        qa uninstall                # 交互式卸载（仅项目级）
         qa uninstall --dry-run      # 预览将被清理的内容
-        qa uninstall --keep-data    # 保留项目数据 (.quickagents/)
-        qa uninstall --keep-config  # 保留全局数据 (~/.quickagents/)
+        qa uninstall --keep-data    # 保留 .quickagents/ 目录
+        qa uninstall --keep-opencode # 保留 .opencode/ 目录
         qa uninstall --force        # 跳过确认提示
     """
-    import subprocess
     import shutil
 
     from .. import __version__
 
     dry_run = getattr(args, 'dry_run', False)
     keep_data = getattr(args, 'keep_data', False)
-    keep_config = getattr(args, 'keep_config', False)
+    keep_opencode = getattr(args, 'keep_opencode', False)
     force = getattr(args, 'force', False)
 
-    print(f"[Uninstall] QuickAgents v{__version__}")
+    print(f"[Uninstall] QuickAgents v{__version__} — 项目级卸载")
+    print("=" * 60)
+    print("  ⚠️  仅清理当前项目，不影响其他项目或 pip 包")
     print("=" * 60)
 
     # --- 1. 收集需要清理的内容 ---
     items_to_clean = []
 
-    # 1a. Git Hooks
+    # 1a. Git Hooks (qa相关)
     git_hooks_dir = Path('.git/hooks')
     qa_hooks = []
     if git_hooks_dir.exists():
@@ -857,49 +867,52 @@ def cmd_uninstall(args):
                 except Exception:
                     pass
     if qa_hooks:
-        items_to_clean.append(('git_hooks', qa_hooks, 'Git Hooks (qa相关)'))
+        items_to_clean.append(('git_hooks', qa_hooks, f'Git Hooks (qa相关, {len(qa_hooks)}个)'))
 
-    # 1b. 项目数据
+    # 1b. 项目数据 .quickagents/
     project_data = Path('.quickagents')
     if project_data.exists():
-        # 计算大小
         total_size = sum(f.stat().st_size for f in project_data.rglob('*') if f.is_file())
-        size_str = _format_size(total_size)
-        items_to_clean.append(('project_data', [project_data], f'项目数据 (.quickagents/) [{size_str}]'))
+        items_to_clean.append(('project_data', [project_data],
+                               f'项目数据 (.quickagents/) [{_format_size(total_size)}]'))
 
-    # 1c. 全局数据
-    global_data = Path.home() / '.quickagents'
-    if global_data.exists():
-        total_size = sum(f.stat().st_size for f in global_data.rglob('*') if f.is_file())
-        size_str = _format_size(total_size)
-        items_to_clean.append(('global_data', [global_data], f'全局数据 (~/.quickagents/) [{size_str}]'))
+    # 1c. .opencode/ 目录
+    opencode_dir = Path('.opencode')
+    if opencode_dir.exists():
+        total_size = sum(f.stat().st_size for f in opencode_dir.rglob('*') if f.is_file())
+        items_to_clean.append(('opencode_dir', [opencode_dir],
+                               f'IDE配置 (.opencode/) [{_format_size(total_size)}]'))
 
-    # 1d. pip包
-    items_to_clean.append(('pip_package', [], 'pip包 (quickagents)'))
+    # 1d. 项目根目录的QA配置文件
+    qa_config_files = []
+    for fname in ['quickagents.json', 'AGENTS.md', 'VERSION.md']:
+        fpath = Path(fname)
+        if fpath.exists():
+            qa_config_files.append(fpath)
+    if qa_config_files:
+        items_to_clean.append(('config_files', qa_config_files,
+                               f'配置文件 ({", ".join(str(f) for f in qa_config_files)})'))
+
+    if not items_to_clean:
+        print("\n[INFO] 当前项目中没有 QuickAgents 相关文件")
+        return
 
     # --- 2. 显示清理计划 ---
-    print("\n将要清理以下内容:\n")
+    print(f"\n将要清理以下内容 (项目: {Path.cwd().name}):\n")
 
     action_plan = []
     for item_type, paths, description in items_to_clean:
         if item_type == 'project_data' and keep_data:
             print(f"  [SKIP] {description} (--keep-data)")
             continue
-        if item_type == 'global_data' and keep_config:
-            print(f"  [SKIP] {description} (--keep-config)")
+        if item_type == 'opencode_dir' and keep_opencode:
+            print(f"  [SKIP] {description} (--keep-opencode)")
             continue
         print(f"  [REMOVE] {description}")
-        if paths and item_type != 'pip_package':
-            for p in paths:
-                if isinstance(p, list):
-                    for sub in p:
-                        print(f"           - {sub}")
-                else:
-                    print(f"           - {p}")
         action_plan.append(item_type)
 
     if not action_plan:
-        print("\n[INFO] 没有需要清理的内容")
+        print("\n[INFO] 所有项目已标记为保留，无需清理")
         return
 
     # --- 3. dry-run 模式 ---
@@ -912,7 +925,7 @@ def cmd_uninstall(args):
     if not force:
         print()
         try:
-            answer = input("确认卸载? [y/N]: ").strip().lower()
+            answer = input("确认卸载当前项目中的 QuickAgents 文件? [y/N]: ").strip().lower()
         except (EOFError, KeyboardInterrupt):
             print("\n[INFO] 已取消卸载")
             return
@@ -921,7 +934,7 @@ def cmd_uninstall(args):
             return
 
     # --- 5. 执行清理 ---
-    print("\n[执行] 开始卸载...")
+    print(f"\n[执行] 开始清理项目: {Path.cwd().name}...")
 
     # 5a. 移除 Git Hooks
     if 'git_hooks' in action_plan:
@@ -942,39 +955,499 @@ def cmd_uninstall(args):
             print(f"         请手动删除: rmdir /s /q .quickagents  (Windows)")
             print(f"                   rm -rf .quickagents          (Linux/Mac)")
 
-    # 5c. 移除全局数据
-    if 'global_data' in action_plan and global_data.exists():
+    # 5c. 移除 .opencode/
+    if 'opencode_dir' in action_plan and opencode_dir.exists():
         try:
-            shutil.rmtree(str(global_data))
-            print(f"  [OK] 已删除: ~/.quickagents/")
+            shutil.rmtree(str(opencode_dir))
+            print(f"  [OK] 已删除: .opencode/")
         except Exception as e:
-            print(f"  [WARN] 无法删除 ~/.quickagents/: {e}")
-            print(f"         请手动删除: rmdir /s /q %USERPROFILE%\\.quickagents  (Windows)")
-            print(f"                   rm -rf ~/.quickagents                   (Linux/Mac)")
+            print(f"  [WARN] 无法删除 .opencode/: {e}")
 
-    # 5d. pip 卸载
-    if 'pip_package' in action_plan:
-        print(f"\n  [执行] pip uninstall quickagents...")
-        cmd = [sys.executable, '-m', 'pip', 'uninstall', '-y', 'quickagents']
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-            if result.returncode == 0:
-                print(f"  [OK] pip包已卸载")
-            else:
-                print(f"  [WARN] pip卸载返回非零: {result.stderr.strip()}")
-                print(f"         请手动执行: pip uninstall quickagents")
-        except Exception as e:
-            print(f"  [WARN] pip卸载失败: {e}")
-            print(f"         请手动执行: pip uninstall quickagents")
+    # 5d. 移除配置文件
+    if 'config_files' in action_plan:
+        for fpath in qa_config_files:
+            try:
+                fpath.unlink()
+                print(f"  [OK] 已删除: {fpath}")
+            except Exception as e:
+                print(f"  [WARN] 无法删除 {fpath}: {e}")
 
     print("\n" + "=" * 60)
-    print("[OK] QuickAgents 卸载完成!")
+    print("[OK] 项目级卸载完成!")
     print()
-    print("如需重新安装:")
-    print("  pip install quickagents")
+    print("  ℹ️  pip 包未被卸载，其他项目不受影响")
+    print("  ℹ️  如需完全移除 QuickAgents，请手动执行:")
+    print("      pip uninstall quickagents")
     print()
-    print("如需查看卸载指导文档:")
-    print("  https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/blob/main/Docs/guides/UNINSTALL_GUIDE.md")
+    print("  如需重新初始化此项目:")
+    print("      启动QuickAgent")
+
+
+# ==================== 导出命令 ====================
+
+# QuickAgents 在用户项目中生成/使用的所有文件和目录
+# 这些文件不应出现在用户的发布包中
+QA_PROJECT_PATTERNS = {
+    # 运行时数据目录
+    'dirs': [
+        '.quickagents',
+        '.opencode',
+        '.pytest_cache',
+        '__pycache__',
+    ],
+    # 配置和文档文件（项目根目录）
+    'root_files': [
+        'AGENTS.md',
+        'VERSION.md',
+        'quickagents.json',
+        'opencode.json',
+    ],
+    # Docs/ 下的 QA 生成文件
+    'docs_files': [
+        'Docs/MEMORY.md',
+        'Docs/TASKS.md',
+        'Docs/DECISIONS.md',
+        'Docs/INDEX.md',
+    ],
+    # Docs/ 下的 QA 生成子目录
+    'docs_dirs': [
+        'Docs/features',
+        'Docs/modules',
+    ],
+    # 通用排除（非QA但也不应发布）
+    'generic_exclude': [
+        'node_modules',
+        '.git',
+        'dist',
+        'build',
+        '*.egg-info',
+        '*.pyc',
+        '*.pyo',
+        '.env',
+        '.env.local',
+    ],
+}
+
+# .gitignore 注入模板
+QA_GITIGNORE_BLOCK = """
+# === QuickAgents Runtime (DO NOT publish) ===
+.quickagents/
+.opencode/
+.pytest_cache/
+AGENTS.md
+VERSION.md
+quickagents.json
+opencode.json
+Docs/MEMORY.md
+Docs/TASKS.md
+Docs/DECISIONS.md
+Docs/INDEX.md
+Docs/features/
+Docs/modules/
+# === End QuickAgents ==="""
+
+QA_GITIGNORE_MARKER_START = "# === QuickAgents Runtime (DO NOT publish) ==="
+QA_GITIGNORE_MARKER_END = "# === End QuickAgents ==="
+
+
+def _should_exclude(rel_path: str, project_root: Path) -> bool:
+    """判断文件是否应被排除（不出现在导出包中）"""
+    # 统一用正斜杠比较
+    rel_path_posix = rel_path.replace('\\', '/')
+    parts = rel_path_posix.split('/')
+
+    # 排除目录
+    for d in QA_PROJECT_PATTERNS['dirs']:
+        if d in parts:
+            return True
+
+    # 排除通用目录
+    for d in QA_PROJECT_PATTERNS['generic_exclude']:
+        clean = d.replace('*', '')
+        if clean in parts:
+            return True
+        # glob 匹配 (如 *.egg-info)
+        if '*' in d:
+            import fnmatch
+            for p in parts:
+                if fnmatch.fnmatch(p, d):
+                    return True
+
+    # 文件名匹配
+    filename = parts[-1] if parts else ''
+
+    # 根目录文件（只在根目录时排除）
+    if len(parts) == 1:
+        for f in QA_PROJECT_PATTERNS['root_files']:
+            if filename == f:
+                return True
+        for f in QA_PROJECT_PATTERNS['generic_exclude']:
+            if '*' in f:
+                import fnmatch
+                if fnmatch.fnmatch(filename, f):
+                    return True
+
+    # Docs/ 下的 QA 文件
+    if len(parts) >= 2 and parts[0] == 'Docs':
+        docs_rel = '/'.join(parts[:2]) if len(parts) >= 2 else parts[0]
+        for f in QA_PROJECT_PATTERNS['docs_files']:
+            if docs_rel == f:
+                return True
+        for d in QA_PROJECT_PATTERNS['docs_dirs']:
+            if rel_path_posix.startswith(d + '/'):
+                return True
+
+    # __pycache__ 在任意层级
+    if '__pycache__' in parts:
+        return True
+
+    return False
+
+
+def cmd_export(args):
+    """导出命令 - 导出干净的项目文件（不含QuickAgents运行时文件）
+
+    用于项目发布、打包、上传到GitHub/PyPI等场景。
+    排除所有 QuickAgents 生成的运行时文件、配置文件和IDE文件。
+    输出到 Output/<版本号>/ 目录，必须与 git commit 对应。
+
+    核心约束:
+        - 必须在 git 仓库中执行
+        - 工作树必须干净（所有变更已 commit），否则拒绝导出
+        - 输出目录名包含版本号，与当前 commit 绑定
+        - manifest 中记录 commit hash 用于溯源
+
+    此命令可由 AI Agents 自动调用（当用户说"发布/打包/上传/导出"等关键词时）。
+
+    用法:
+        qa export                       # 导出到 Output/<版本号>/
+        qa export --version 1.0.0       # 指定版本号
+        qa export --output ./dist       # 指定输出根目录（默认 ./Output）
+        qa export --dry-run             # 仅预览将被排除的文件
+        qa export --list-excludes       # 列出所有排除规则
+        qa export --inject-gitignore    # 将排除规则注入 .gitignore
+    """
+    import shutil
+    import json
+    import subprocess
+
+    from .. import __version__
+
+    dry_run = getattr(args, 'dry_run', False)
+    list_excludes = getattr(args, 'list_excludes', False)
+    inject_gitignore = getattr(args, 'inject_gitignore', False)
+    output_root = getattr(args, 'output', 'Output') or 'Output'
+    version = getattr(args, 'version', None)
+
+    # --- 列出排除规则 ---
+    if list_excludes:
+        print("[Export] QuickAgents 排除规则列表")
+        print("=" * 60)
+
+        print("\n排除目录:")
+        for d in QA_PROJECT_PATTERNS['dirs']:
+            print(f"  - {d}/")
+
+        print("\n排除根目录文件:")
+        for f in QA_PROJECT_PATTERNS['root_files']:
+            print(f"  - {f}")
+
+        print("\n排除 Docs/ 文件:")
+        for f in QA_PROJECT_PATTERNS['docs_files']:
+            print(f"  - {f}")
+
+        print("\n排除 Docs/ 子目录:")
+        for d in QA_PROJECT_PATTERNS['docs_dirs']:
+            print(f"  - {d}/")
+
+        print("\n通用排除:")
+        for f in QA_PROJECT_PATTERNS['generic_exclude']:
+            print(f"  - {f}")
+
+        return
+
+    # --- 注入 .gitignore ---
+    if inject_gitignore:
+        gitignore_path = Path('.gitignore')
+
+        if gitignore_path.exists():
+            content = gitignore_path.read_text(encoding='utf-8')
+            if QA_GITIGNORE_MARKER_START in content:
+                print("[Export] .gitignore 已包含 QuickAgents 排除规则，跳过注入")
+                return
+            content = content.rstrip() + '\n' + QA_GITIGNORE_BLOCK + '\n'
+            gitignore_path.write_text(content, encoding='utf-8')
+            print("[OK] 已将 QuickAgents 排除规则追加到 .gitignore")
+        else:
+            gitignore_path.write_text(QA_GITIGNORE_BLOCK + '\n', encoding='utf-8')
+            print("[OK] 已创建 .gitignore 并添加 QuickAgents 排除规则")
+
+        return
+
+    # --- Git 前置检查 ---
+    project_root = Path.cwd()
+    project_name = project_root.name
+
+    git_dir = project_root / '.git'
+    if not git_dir.exists():
+        print("[FAIL] 当前目录不是 git 仓库")
+        print("  qa export 要求在 git 仓库中执行，确保导出与 commit 对应")
+        print("  请先执行: git init")
+        return
+
+    # 获取当前 commit hash
+    commit_hash = None
+    commit_short = None
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', 'HEAD'],
+            capture_output=True, text=True, timeout=5, cwd=str(project_root)
+        )
+        if result.returncode == 0:
+            commit_hash = result.stdout.strip()
+            commit_short = commit_hash[:7]
+    except Exception:
+        pass
+
+    if not commit_hash:
+        print("[FAIL] 无法获取当前 commit hash")
+        print("  请先执行至少一次 git commit")
+        return
+
+    # 检查工作树是否干净
+    is_dirty = False
+    try:
+        result = subprocess.run(
+            ['git', 'status', '--porcelain'],
+            capture_output=True, text=True, timeout=10, cwd=str(project_root)
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            # 排除 Output/ 目录的变更（Output 本身可能已被 gitignore）
+            dirty_lines = [
+                line for line in result.stdout.strip().splitlines()
+                if not line.strip().startswith('?? Output')
+                and not line.strip().startswith('?? Output/')
+            ]
+            if dirty_lines:
+                is_dirty = True
+                dirty_count = len(dirty_lines)
+    except Exception:
+        pass
+
+    if is_dirty:
+        print(f"[FAIL] 工作树有 {dirty_count} 个未提交的变更")
+        print("  qa export 要求所有变更已 commit，确保导出与 commit 一一对应")
+        print()
+        print("  请先提交:")
+        print("    git add .")
+        print("    git commit -m \"feat: xxx\"")
+        return
+
+    # --- 确定版本号 ---
+    if not version:
+        version = _detect_project_version()
+    if not version:
+        # 最终 fallback: 用 commit short hash
+        version = f'commit-{commit_short}'
+        print(f"[INFO] 未检测到项目版本号，使用: {version}")
+        print(f"       可通过 --version 参数指定")
+
+    # --- 扫描项目文件 ---
+    versioned_output = Path(output_root) / version
+
+    print(f"[Export] QuickAgents v{__version__} — 项目导出")
+    print(f"  项目: {project_name}")
+    print(f"  版本: {version}")
+    print(f"  Commit: {commit_short} ({commit_hash})")
+    print(f"  输出: {versioned_output}/")
+    print("=" * 60)
+
+    all_files = []
+    excluded_files = []
+    included_files = []
+
+    output_root_path = Path(output_root)
+
+    for path in project_root.rglob('*'):
+        if not path.is_file():
+            continue
+        rel_path = path.relative_to(project_root)
+        rel_str = str(rel_path)
+
+        # 排除 Output 目录自身
+        rel_posix = rel_str.replace('\\', '/')
+        if rel_posix.startswith(output_root + '/') or rel_posix == output_root:
+            continue
+
+        all_files.append(rel_str)
+
+        if _should_exclude(rel_str, project_root):
+            excluded_files.append(rel_str)
+        else:
+            included_files.append(rel_str)
+
+    # 读取 .gitignore 中的规则进一步排除
+    gitignore_path = project_root / '.gitignore'
+    if gitignore_path.exists():
+        try:
+            import fnmatch as _fnmatch
+            gitignore_lines = [
+                line.strip() for line in gitignore_path.read_text(encoding='utf-8').splitlines()
+                if line.strip() and not line.strip().startswith('#')
+            ]
+            final_included = []
+            for f in included_files:
+                excluded_by_gitignore = False
+                for pattern in gitignore_lines:
+                    if pattern.endswith('/'):
+                        if f.replace('\\', '/').startswith(pattern) or ('/' + pattern) in f:
+                            excluded_by_gitignore = True
+                            break
+                    elif '*' in pattern:
+                        if _fnmatch.fnmatch(f, pattern) or _fnmatch.fnmatch(Path(f).name, pattern):
+                            excluded_by_gitignore = True
+                            break
+                    else:
+                        if f == pattern or Path(f).name == pattern:
+                            excluded_by_gitignore = True
+                            break
+                if not excluded_by_gitignore:
+                    final_included.append(f)
+                elif f not in excluded_files:
+                    excluded_files.append(f)
+            included_files = final_included
+        except Exception:
+            pass
+
+    # --- dry-run 模式 ---
+    if dry_run:
+        print(f"\n[DRY-RUN] 导出预览")
+        print(f"  版本号: {version}")
+        print(f"  Commit: {commit_short}")
+        print(f"  总文件: {len(all_files)}")
+        print(f"  将导出: {len(included_files)}")
+        print(f"  将排除: {len(excluded_files)}")
+
+        print(f"\n排除文件 (前30个):")
+        for f in sorted(excluded_files)[:30]:
+            print(f"  [SKIP] {f}")
+        if len(excluded_files) > 30:
+            print(f"  ... 还有 {len(excluded_files) - 30} 个")
+
+        print(f"\n导出文件 (前20个):")
+        for f in sorted(included_files)[:20]:
+            print(f"  [COPY] {f}")
+        if len(included_files) > 20:
+            print(f"  ... 还有 {len(included_files) - 20} 个")
+
+        print(f"\n[DRY-RUN] 未执行任何操作")
+        print(f"  移除 --dry-run 参数以执行实际导出")
+        return
+
+    # --- 执行导出 ---
+    if versioned_output.exists():
+        shutil.rmtree(str(versioned_output))
+    versioned_output.mkdir(parents=True, exist_ok=True)
+
+    for rel_str in included_files:
+        src = project_root / rel_str
+        dst = versioned_output / rel_str
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(str(src), str(dst))
+
+    total_size = sum(f.stat().st_size for f in versioned_output.rglob('*') if f.is_file())
+
+    # 生成 manifest（含 git commit 溯源）
+    from datetime import datetime
+    manifest = {
+        'export_time': datetime.now().isoformat(),
+        'project': project_name,
+        'version': version,
+        'git_commit': commit_hash,
+        'git_commit_short': commit_short,
+        'quickagents_version': __version__,
+        'total_files': len(included_files),
+        'excluded_files': len(excluded_files),
+    }
+    manifest_path = versioned_output / 'export-manifest.json'
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding='utf-8')
+
+    print(f"\n[OK] 导出完成!")
+    print(f"  输出目录: {versioned_output}/")
+    print(f"  项目版本: {version}")
+    print(f"  Git Commit: {commit_short}")
+    print(f"  文件数: {len(included_files)}")
+    print(f"  排除数: {len(excluded_files)}")
+    print(f"  总大小: {_format_size(total_size)}")
+    print(f"  清单: {manifest_path}")
+
+
+def _detect_project_version():
+    """自动检测用户项目的版本号
+
+    检测顺序:
+        1. pyproject.toml (version = "x.y.z")
+        2. package.json ("version": "x.y.z")
+        3. VERSION.md (| Version | x.y.z |)
+        4. git tag (vx.y.z)
+    """
+    # 1. pyproject.toml
+    pyproject = Path('pyproject.toml')
+    if pyproject.exists():
+        try:
+            content = pyproject.read_text(encoding='utf-8')
+            for line in content.splitlines():
+                stripped = line.strip()
+                if stripped.startswith('version =') or stripped.startswith('version='):
+                    v = stripped.split('=', 1)[1].strip().strip('"').strip("'")
+                    if v and v[0].isdigit():
+                        return v
+        except Exception:
+            pass
+
+    # 2. package.json
+    package_json = Path('package.json')
+    if package_json.exists():
+        try:
+            import json as _json
+            data = _json.loads(package_json.read_text(encoding='utf-8'))
+            v = data.get('version', '')
+            if v and v[0].isdigit():
+                return v
+        except Exception:
+            pass
+
+    # 3. VERSION.md
+    version_md = Path('VERSION.md')
+    if version_md.exists():
+        try:
+            content = version_md.read_text(encoding='utf-8')
+            for line in content.splitlines():
+                if '| Version |' in line or '| version |' in line:
+                    parts = [p.strip() for p in line.split('|')]
+                    for p in parts:
+                        if p and p[0].isdigit():
+                            return p
+        except Exception:
+            pass
+
+    # 4. git tag
+    try:
+        import subprocess
+        result = subprocess.run(
+            ['git', 'describe', '--tags', '--abbrev=0'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            tag = result.stdout.strip()
+            if tag.startswith('v'):
+                tag = tag[1:]
+            if tag and tag[0].isdigit():
+                return tag
+    except Exception:
+        pass
+
+    return None
 
 
 def _format_size(size_bytes):
@@ -1245,16 +1718,30 @@ def main():
     p_update.set_defaults(func=cmd_update)
     
     # uninstall 命令
-    p_uninstall = subparsers.add_parser('uninstall', help='卸载QuickAgents')
+    p_uninstall = subparsers.add_parser('uninstall', help='卸载当前项目的QuickAgents文件（项目级）')
     p_uninstall.add_argument('--dry-run', '-d', action='store_true',
                              help='仅预览，不执行卸载')
     p_uninstall.add_argument('--keep-data', action='store_true',
-                             help='保留项目数据 (.quickagents/)')
-    p_uninstall.add_argument('--keep-config', action='store_true',
-                             help='保留全局数据 (~/.quickagents/)')
+                             help='保留 .quickagents/ 目录')
+    p_uninstall.add_argument('--keep-opencode', action='store_true',
+                             help='保留 .opencode/ 目录')
     p_uninstall.add_argument('--force', '-f', action='store_true',
                              help='跳过确认提示')
     p_uninstall.set_defaults(func=cmd_uninstall)
+    
+    # export 命令
+    p_export = subparsers.add_parser('export', help='导出干净的项目文件（排除QA运行时）')
+    p_export.add_argument('--output', '-o', default='Output',
+                          help='输出根目录（默认: Output，实际输出到 Output/<版本号>/）')
+    p_export.add_argument('--version', '-v',
+                          help='指定版本号（默认自动检测 pyproject.toml/package.json/git tag）')
+    p_export.add_argument('--dry-run', '-d', action='store_true',
+                          help='仅预览，不执行导出')
+    p_export.add_argument('--list-excludes', action='store_true',
+                          help='列出所有排除规则')
+    p_export.add_argument('--inject-gitignore', action='store_true',
+                          help='将排除规则注入 .gitignore')
+    p_export.set_defaults(func=cmd_export)
     
     args = parser.parse_args()
     

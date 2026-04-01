@@ -8,8 +8,8 @@
 
 | Property | Value |
 |-----------|-------|
-| Version | 2.7.6 |
-| Git Tag | v2.7.6 |
+| Version | 2.7.8 |
+| Git Tag | v2.7.8 |
 | Release Date | 2026-04-01 |
 | Minimum Compatible | 2.0.0 |
 | Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
@@ -38,11 +38,11 @@ qa hooks install
 
 ---
 
-## What's New (v2.7.6) | 本次更新
+## What's New (v2.7.8) | 本次更新
 
-**Core Architecture Upgrade — 6-Phase Enhancement, 568 Tests**
+**Project Isolation & Clean Export — 安全卸载与干净发布**
 
-**核心架构升级 — 6阶段增强，568个测试**
+**项目级隔离与干净导出 — 卸载不跨项目，发布不含QA文件**
 
 ---
 
@@ -168,33 +168,30 @@ session.execute("UPDATE ...")          # Auto-commit
 
 | Test Type | Pass Rate | Details |
 |-----------|-----------|---------|
-| Unit Tests | 100% | 568/568 passing |
+| Unit Tests | 100% | 580/580 passing |
 | Integration Tests | 100% | All passing |
 | Code Quality | 100% | All syntax checks pass |
 
 **Test Command | 测试命令:**
 ```bash
 pytest tests/ -v
-# 568 passed in 27.85s
+# 580 passed in 23.24s
 ```
 
 ---
 
 ## Version History | 版本历史
 
+### v2.7.8 (2026-04-01)
+- `qa uninstall` redesign: project-level only, no global side effects
+- `qa export` command: clean export to Output/<version>/ with git commit binding
+- Git commit enforcement: export requires clean working tree
+- `.gitignore` injection: `qa export --inject-gitignore`
+- 580 tests all passing
+
 ### v2.7.6 (2026-04-01)
 - Core architecture upgrade: 6-phase enhancement
-- Dynamic connection pool with pre_ping
-- Exponential backoff retry
-- Django-style QueryBuilder
-- External migration files
-- Session interface unification
-- `qa version` and `qa update` CLI commands
-- `qa uninstall` command with dry-run/keep-data/keep-config
-- 580 tests passing (244 new)
-
-### v2.7.5 (2026-04-01)
-- Initial core architecture upgrade release (superseded by v2.7.6)
+- `qa uninstall` command (superseded by v2.7.8)
 
 ### v2.7.0 (2026-03-30)
 - Pattern-based LoopDetector
@@ -330,6 +327,6 @@ pip install --upgrade quickagents
 
 ---
 
-*QuickAgents v2.7.6 - Making AI agent development easier*
+*QuickAgents v2.7.8 - Making AI agent development easier*
 
-*QuickAgents v2.7.6 - 让AI代理开发更简单*
+*QuickAgents v2.7.8 - 让AI代理开发更简单*

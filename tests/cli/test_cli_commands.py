@@ -857,31 +857,33 @@ class TestUninstallCommand(unittest.TestCase):
         args = MagicMock()
         args.dry_run = True
         args.keep_data = False
-        args.keep_config = False
+        args.keep_opencode = False
         args.force = False
         
-        # 在无 .quickagents 和无 ~/.quickagents 的环境中
+        # 在无任何QA文件的环境中（包括无.opencode、无配置文件）
         with patch('pathlib.Path.exists', return_value=False):
-            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                cmd_uninstall(args)
-                output = mock_stdout.getvalue()
+            with patch('pathlib.Path.iterdir', return_value=[]):
+                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    cmd_uninstall(args)
+                    output = mock_stdout.getvalue()
         
         self.assertIn('[Uninstall]', output)
-        self.assertIn('[DRY-RUN]', output)
+        self.assertIn('项目级卸载', output)
     
     def test_uninstall_dry_run_with_data(self):
         """uninstall --dry-run 有数据目录时"""
         args = MagicMock()
         args.dry_run = True
         args.keep_data = False
-        args.keep_config = False
+        args.keep_opencode = False
         args.force = False
         
         with patch('pathlib.Path.exists', return_value=True):
             with patch('pathlib.Path.rglob', return_value=[]):
-                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                    cmd_uninstall(args)
-                    output = mock_stdout.getvalue()
+                with patch('pathlib.Path.iterdir', return_value=[]):
+                    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                        cmd_uninstall(args)
+                        output = mock_stdout.getvalue()
         
         self.assertIn('[REMOVE]', output)
         self.assertIn('[DRY-RUN]', output)
@@ -891,24 +893,25 @@ class TestUninstallCommand(unittest.TestCase):
         args = MagicMock()
         args.dry_run = True
         args.keep_data = True
-        args.keep_config = False
+        args.keep_opencode = False
         args.force = False
         
         with patch('pathlib.Path.exists', return_value=True):
             with patch('pathlib.Path.rglob', return_value=[]):
-                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                    cmd_uninstall(args)
-                    output = mock_stdout.getvalue()
+                with patch('pathlib.Path.iterdir', return_value=[]):
+                    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                        cmd_uninstall(args)
+                        output = mock_stdout.getvalue()
         
         self.assertIn('[SKIP]', output)
         self.assertIn('--keep-data', output)
     
     def test_uninstall_keep_config(self):
-        """uninstall --keep-config 跳过全局数据"""
+        """uninstall --keep-opencode 跳过 .opencode/"""
         args = MagicMock()
         args.dry_run = True
         args.keep_data = False
-        args.keep_config = True
+        args.keep_opencode = True
         args.force = False
         
         with patch('pathlib.Path.exists', return_value=True):
@@ -918,7 +921,7 @@ class TestUninstallCommand(unittest.TestCase):
                     output = mock_stdout.getvalue()
         
         self.assertIn('[SKIP]', output)
-        self.assertIn('--keep-config', output)
+        self.assertIn('--keep-opencode', output)
     
     def test_uninstall_force_with_data(self):
         """uninstall --force 执行实际清理"""
@@ -933,24 +936,18 @@ class TestUninstallCommand(unittest.TestCase):
         args = MagicMock()
         args.dry_run = False
         args.keep_data = False
-        args.keep_config = True
+        args.keep_opencode = False
         args.force = True
         
         original_cwd = os.getcwd()
         try:
             os.chdir(test_dir)
-            
-            # Mock Path.home() to avoid touching real home
-            with patch('pathlib.Path.home', return_value=Path(test_dir) / 'fake_home'):
-                with patch.object(Path, 'exists', side_effect=lambda: True if '.quickagents' in str(self) else False):
-                    with patch('subprocess.run') as mock_run:
-                        mock_run.return_value = MagicMock(returncode=0, stderr='')
-                        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                            cmd_uninstall(args)
-                            output = mock_stdout.getvalue()
+            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                cmd_uninstall(args)
+                output = mock_stdout.getvalue()
             
             self.assertIn('[OK]', output)
-            self.assertIn('卸载完成', output)
+            self.assertIn('项目级卸载完成', output)
         finally:
             os.chdir(original_cwd)
             if os.path.exists(test_dir):
@@ -961,13 +958,17 @@ class TestUninstallCommand(unittest.TestCase):
         args = MagicMock()
         args.dry_run = False
         args.keep_data = False
-        args.keep_config = False
+        args.keep_opencode = False
         args.force = False
         
-        with patch('builtins.input', return_value='n'):
-            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                cmd_uninstall(args)
-                output = mock_stdout.getvalue()
+        # 需要至少有 .quickagents 存在才会到确认步骤
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('pathlib.Path.rglob', return_value=[]):
+                with patch('pathlib.Path.iterdir', return_value=[]):
+                    with patch('builtins.input', return_value='n'):
+                        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                            cmd_uninstall(args)
+                            output = mock_stdout.getvalue()
         
         self.assertIn('已取消', output)
     
@@ -975,12 +976,13 @@ class TestUninstallCommand(unittest.TestCase):
         """uninstall 子命令已注册到CLI"""
         with patch('sys.argv', ['qa', 'uninstall', '--dry-run']):
             with patch('pathlib.Path.exists', return_value=False):
-                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                    main()
-                    output = mock_stdout.getvalue()
+                with patch('pathlib.Path.iterdir', return_value=[]):
+                    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                        main()
+                        output = mock_stdout.getvalue()
         
         self.assertIn('[Uninstall]', output)
-        self.assertIn('[DRY-RUN]', output)
+        self.assertIn('项目级卸载', output)
     
     def test_uninstall_cli_help(self):
         """uninstall --help 不报错"""
