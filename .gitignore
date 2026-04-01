@@ -60,3 +60,20 @@ Docs/API_REFERENCE.md
 __pycache__/
 *.pyc
 *.pyo
+
+# === Temporary test files (root directory) ===
+# These are debugging/development scripts, not part of the package
+/test_*.py
+!/tests/
+*_output.txt
+*_test_report.md
+!TEST_REPORT.md
+
+# === Package build artifacts ===
+dist/
+build/
+*.egg-info/
+
+# === Archive directory ===
+# Backup files are kept for reference but not tracked
+archive/
