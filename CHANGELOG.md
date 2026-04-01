@@ -5,6 +5,83 @@ All notable changes to QuickAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.8] - 2026-04-01
+
+### Added - Project Isolation & Clean Export
+
+#### qa uninstall — Project-Level Isolation (Redesign)
+- **Strict Project Scope**: Only cleans files within the current project directory
+- **No Global Side Effects**: Never touches pip package, `~/.quickagents/`, or other projects
+- **Cleanup Targets**: `.quickagents/`, `.opencode/`, `AGENTS.md`, `VERSION.md`, `quickagents.json`, qa-related git hooks
+- **New `--keep-opencode` Flag**: Preserve `.opencode/` directory when desired
+- **Safety Banner**: Clear warning that only current project is affected, pip package untouched
+
+#### qa export — Clean Project Export
+- **Clean Export to `Output/<version>/`**: Copies project files excluding all QuickAgents runtime artifacts
+- **Git Commit Binding**: Requires clean git working tree (all changes committed) before export
+- **Commit Hash Traceability**: `export-manifest.json` records full git commit hash
+- **Automatic Version Detection**: Reads from `pyproject.toml` → `package.json` → `VERSION.md` → git tag
+- **`.gitignore` Injection**: `--inject-gitignore` adds QA exclusion rules to `.gitignore`
+- **Exclusion Preview**: `--list-excludes` displays all exclusion patterns
+- **Dry-Run Mode**: `--dry-run` previews included/excluded files without executing
+
+#### Export Exclusion Patterns
+- **Runtime Directories**: `.quickagents/`, `.opencode/`, `.pytest_cache/`, `__pycache__/`
+- **Config Files**: `AGENTS.md`, `VERSION.md`, `quickagents.json`, `opencode.json`
+- **QA-Generated Docs**: `Docs/MEMORY.md`, `Docs/TASKS.md`, `Docs/DECISIONS.md`, `Docs/INDEX.md`, `Docs/features/`, `Docs/modules/`
+- **Generic Excludes**: `node_modules/`, `.git/`, `dist/`, `*.egg-info`, `*.pyc`, `.env`
+
+### Changed
+- **`qa uninstall` Complete Redesign**: Removed all global operations (no pip uninstall, no `~/.quickagents/` deletion)
+- **Removed `--keep-config` Flag**: Replaced by `--keep-opencode` (was misleading — "config" implied global)
+- **Uninstall Confirmation**: Prompt now reads "确认卸载当前项目中的 QuickAgents 文件?" instead of generic "确认卸载?"
+- **Uninstall Completion Message**: Now explicitly states "pip 包未被卸载，其他项目不受影响"
+
+### Fixed
+- Multi-project safety: Previous version would `pip uninstall quickagents` affecting ALL projects
+- Global data deletion: Previous version would `rm -rf ~/.quickagents/` destroying shared data
+- `UninstallCommand` tests updated to match project-level behavior (54 CLI tests passing)
+
+### New Files
+- `tests/benchmark_performance.py` — Performance benchmark suite (read 16,679 QPS, pool 100% hit rate, WAL controlled)
+
+## [2.7.6] - 2026-04-01
+
+### Added - CLI Commands & Version Alignment
+
+#### qa version Command
+- **Version Display**: Shows QuickAgents version and Python version
+- **Module Integrity Check**: `qa version --check` verifies all 15 core modules and 5 key classes
+
+#### qa update Command
+- **PyPI Upgrade**: `qa update` installs latest version from PyPI
+- **Targeted Upgrade**: `qa update --target 2.7.6` upgrades to specific version
+- **GitHub Source**: `qa update --source github` installs from GitHub main branch
+- **Dry-Run**: `qa update --dry-run` previews upgrade without executing
+
+#### qa uninstall Command (Initial Version, superseded by 2.7.8)
+- **Interactive Uninstall**: `qa uninstall` with confirmation prompt
+- **Dry-Run**: `qa uninstall --dry-run` previews cleanup
+- **Keep Flags**: `--keep-data`, `--keep-config` for selective cleanup
+- **Force Mode**: `--force` skips confirmation
+
+#### Documentation
+- **Uninstall Guide**: `Docs/guides/UNINSTALL_GUIDE.md` — complete uninstall instructions for all versions
+- **Performance Benchmarks**: `tests/benchmark_performance.py` with automated verification
+
+### Changed
+- **Version Alignment**: Unified all version references to 2.7.6 across VERSION.md, RELEASE_NOTES.md, README.md
+- **Test Count**: 568 → 580 tests (12 new uninstall tests)
+
+### Performance Benchmark Results (v2.7.6)
+| Metric | Result |
+|--------|--------|
+| Single Read QPS | 16,679 ops/sec |
+| Batch Write QPS | 5,200–7,096 ops/sec |
+| Connection Pool Hit Rate | 100% |
+| Connection Acquisition | 0.005–0.006 ms |
+| WAL Growth | 0 KB (auto-checkpoint) |
+
 ## [2.7.5] - 2026-04-01
 
 ### Added - Core Architecture Upgrade (6 Phases)
