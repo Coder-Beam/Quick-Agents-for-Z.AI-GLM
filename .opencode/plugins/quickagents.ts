@@ -1,148 +1,125 @@
 /**
- * @opencode-plugin @coder-beam/quickagents
- * @version 2.6.8
- * @description QuickAgents Unified Plugin - Maximize local processing, minimize token consumption
- * @author Coder-Beam
- * @license MIT
- * 
- * 核心目标：最大化本地处理，最小化Token消耗
- * 
- * 整合模块：
- * - FileManager Cache: 文件哈希检测，Token节省60-100%
- * - LoopDetector: Pattern-based循环检测，Token节省100%
- *   - Stuck pattern: A→A→A (same operation 3+ times)
- *   - Oscillation pattern: A→B→A→B (2+ cycles)
- * - Reminder: 事件驱动提醒
- * - LocalExecutor: 本地执行器
- *   - qa命令拦截：memory/knowledge/stats/progress
- *   - grep/glob工具拦截
- * - SkillEvolution: Skills自我进化
- * - FeedbackCollector: 经验收集
- * 
- * Token节省预估：
- * - 文件操作密集场景：60-80%
- * - 搜索密集场景：80-95%
- * - 记忆/知识图谱密集场景：90-100%
- * - 综合场景：50-70%
- */
 
-import { execSync } from "child_process";
-import * as fs from "fs";
-import * as path from "path";
-import type { Plugin } from "@opencode-ai/plugin";
-
-// ============================================================================
-// 类型定义
+ ============================================================================
+// LoopDetector V3 - 轻量级本地计数器 + Python 深度检测
 // ============================================================================
 
-interface PluginConfig {
-  fileManagerCache: boolean;
-  loopDetector: boolean;
-  reminder: boolean;
-  localExecutor: boolean;
-  skillEvolution: boolean;
-  feedbackCollector: boolean;
-}
+  const loopDetector = {
+    // 加载配置（启动时执行一次）
+    loadConfig: (): LoopDetectorConfig => {
+      if (cachedConfig) {
+        return cachedConfig;
+      }
+      
+      try {
+        const configPath = path.join(directory, "quickagents.json");
+        if (fs.existsSync(configPath)) {
+          const configData = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+          cachedConfig = configData.loop_detector || {};
+        }
+      } catch (e) {
+        // 配置加载失败，使用默认值
+      }
+      
+      // 默认配置
+      cachedConfig = cachedConfig || {
+        threshold_strategy: "normal",
+        deep_check_interval: 5
+      };
+      
+      return cachedConfig;
+    },
+    
+    // 本地计数器更新
+    updateCounters: (result?: any) => {
+      counters.totalCalls++;
+      if (result && (result.error || result.success === false)) {
+        counters.failures++;
+        counters.lastResult = result;
+      }
+    },
+    
+    // 检查是否需要深度检测
+    shouldDeepCheck: (): boolean => {
+      const cfg = loopDetector.loadConfig();
+      const interval = cfg.deep_check_interval || 5;
+      
+      // 每 N 次调用触发一次深度检测
+      if (counters.totalCalls % interval === 0) {
+        return true;
+      }
+      
+      // 有失败时立即触发深度检测
+      if (counters.failures > 0) {
+        return true;
+      }
+      
+      return false;
+    },
+    
+    // 深度检测（调用 Python V3）
+    deepCheck: (
+      toolName: string, 
+      toolArgs: any,
+      result?: any
+    ): LocalResult => {
+      return callPython(`
+from quickagents import get_loop_detector
+import json
 
-interface CacheEntry {
-  hash: string;
-  content: string;
-  timestamp: number;
-}
+detector = get_loop_detector()
+is_loop, info = detector.check(
+    tool_name='${toolName}',
+    tool_args=${JSON.stringify(toolArgs)},
+    result=${result ? JSON.stringify(result) : 'None'}
+)
 
-interface LocalResult {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
-
-// ============================================================================
-// 主插件
-// ============================================================================
-
-export const QuickAgentsPlugin: Plugin = async (ctx) => {
-  const { directory, client } = ctx;
-
-  const config: PluginConfig = {
-    fileManagerCache: true,
-    loopDetector: true,
-    reminder: true,
-    localExecutor: true,
-    skillEvolution: true,
-    feedbackCollector: true,
-  };
-
-  // ============================================================================
-  // 状态管理
-  // ============================================================================
-
-  const fileCache = new Map<string, CacheEntry>();
-  
-  // Pattern-based loop detection state
-  interface ToolCall {
-    fingerprint: string;
-    toolName: string;
-    timestamp: number;
-  }
-  const callSequence: ToolCall[] = [];
-const MAX_SEQUENCE_LENGTH = 20;
-const STUCK_THRESHOLD = 5;      // Same call 5+ times in a row (incre阈值)
-const OSCILLATION_MIN = 3;      // A→ B→A→ B pattern (3 cycles) (增加阈值)
-const PATTERN_WINDOW = 60000;   // 60 second window
-  
-  let toolCallCount = 0;
-  let sessionStartTime = Date.now();
-  let errorCount = 0;
-
-  // ============================================================================
-  // 工具函数
-  // ============================================================================
-
-  const log = async (
-    message: string,
-    level: "info" | "warn" | "error" = "info",
-    extra: Record<string, any> = {}
-  ) => {
-    await client.app.log({
-      body: {
-        service: "quickagents",
-        level,
-        message,
-        extra: { cacheSize: fileCache.size, toolCalls: toolCallCount, ...extra },
-      },
-    });
-  };
-
-  const callPython = (script: string, timeout = 5000): LocalResult => {
-    try {
-      const escapedDir = directory.replace(/\\/g, "\\\\");
-      const indentedScript = script.split("\n").map((l) => "    " + l).join("\n");
-      const fullScript = `
-import sys, json
-sys.path.insert(0, r"${escapedDir}")
-try:
-${indentedScript}
-except Exception as e:
-    print(json.dumps({"success": False, "error": str(e)}))
-      `.trim();
-
-      const escapedScript = fullScript
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, "; ");
-
-      const result = execSync(`python -c "${escapedScript}"`, {
-        encoding: "utf-8",
-        timeout,
-        cwd: directory,
-        maxBuffer: 10 * 1024 * 1024,
-      });
-
-      return JSON.parse(result.trim());
-    } catch (error: any) {
-      return { success: false, error: error.message };
+print(json.dumps({
+    "success": True,
+    "data": {
+        "is_loop": is_loop,
+        "info": info
+    }
+}))
+      `, 5000);
+    },
+    
+    // 主检查函数
+    check: (
+      toolName: string, 
+      toolArgs: any,
+      result?: any
+    ): { detected: boolean; info: any } => {
+      if (!config.loopDetector) {
+        return { detected: false, info: {} };
+      }
+      
+      // 1. 更新本地计数器
+      loopDetector.updateCounters(result);
+      
+      // 2. 检查是否需要深度检测
+      if (!loopDetector.shouldDeepCheck()) {
+        return { detected: false, info: { source: "local_counter" } };
+      }
+      
+      // 3. 执行深度检测
+      const checkResult = loopDetector.deepCheck(toolName, toolArgs, result);
+      
+      if (checkResult.success && checkResult.data) {
+        const { is_loop, info } = checkResult.data;
+        
+        if (is_loop) {
+          await log(`Loop detected: ${info.type || "unknown"} - ${toolName}`, "warn");
+        }
+        
+        return { detected: is_loop, info };
+      }
+      
+      return { detected: false, info: { source: "python_error", error: checkResult.error } };
     }
   };
+
+
 
   const getFileHash = (filePath: string): string => {
     try {
@@ -470,115 +447,153 @@ print(json.dumps({"success": True, "data": progress}))
   // ============================================================================
 
   return {
-    // ------------------------------------------------------------------
-    // tool.execute.before - 核心拦截点
-    // ------------------------------------------------------------------
-    "tool.execute.before": async (input: any, output: any) => {
-      const toolName = input.tool;
-      const toolArgs = input.args || {};
+  // ------------------------------------------------------------------
+  // tool.execute.before - 核心拦截点
+  // ------------------------------------------------------------------
+  "tool.execute.before": async (input: any, output: any) => {
+    const toolName = input.tool;
+    const toolArgs = input.args || {};
 
-      // 1. FileManager Cache: 拦截read
-      if (toolName === "read" && toolArgs.filePath) {
-        if (fileManagerCache.check(toolArgs.filePath)) {
-          await log(`Cache HIT: ${toolArgs.filePath}`, "info");
-          throw new Error(
-            `[QuickAgents] FILE_UNCHANGED: ${toolArgs.filePath}\n` +
-            `文件未变化，请使用对话上下文中的缓存内容。`
-          );
-        }
-        await log(`Cache MISS: ${toolArgs.filePath}`, "info");
-      }
-
-      // 2. LoopDetector: Pattern-based detection
-      const loopResult = loopDetector.check(toolName, toolArgs);
-      if (loopResult.detected) {
-        const patternType = loopResult.pattern.startsWith("stuck:") ? "Stuck" : "Oscillation";
-        await log(`Loop detected: ${patternType} - ${toolName}`, "warn");
+    // 1. FileManager Cache: 拦截read
+    if (toolName === "read" && toolArgs.filePath) {
+      if (fileManagerCache.check(toolArgs.filePath)) {
+        await log(`Cache HIT: ${toolArgs.filePath}`, "info");
         throw new Error(
-          `[QuickAgents] DOOM_LOOP_DETECTED\n` +
-          `Pattern: ${patternType}\n` +
-          `Tool: ${toolName}\n` +
-          `Detail: ${loopResult.pattern}\n` +
-          `Action: Verify your approach or request user confirmation.`
+          `[QuickAgents] FILE_UNCHANGED: ${toolArgs.filePath}\n` +
+          `文件未变化，请使用对话上下文中的缓存内容。`
         );
       }
+      await log(`Cache MISS: ${toolArgs.filePath}`, "info");
+    }
 
-      // 3. LocalExecutor: 拦截bash中的qa命令
-      if (config.localExecutor && toolName === "bash") {
-        const cmd = toolArgs.command || "";
+    // 2. LoopDetector V3: 使用新的检测逻辑（本地计数 + 定期深度检测）
+    const loopResult = loopDetector.check(toolName, toolArgs);
+    if (loopResult.detected) {
+      const patternType = loopResult.info?.type || "unknown";
+      await log(`Loop detected: ${patternType} - ${toolName}`, "warn");
+      throw new Error(
+        `[QuickAgents] DOOM_LOOP_DETECTED\n` +
+        `Pattern: ${patternType}\n` +
+        `Tool: ${toolName}\n` +
+        `Detail: ${JSON.stringify(loopResult.info)}\n` +
+        `Action: Verify your approach or request user confirmation.`
+      );
+    }
+
+    // 3. LocalExecutor: 拦截bash中的qa命令
+    if (config.localExecutor && toolName === "bash") {
+      const cmd = toolArgs.command || "";
+      
+      if (cmd.startsWith("qa ")) {
+        const parts = cmd.slice(3).trim().split(/\s+/);
+        const qaCmd = parts[0];
+        const qaArgs = parts.slice(1);
         
-        if (cmd.startsWith("qa ")) {
-          const parts = cmd.slice(3).trim().split(/\s+/);
-          const qaCmd = parts[0];
-          const qaArgs = parts.slice(1);
-          
-          let result: LocalResult;
-          
-          switch (qaCmd) {
-            case "memory":
-              result = localExecutor.qa.memory(qaArgs);
-              break;
-            case "knowledge":
-              result = localExecutor.qa.knowledge(qaArgs);
-              break;
-            case "stats":
-              result = localExecutor.qa.stats();
-              break;
-            case "progress":
-              result = localExecutor.qa.progress();
-              break;
-            default:
-              result = { success: false, error: `Unknown qa command: ${qaCmd}` };
-          }
-          
-          await log(`QA command intercepted: qa ${qaCmd}`, "info");
-          
-          throw new Error(
-            `[QuickAgents] LOCAL_RESULT\n` +
-            `命令: qa ${qaCmd}\n` +
-            `结果: ${JSON.stringify(result, null, 2)}`
-          );
+        let result: LocalResult;
+        
+        switch (qaCmd) {
+          case "memory":
+            result = localExecutor.qa.memory(qaArgs);
+            break;
+          case "knowledge":
+            result = localExecutor.qa.knowledge(qaArgs);
+            break;
+          case "stats":
+            result = localExecutor.qa.stats();
+            break;
+          case "progress":
+            result = localExecutor.qa.progress();
+            break;
+          default:
+            result = { success: false, error: `Unknown qa command: ${qaCmd}` };
         }
-      }
-
-      // 4. LocalExecutor: 拦截grep
-      if (config.localExecutor && toolName === "grep") {
-        const pattern = toolArgs.pattern;
-        const include = toolArgs.include;
-        const result = localExecutor.grep(pattern, include);
         
-        await log(`Grep intercepted: ${pattern}`, "info", { 
-          count: result.data?.length || 0 
-        });
+        await log(`QA command intercepted: qa ${qaCmd}`, "info");
         
         throw new Error(
           `[QuickAgents] LOCAL_RESULT\n` +
-          `工具: grep\n` +
+          `命令: qa ${qaCmd}\n` +
           `结果: ${JSON.stringify(result, null, 2)}`
         );
       }
+    }
 
-      // 5. LocalExecutor: 拦截glob
-      if (config.localExecutor && toolName === "glob") {
-        const pattern = toolArgs.pattern;
-        
-        if (!pattern) {
-          return;
-        }
-        
-        const result = localExecutor.glob(pattern);
-        
-        await log(`Glob intercepted: ${pattern}`, "info", { 
-          count: result.data?.length || 0 
-        });
-        
-        throw new Error(
-          `[QuickAgents] LOCAL_RESULT\n` +
-          `工具: glob\n` +
-          `结果: ${JSON.stringify(result, null, 2)}`
-        );
+    // 4. LocalExecutor: 拦截grep
+    if (config.localExecutor && toolName === "grep") {
+      const pattern = toolArgs.pattern;
+      const include = toolArgs.include;
+      const result = localExecutor.grep(pattern, include);
+      
+      await log(`Grep intercepted: ${pattern}`, "info", { 
+        count: result.data?.length || 0 
+      });
+      
+      throw new Error(
+        `[QuickAgents] LOCAL_RESULT\n` +
+        `工具: grep\n` +
+        `结果: ${JSON.stringify(result, null, 2)}`
+      );
+    }
+
+    // 5. LocalExecutor: 拦截glob
+    if (config.localExecutor && toolName === "glob") {
+      const pattern = toolArgs.pattern;
+      
+      if (!pattern) {
+        return;
       }
-    },
+      
+      const result = localExecutor.glob(pattern);
+      
+      await log(`Glob intercepted: ${pattern}`, "info", { 
+        count: result.data?.length || 0 
+      });
+      
+      throw new Error(
+        `[QuickAgents] LOCAL_RESULT\n` +
+        `工具: glob\n` +
+        `结果: ${JSON.stringify(result, null, 2)}`
+      );
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // tool.execute.after - 后处理（更新本地计数器)
+  // ------------------------------------------------------------------
+  "tool.execute.after": async (input: any, output: any) => {
+    const toolName = input.tool;
+    const toolArgs = input.args || {};
+    const outputResult = output?.result;
+
+    // FileManager Cache更新
+    if (toolName === "read" && toolArgs.filePath && outputResult) {
+      fileManagerCache.update(toolArgs.filePath, outputResult);
+    }
+
+    // 更新 LoopDetector 本地计数器（记录失败）
+    if (outputResult && (outputResult.error || outputResult.success === false)) {
+      loopDetector.updateCounters(outputResult);
+    }
+
+    // Reminder计数
+    toolCallCount++;
+    if (toolCallCount % 5 === 0) {
+      await log(`Progress: ${toolCallCount} tool calls`, "info");
+    }
+
+    // SkillEvolution
+    if (toolName === "skill") {
+      callPython(`
+from quickagents import get_evolution
+evolution = get_evolution()
+evolution.on_task_complete({
+    'task_id': 'auto',
+    'skills_used': ['${toolArgs.name}'],
+    'success': True
+})
+      `, 10000);
+    }
+  },
 
     // ------------------------------------------------------------------
     // tool.execute.after - 后处理

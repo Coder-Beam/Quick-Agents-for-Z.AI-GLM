@@ -16,18 +16,23 @@ QuickAgents Core - 核心模块
 
 # V2 核心组件
 from .connection_manager import ConnectionManager
-from .transaction_manager import TransactionManager, TransactionError
-from .migration_manager import MigrationManager, Migration
+from .transaction_manager import TransactionManager, TransactionError, RetryConfig
+from .migration_manager import MigrationManager, Migration, MigrationResult
+from .session import Session
 
 # V2 UnifiedDB
 from .unified_db import UnifiedDB, get_unified_db, reset_global_db
 
-# V1 备份
-from .unified_db_v1_backup import UnifiedDB as UnifiedDBV1
+# V1 备份（已归档到 archive/ 目录）
+try:
+    from .unified_db_v1_backup import UnifiedDB as UnifiedDBV1
+except ImportError:
+    UnifiedDBV1 = None
 
 # Repositories
 from .repositories import (
     BaseRepository,
+    QueryBuilder,
     MemoryRepository,
     TaskRepository,
     ProgressRepository,
@@ -57,8 +62,11 @@ __all__ = [
     'ConnectionManager',
     'TransactionManager',
     'TransactionError',
+    'RetryConfig',
     'MigrationManager',
     'Migration',
+    'MigrationResult',
+    'Session',
     
     # V2 UnifiedDB
     'UnifiedDB',
@@ -70,6 +78,7 @@ __all__ = [
     
     # Repositories
     'BaseRepository',
+    'QueryBuilder',
     'MemoryRepository',
     'TaskRepository',
     'ProgressRepository',

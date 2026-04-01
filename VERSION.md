@@ -8,9 +8,9 @@
 
 | Property | Value |
 |-----------|-------|
-| Version | 2.7.0 |
-| Git Tag | v2.7.0 |
-| Release Date | 2026-03-30 |
+| Version | 2.7.5 |
+| Git Tag | v2.7.5 |
+| Release Date | 2026-04-01 |
 | Minimum Compatible | 2.0.0 |
 | Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
 | PyPI Package | https://pypi.org/project/quickagents/ |
@@ -38,228 +38,114 @@ qa hooks install
 
 ---
 
-## What's New (v2.7.0) | 本次更新
+## What's New (v2.7.5) | 本次更新
 
-**Major Update - Complete Documentation, Pattern Detection & Bilingual Support**
+**Core Architecture Upgrade — 6-Phase Enhancement, 568 Tests**
 
-**重大更新 - 完整文档、模式检测与双语支持**
+**核心架构升级 — 6阶段增强，568个测试**
 
 ---
 
-### 1. Pattern-based LoopDetector | 基于模式的循环检测器
+### 1. Dynamic Connection Pool | 动态连接池
 
 **Problem Solved | 解决的问题:**
-- Previous: Simple threshold (3 identical calls in 60s)
-- Previous: 之前：简单阈值（60秒内3次相同调用）
-- Now: Intelligent pattern detection
-- Now: 现在：智能模式检测
+- Fixed-size pool wastes resources when idle
+- No validation for stale connections
+- 固定连接池空闲时浪费资源
+- 无过期连接验证
 
-**Detection Patterns | 检测模式:**
-
-| Pattern | Definition | Example | Threshold |
-|---------|------------|---------|-----------|
-| **Stuck** | Same operation repeated | A→A→A | 3 times |
-| **Oscillation** | Two operations alternating | A→B→A→B | 2 cycles |
-
-**Allowed Patterns | 允许的模式:**
-- A→B→C (normal exploration, different operations)
-- A→B→C（正常探索，不同操作）
-- read(file1)→read(file2)→read(file3) (different parameters)
-- read(file1)→read(file2)→read(file3)（不同参数）
-
-**Implementation | 实现:**
-```python
-from quickagents import LoopDetector
-
-detector = LoopDetector()
-
-# Record tool calls
-detector.record_tool_call('read', {'file': 'a.py'})
-detector.record_tool_call('read', {'file': 'a.py'})
-detector.record_tool_call('read', {'file': 'a.py'})
-
-# Check if looping
-if detector.is_looping():
-    patterns = detector.get_loop_patterns()
-    # patterns: [{'type': 'stuck', 'tool': 'read', 'count': 3}]
-```
-
-**Token Savings | Token节省:** 100% (local processing)
-
----
-
-### 2. Python Environment Detection | Python环境检测
-
-**Step 0 in Startup Flow | 启动流程Step 0:**
-
-```
-启动QuickAgent
-    ↓
-Step 0: Python环境检测
-    ├─ 检测 python --version / python3 --version
-    ├─ 检测 pip --version / pip3 --version
-    └─ 检测 Python版本 >= 3.9
-        ├─ 通过 → 继续流程
-        └─ 失败 → 显示安装引导
-```
-
-**Version Requirements | 版本要求:**
-
-| Component | Minimum | Recommended | Reason |
-|-----------|---------|-------------|--------|
-| Python | 3.9 | 3.11+ | Uses match syntax |
-| pip | 21.0 | Latest | Dependency resolution |
-
-**Platform-specific Guides | 各平台安装指南:**
-
-<details>
-<summary>Windows</summary>
-
-```powershell
-# Option 1 - Official Installer (Recommended)
-# 1. Visit https://www.python.org/downloads/
-# 2. Download Python 3.12.x
-# 3. Check "Add Python to PATH" during installation
-
-# Option 2 - Scoop
-scoop install python
-
-# Option 3 - winget
-winget install Python.Python.3.12
-```
-</details>
-
-<details>
-<summary>macOS</summary>
-
-```bash
-# Option 1 - Homebrew (Recommended)
-brew install python@3.12
-
-# Option 2 - Official Installer
-# Visit https://www.python.org/downloads/macos/
-```
-</details>
-
-<details>
-<summary>Linux</summary>
-
-```bash
-# Ubuntu/Debian
-sudo apt update && sudo apt install python3.12 python3-pip
-
-# Fedora/RHEL
-sudo dnf install python3.12 python3-pip
-
-# Arch Linux
-sudo pacman -S python python-pip
-```
-</details>
-
----
-
-### 3. Bilingual Documentation | 双语文档
-
-**Complete Chinese and English Support | 完整的中英文支持:**
-
-| Document | Chinese | English |
-|----------|---------|---------|
-| README.md | ✅ | ✅ |
-| CHANGELOG.md | ✅ | ✅ |
-| Installation Guide | ✅ | ✅ |
-| API Documentation | ✅ | ✅ |
-
-**README.md Structure | README.md结构:**
-- Project Overview | 项目概述
-- Core Features | 核心功能
-- Installation | 安装
-- CLI Commands | CLI命令
-- Architecture | 架构
-- Module Description | 模块说明
-- Testing | 测试
-- Documentation | 文档
-- Contributing | 贡献
-- License | 许可证
-
----
-
-### 4. Comprehensive API Documentation | 完整的API文档
-
-**Location | 位置:** `Docs/api/index.md`
-
-**Coverage | 覆盖范围:**
-
-| Module | Functions/Classes | Status |
-|--------|-------------------|--------|
-| UnifiedDB | 15+ methods | ✅ Documented |
-| SkillEvolution | 10+ methods | ✅ Documented |
-| MarkdownSync | 8+ methods | ✅ Documented |
-| FileManager | 6+ methods | ✅ Documented |
-| LoopDetector | 5+ methods | ✅ Documented |
-| Reminder | 4+ methods | ✅ Documented |
-| KnowledgeGraph | 20+ methods | ✅ Documented |
-| TDDWorkflow | 8+ methods | ✅ Documented |
-| GitCommit | 6+ methods | ✅ Documented |
-| FeedbackCollector | 6+ methods | ✅ Documented |
-| Browser | 10+ methods | ✅ Documented |
-| CLI Tools | 30+ commands | ✅ Documented |
-
-**Example API Documentation | API文档示例:**
+**Solution | 解决方案:**
+- `PoolConfig(min_size, max_size)` — dynamic scaling
+- `pre_ping=True` — validate before reuse
+- PRAGMA tuning: `mmap_size=256MB`, `temp_store=MEMORY`
+- Pool metrics: `hit_rate`, `avg_wait_ms`, `evicted_count`
+- WAL auto-checkpoint: interval + threshold based
 
 ```python
-# UnifiedDB - Memory Operations
-from quickagents import UnifiedDB, MemoryType
+from quickagents.core import ConnectionManager, PoolConfig
 
-db = UnifiedDB('.quickagents/unified.db')
-
-# Set memory
-db.set_memory(
-    key: str,
-    value: Any,
-    memory_type: MemoryType,
-    category: Optional[str] = None,
-    ttl: Optional[int] = None
-) -> None
-
-# Get memory
-db.get_memory(key: str) -> Optional[Any]
-
-# Search memory
-db.search_memory(
-    query: str,
-    memory_type: Optional[MemoryType] = None,
-    limit: int = 10
-) -> List[Dict]
+config = PoolConfig(min_size=2, max_size=10, pre_ping=True)
+mgr = ConnectionManager('.quickagents/unified.db', pool_config=config)
+metrics = mgr.get_pool_metrics()
 ```
 
 ---
 
-### 5. Author Unification | 作者统一
+### 2. Exponential Backoff Retry | 指数退避重试
 
-**Before | 之前:** Mixed (QuickAgents Team, Coder-Beam)
-
-**After | 之后:** Unified to **Coder-Beam**
-
-**Files Updated | 已更新文件:**
-
-| File | Field | Value |
-|------|-------|-------|
-| pyproject.toml | authors | Coder-Beam |
-| quickagents/__init__.py | __author__ | Coder-Beam |
-| .opencode/plugins/package.json | author | Coder-Beam |
-| README.md | Author | Coder-Beam |
-| VERSION.md | Author | Coder-Beam |
+- `RetryConfig(max_retries=5, backoff_base_ms=2000)`
+- Thread-local transactions — independent depth per thread
+- Read-only transaction separation
+- 指数退避消除 `database is locked` 错误
 
 ---
 
-### 6. Bug Fixes | Bug修复
+### 3. Django-style QueryBuilder | Django风格查询构建器
 
-| Bug | File | Fix |
-|-----|------|-----|
-| Glob null pointer | `.opencode/plugins/quickagents.ts` | Added null check for pattern parameter |
-| Duplicate code | `.opencode/plugins/quickagents.ts` | Removed duplicate glob interception logic |
-| Package.json formatting | `.opencode/plugins/package.json` | Fixed repository field indentation |
-| Version inconsistency | Multiple files | Unified to 2.7.0 |
+```python
+from quickagents.core import QueryBuilder
+
+results = (
+    QueryBuilder('memory')
+    .filter(memory_type='factual')
+    .filter(importance_score__gte=0.7)
+    .exclude(category='internal')
+    .order_by('-importance_score')
+    .limit(10)
+    .build()
+)
+```
+
+- Immutable cloning, parameterized queries
+- Batch INSERT optimization (5-10x faster)
+- 不可变克隆，参数化查询，批量插入优化
+
+---
+
+### 4. External Migration Files | 外部迁移文件
+
+- Load SQL from `migrations/` directory
+- `MigrationResult` tracking with duration_ms
+- Enhanced logging per migration
+- 从 `migrations/` 目录加载SQL，增强日志
+
+---
+
+### 5. Session Interface Unification | Session接口统一
+
+```python
+session = db.session
+
+with session.query() as conn:          # Read-only
+    rows = conn.execute("SELECT ...").fetchall()
+
+with session.transaction() as conn:    # Read-write
+    conn.execute("INSERT INTO ...")
+
+row = session.query_one("SELECT ...")  # Convenience
+rows = session.query_all("SELECT ...")
+session.execute("UPDATE ...")          # Auto-commit
+```
+
+- Single entry point for all database access
+- All modules delegate through Session
+- 所有模块通过 Session 统一访问数据库
+
+---
+
+### 6. Complete Command Reference | 完整命令参考
+
+**CLI Commands (35+ subcommands):**
+- `qa stats/sync/memory/tasks/progress/evolution/hooks/git/tdd/feedback/models/cache/loop/reminder`
+
+**Slash Commands (30+ commands):**
+- `/ultrawork` `/start-work` `/run-workflow` `/add-skill` `/list-skills` `/tdd-red/green/refactor` `/qa-update` `/feedback` `/debug` `/handoff`
+
+**Upgrade Commands | 升级命令:**
+- `/qa-update` — detect and update
+- `/qa-update --check` — check only
+- `/qa-update --rollback` — rollback
+- `/qa-check-alignment` — version alignment check
 
 ---
 
@@ -282,19 +168,28 @@ db.search_memory(
 
 | Test Type | Pass Rate | Details |
 |-----------|-----------|---------|
-| Unit Tests | 100% | 254/254 passing |
+| Unit Tests | 100% | 568/568 passing |
 | Integration Tests | 100% | All passing |
 | Code Quality | 100% | All syntax checks pass |
 
 **Test Command | 测试命令:**
 ```bash
 pytest tests/ -v
-# 254 passed in 9.58s
+# 568 passed in 27.85s
 ```
 
 ---
 
 ## Version History | 版本历史
+
+### v2.7.5 (2026-04-01)
+- Core architecture upgrade: 6-phase enhancement
+- Dynamic connection pool with pre_ping
+- Exponential backoff retry
+- Django-style QueryBuilder
+- External migration files
+- Session interface unification
+- 568 tests passing (232 new)
 
 ### v2.7.0 (2026-03-30)
 - Pattern-based LoopDetector
@@ -383,10 +278,10 @@ pytest tests/ -v
 
 ## Roadmap | 路线图
 
-### v2.7.0 (Planned | 计划中)
-- Multi-model routing enhancement
-- Performance optimizations
-- Additional language support
+### v2.8.0 (Planned | 计划中)
+- Multi-model routing with intelligent fallback
+- Async database operations support
+- Performance profiling dashboard
 
 ### v3.0.0 (Planned | 计划中)
 - Plugin marketplace
@@ -430,6 +325,6 @@ pip install --upgrade quickagents
 
 ---
 
-*QuickAgents v2.7.0 - Making AI agent development easier*
+*QuickAgents v2.7.5 - Making AI agent development easier*
 
-*QuickAgents v2.7.0 - 让AI代理开发更简单*
+*QuickAgents v2.7.5 - 让AI代理开发更简单*

@@ -106,20 +106,47 @@ class TestConnectionManager:
             assert cursor.fetchone() is not None
     
     def test_connection_pool_exhaustion(self, temp_db_path):
-        """测试连接池耗尽时创建新连接"""
-        mgr = ConnectionManager(temp_db_path, pool_size=1)
+        """测试连接池耗尽时在 max_size 内创建新连接"""
+        from quickagents.core.connection_manager import PoolConfig
         
-        # 获取所有连接
+        # min=1, max=3: 允许动态扩展
+        cfg = PoolConfig(min_size=1, max_size=3, acquire_timeout=5.0)
+        mgr = ConnectionManager(temp_db_path, pool_config=cfg)
+        
+        # 获取第一个连接（池中唯一的连接）
         conn1 = mgr._acquire()
         status = mgr.get_pool_status()
         assert status["available"] == 0
         
-        # 连接池为空，应该创建新连接
+        # 连接池为空，但在 max_size 内，应该创建新连接
         conn2 = mgr._acquire()
         assert conn1 is not conn2
         
+        # 再获取一个，仍可创建（max=3）
+        conn3 = mgr._acquire()
+        assert conn3 is not conn1
+        assert conn3 is not conn2
+        
         mgr._release(conn1)
         mgr._release(conn2)
+        mgr._release(conn3)
+        mgr.close_all()
+    
+    def test_connection_pool_max_exhausted(self, temp_db_path):
+        """测试达到 max_size 后获取连接超时"""
+        from quickagents.core.connection_manager import PoolConfig
+        
+        cfg = PoolConfig(min_size=1, max_size=1, acquire_timeout=1.0)
+        mgr = ConnectionManager(temp_db_path, pool_config=cfg)
+        
+        # 获取唯一连接
+        conn1 = mgr._acquire()
+        
+        # 第二次获取应该超时
+        with pytest.raises(sqlite3.Error, match="Connection pool exhausted"):
+            mgr._acquire()
+        
+        mgr._release(conn1)
         mgr.close_all()
     
     def test_connection_rollback_on_error(self, connection_manager):
@@ -191,7 +218,8 @@ class TestConnectionManager:
         repr_str = repr(connection_manager)
         
         assert "ConnectionManager" in repr_str
-        assert "pool_size" in repr_str
+        # v2.7.5: repr 使用 min/max 格式
+        assert "min=" in repr_str or "pool_size" in repr_str
     
     def test_concurrent_access(self, connection_manager):
         """测试并发访问"""
@@ -227,7 +255,8 @@ class TestTransactionManager:
         tx_mgr = TransactionManager(connection_manager)
         
         assert tx_mgr.conn_mgr is connection_manager
-        assert tx_mgr._transaction_depth == 0
+        # v2.7.5: 线程本地状态，depth 通过方法访问
+        assert tx_mgr.get_depth() == 0
     
     def test_basic_transaction(self, transaction_manager, connection_manager):
         """测试基本事务"""

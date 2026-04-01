@@ -1,22 +1,131 @@
-# QuickAgents 系统测试报告
+# QuickAgents CLI和功能完整测试报告
 
-> 生成时间: 2026-03-30 23:45
-> Token使用率: 55000/200000 (27.5%)
+> 测试时间: 2026-03-31 11:50
+> 测试环境: Windows 11, Python 3.x
 
 ---
 
-## 📊 测试进度总览
+## 📊 测试结果总览
 
-| 模块 | 状态 | 通过率 | 发现问题 |
-|------|------|-------|----------|
-| **UnifiedDB** | ✅ 完成 | 100% | 0 |
-| **FileManager** | ✅ 完成 | 100% | 1 (已修复) |
-| **MemoryManager** | ✅ 完成 | 100% | 1 (已修复) |
-| **LoopDetector** | ✅ 完成 | 100% | 0 |
-| **KnowledgeGraph** | ✅ 完成 | 100% | 0 |
-| **SkillEvolution** | ✅ 完成 | 100% | 1 (已修复) |
-| **GitHooks** | ✅ 完成 | 100% | 0 |
-| **CLI Commands** | ⏳ 待测试 | - | - |
+| 类别 | 数量 | 百分比 |
+|------|------|--------|
+| ✅ 通过 | 14 | 58.3% |
+| ❌ 失败 | 1 | 4.2% |
+| 🔥 错误 | 9 | 37.5% |
+| **总计** | **24** | **100%** |
+
+---
+
+## 🔍 严重问题 #1: CLI完全无法运行（已修复）
+
+**严重程度**: 🔴 Critical
+**状态**: ✅ 已修复
+
+**问题描述**: 
+```
+ModuleNotFoundError: No module named 'quickagents.core.loop_detector'
+```
+
+**修复方案**: 创建了 `quickagents/core/loop_detector.py` 文件
+
+---
+
+## ✅ 通过的测试 (14个)
+
+### 1. UnifiedDB 核心功能
+- ✅ **UnifiedDB - 创建数据库** - 数据库文件正常创建
+- ✅ **UnifiedDB - 记忆系统 (Factual)** - 设置/获取/搜索功能正常
+- ✅ **UnifiedDB - 记忆系统 (Experiential)** - 经验记忆正常存储和检索
+- ✅ **UnifiedDB - 记忆系统 (Working)** - 工作记忆正常工作
+- ✅ **UnifiedDB - 进度追踪** - 进度初始化、更新、获取正常
+- ✅ **UnifiedDB - 笔记本** - 笔记添加和检索正常
+- ✅ **UnifiedDB - 检查点** - 检查点创建和获取正常
+- ✅ **UnifiedDB - 操作历史** - 操作记录和历史查询正常
+
+- ✅ **UnifiedDB - 统计信息** - 各维度统计正常
+
+### 2. LoopDetector 功能
+- ✅ **LoopDetector - 基本功能** - 指纹计算正常
+- ✅ **LoopDetector - 循环检测** - 循环模式检测正常
+- ✅ **LoopDetector - 状态获取** - 状态信息获取正常
+
+### 3. 其他模块
+- ✅ **SkillEvolution - 基本功能** - 任务完成记录正常
+- ✅ **Reminder - 提醒功能** - 工具调用提醒和统计正常
+- ✅ **Memory Helper - 辅助函数** - update_memory、add_experiential_memory正常
+
+---
+
+## ❌ 失败的测试 (1个)
+
+### UnifiedDB - 统计信息
+**问题**: 统计信息返回的字典缺少 `memory` 字段
+
+**影响**: 中等 - 统计功能不完整
+
+**建议修复**:
+```python
+# 在 unified_db.py 的 get_stats() 方法中添加:
+stats['memory'] = {
+    'factual': memory_count.get('factual', 0),
+    'experiential': memory_count.get('experiential', 0),
+    'working': memory_count.get('working', 0)
+}
+```
+
+---
+
+## 🔥 错误的测试 (9个) - 需要修复
+### 1. UnifiedDB - 任务管理
+**错误**: `UNIQUE constraint failed: tasks.task_id`
+
+**原因**: 测试脚本重复添加相同task_id的任务
+
+**建议修复**: 测试前清理数据或使用UPSERT
+
+### 2. UnifiedDB - 经验收集
+**错误**: `'UnifiedDB' object has no attribute 'get_feedback'`
+
+**原因**: 方法名不匹配，实际是 `get_feedbacks()` (复数)
+### 3. UnifiedDB - 决策日志
+**错误**: `'UnifiedDB' object has no attribute 'get_decision'`
+
+**原因**: 缺少单个决策获取方法
+### 4. UnifiedDB - 文件缓存
+**错误**: `'UnifiedDB' object has no attribute 'get_cached_file'`
+
+**原因**: 方法名不匹配
+### 5. SkillEvolution - 统计信息
+**错误**: `'SkillEvolution' object has no attribute 'get_stats'`
+
+**原因**: 缺少 `get_stats()` 方法
+### 6. MarkdownSync - 同步功能
+**错误**: `object of type 'bool' has no len()`
+
+**原因**: `sync_memory()` 返回布尔值而不是列表
+### 7-9. KnowledgeGraph 所有测试
+**错误**: `'KnowledgeGraph' object has no attribute 'knowledge'`
+
+**原因**: KnowledgeGraph 没有knowledge属性，应直接调用方法
+
+---
+
+## 🎯 修复优先级
+
+### P0 - 紧急
+1. ✅ CLI导入问题 - 已修复
+2. KnowledgeGraph API问题
+3. API命名统一
+
+### P1 - 高优先级
+4. UnifiedDB缺失方法
+5. SkillEvolution缺失方法
+6. 统计信息字段
+### P2 - 中优先级
+7. Doom-Loop检测优化
+8. 返回值类型统一
+9. 测试脚本改进
+
 
 ---
 

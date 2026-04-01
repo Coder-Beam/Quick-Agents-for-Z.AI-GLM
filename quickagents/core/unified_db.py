@@ -37,6 +37,7 @@ from contextlib import contextmanager
 from .connection_manager import ConnectionManager
 from .transaction_manager import TransactionManager
 from .migration_manager import MigrationManager
+from .session import Session
 from .repositories import (
     MemoryRepository,
     TaskRepository,
@@ -100,6 +101,9 @@ class UnifiedDB:
         self._transaction_manager = TransactionManager(self._connection_manager)
         self._migration_manager = MigrationManager(self._connection_manager)
         
+        # Session 统一接口（v2.7.5）
+        self._session = Session(self._connection_manager, self._transaction_manager)
+        
         # 初始化 Repositories
         self._memory_repo = MemoryRepository(
             self._connection_manager,
@@ -142,6 +146,18 @@ class UnifiedDB:
     def migration_manager(self) -> MigrationManager:
         """迁移管理器"""
         return self._migration_manager
+    
+    @property
+    def session(self) -> Session:
+        """
+        统一数据库会话（v2.7.5）
+        
+        所有模块通过 Session 访问数据库，隐藏 CM/TM 实现细节。
+        
+        Returns:
+            Session: 统一数据库会话实例
+        """
+        return self._session
     
     @property
     def knowledge(self):
@@ -643,15 +659,24 @@ class UnifiedDB:
         V1 兼容：获取数据库连接（上下文管理器）
         
         此方法为 V1 API 兼容层，供 SkillEvolution 等模块直接使用。
-        内部委托给 ConnectionManager.get_connection()。
+        v2.7.5 起委托给 Session.query() 统一接口。
         
+        注意: 退出时自动 commit，确保连接回到池中时不带未提交事务。
+
         Yields:
             sqlite3.Connection: 数据库连接，已设置 row_factory
         """
-        with self._connection_manager.get_connection() as conn:
+        with self._session.query() as conn:
             # V1 使用 sqlite3.Row 作为行工厂
             conn.row_factory = sqlite3.Row
-            yield conn
+            try:
+                yield conn
+                # 正常退出时自动 commit
+                if conn.in_transaction:
+                    conn.commit()
+            except Exception:
+                # 异常时 rollback（由 get_connection 的 finally 处理）
+                raise
     
     def _execute_sql(self, sql: str, params: tuple = None) -> Any:
         """

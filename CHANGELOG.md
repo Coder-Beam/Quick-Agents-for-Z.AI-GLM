@@ -5,6 +5,67 @@ All notable changes to QuickAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.5] - 2026-04-01
+
+### Added - Core Architecture Upgrade (6 Phases)
+
+#### Phase 1: ConnectionManager Enhancement
+- **Dynamic Connection Pool**: `PoolConfig(min_size, max_size)` replaces fixed `pool_size`
+- **pre_ping Validation**: `SELECT 1` check before reusing connections
+- **PRAGMA Enhancements**: `mmap_size=256MB`, `temp_store=MEMORY`, `wal_autocheckpoint=1000`
+- **Pool Metrics**: `PoolMetrics` dataclass tracking hit_rate, avg_wait_ms, created/reused/evicted counts
+- **Idle Connection Eviction**: Configurable `idle_timeout` (default 300s)
+- **WAL Auto-Checkpoint**: Interval-based (5min) + threshold-based (1000 ops), using independent connection
+
+#### Phase 2: TransactionManager Enhancement
+- **Exponential Backoff Retry**: `RetryConfig(max_retries=5, backoff_base_ms=2000, multiplier=2.0)`
+- **Thread-Local Transactions**: `threading.local()` for per-thread depth/connection tracking
+- **Independent Read-Only Depth**: Separate `read_depth` counter for `read_only()` transactions
+- **Retryable Error Detection**: Configurable error message matching (database is locked/busy)
+
+#### Phase 3: Repository Layer Enhancement
+- **QueryBuilder**: Django-style chainable API (filter/exclude/order_by/limit/offset/only)
+- **Immutable Cloning**: Each chained call returns new QueryBuilder instance
+- **Parameterized Queries**: All queries use `?` placeholders, SQL-injection safe
+- **Batch INSERT Optimization**: `add_batch()` with batched VALUES clauses (5-10x faster)
+- **BaseRepository.query()**: Generic query method accepting QueryBuilder instances
+
+#### Phase 4: MigrationManager Enhancement
+- **External Migration Files**: `load_external_migrations()` from `migrations/` directory
+- **MigrationResult Dataclass**: Track success/failure with duration_ms per migration
+- **Enhanced Logging**: Per-migration timing and status reporting
+- **Migration.source Field**: Distinguish 'builtin' vs 'external' migrations
+
+#### Phase 5: Session Interface Unification
+- **Session Class**: Unified database session interface (query/transaction/read_only/execute)
+- **Public acquire()/release()**: ConnectionManager public API replacing _acquire()/_release()
+- **UnifiedDB.session Property**: Single entry point for all database access
+- **_get_connection() Delegation**: V1 compat layer delegates through Session
+
+### Changed
+- **ConnectionManager**: 254→640 lines (dynamic pool, metrics, WAL checkpoint)
+- **TransactionManager**: 219→364 lines (retry, thread-local, read-only separation)
+- **MigrationManager**: 405→500 lines (external files, result tracking)
+- **BaseRepository**: Added `query()` method and batch VALUES optimization
+- **UnifiedDB**: Added `session` property, `_get_connection()` delegates to Session
+- **Test Coverage**: Expanded from 536 to 568 tests (32 new Phase 5 tests)
+
+### Fixed
+- `_get_connection()` missing auto-commit on exit — data loss prevention
+- `sqlite_storage.py` `_get_connection()` missing commit/rollback handling
+- WAL checkpoint using pool connections — now uses independent temporary connection
+- Thread-local `getattr` without defaults — `AttributeError` prevention
+- `QueryBuilder` missing from `core/__init__.py` exports
+- `RetryConfig` missing from `core/__init__.py` exports
+- `core/__init__.py` V1 backup import referencing moved `unified_db_v1_backup`
+
+### New Files
+- `quickagents/core/session.py` (190 lines) — Session unified interface
+- `quickagents/core/repositories/query_builder.py` (463 lines) — Django-style query builder
+- `tests/test_phase3_repo_upgrade.py` (48 tests) — Repository/QueryBuilder tests
+- `tests/test_phase4_migration_upgrade.py` (26 tests) — MigrationManager tests
+- `tests/test_phase5_session_unification.py` (32 tests) — Session tests
+
 ## [2.7.0] - 2026-03-31
 
 ### Added - UnifiedDB V2 Architecture

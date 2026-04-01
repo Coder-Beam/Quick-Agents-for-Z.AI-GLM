@@ -42,6 +42,14 @@ class SQLiteGraphStorage(GraphStorageInterface):
         conn.execute("PRAGMA foreign_keys = ON")
         try:
             yield conn
+            # 正常退出时自动 commit，防止数据丢失
+            if conn.in_transaction:
+                conn.commit()
+        except Exception:
+            # 异常时 rollback
+            if conn.in_transaction:
+                conn.rollback()
+            raise
         finally:
             conn.close()
     

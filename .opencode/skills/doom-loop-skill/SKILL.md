@@ -30,7 +30,9 @@ DOOM_LOOP_CONFIG = {
     "THRESHOLD": 3,              # 重复次数阈值
     "WINDOW_SIZE": 20,           # 检测窗口大小
     "ACTION": "approval_pause",  # 触发动作
-    "MAX_HISTORY": 100           # 最大历史记录
+    "MAX_HISTORY": 100,          # 最大历史记录
+    "STUCK_THRESHOLD": 5,        # Stuck模式阈值
+    "OSCILLATION_THRESHOLD": 3   # Oscillation模式阈值
 }
 ```
 
