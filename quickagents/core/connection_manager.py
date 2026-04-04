@@ -354,8 +354,9 @@ class ConnectionManager:
         conn = self._acquire()
         try:
             yield conn
+            conn.commit()  # 正常退出时自动提交
         except Exception:
-            conn.rollback()
+            conn.rollback()  # 异常时回滚
             raise
         finally:
             self._release(conn)
