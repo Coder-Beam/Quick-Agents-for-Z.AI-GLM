@@ -51,12 +51,13 @@ class GitHooks:
         
         # 钩子脚本
         self.post_commit_script = '''#!/bin/bash
-# QuickAgents post-commit hook
-# 自动触发进化分析
+# QuickAgents post-commit hook v2
+# 自动触发进化分析 + 采集 files_changed
 
 # 获取提交信息
 COMMIT_HASH=$(git rev-parse HEAD)
 COMMIT_MSG=$(git log -1 --pretty=%s)
+FILES_CHANGED=$(git diff-tree --no-commit-id --name-only -r HEAD | tr '\\n' ',')
 
 # 调用Python进化系统
 python3 -c "
@@ -65,9 +66,11 @@ sys.path.insert(0, '.')
 try:
     from quickagents import get_evolution
     evolution = get_evolution()
+    files = [f for f in '$FILES_CHANGED'.split(',') if f]
     result = evolution.on_git_commit({
         'hash': '$COMMIT_HASH',
-        'message': '$COMMIT_MSG'
+        'message': '$COMMIT_MSG',
+        'files_changed': files
     })
     print(f'[Evolution] Triggered: {result}')
 except Exception as e:
