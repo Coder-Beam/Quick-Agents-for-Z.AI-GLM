@@ -181,7 +181,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
                     content,
                     tags,
                     source_uri,
-                    tokenize='porter unicode61'
+                    tokenize='unicode61'
                 )
             ''')
             
@@ -442,6 +442,26 @@ class SQLiteGraphStorage(GraphStorageInterface):
             rows = cursor.fetchall()
             return [self._row_to_edge(row) for row in rows]
     
+    @staticmethod
+    def _build_fts_query(query: str) -> str:
+        """
+        Build FTS5 MATCH query with prefix wildcards.
+
+        FTS5 prefix operator (*) only works on UNQUOTED tokens.
+        Quoted tokens like "auth*" lose prefix matching capability
+        and only match exact tokens. So we must NOT wrap in quotes.
+
+        Sanitization: strip FTS5-special characters to prevent parse errors.
+        """
+        # Strip characters that could cause FTS5 parse errors
+        for ch in '"\'(){}[]^:':
+            query = query.replace(ch, ' ')
+        tokens = query.split()
+        if not tokens:
+            return '""'
+        # Unquoted tokens with * suffix for prefix matching
+        return ' '.join(f'{t}*' for t in tokens)
+
     def search_fts(
         self,
         query: str,
@@ -452,9 +472,9 @@ class SQLiteGraphStorage(GraphStorageInterface):
         """Full-text search using FTS5 knowledge_index."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
-            safe_query = query.replace('"', '""')
-            
+
+            fts_query = self._build_fts_query(query)
+
             if node_type:
                 sql = (
                     "SELECT kn.* FROM knowledge_nodes kn "
@@ -464,7 +484,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
                     "ORDER BY rank "
                     "LIMIT ? OFFSET ?"
                 )
-                cursor.execute(sql, (safe_query, node_type, limit, offset))
+                cursor.execute(sql, (fts_query, node_type, limit, offset))
             else:
                 sql = (
                     "SELECT kn.* FROM knowledge_nodes kn "
@@ -473,10 +493,39 @@ class SQLiteGraphStorage(GraphStorageInterface):
                     "ORDER BY rank "
                     "LIMIT ? OFFSET ?"
                 )
-                cursor.execute(sql, (safe_query, limit, offset))
-            
+                cursor.execute(sql, (fts_query, limit, offset))
+
             rows = cursor.fetchall()
             return [self._row_to_node(row) for row in rows]
+
+    def count_fts(
+        self,
+        query: str,
+        node_type: Optional[str] = None,
+    ) -> int:
+        """Count total matching nodes for FTS query (no pagination)."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            fts_query = self._build_fts_query(query)
+
+            if node_type:
+                sql = (
+                    "SELECT COUNT(*) FROM knowledge_nodes kn "
+                    "JOIN knowledge_index ki ON kn.id = ki.node_id "
+                    "WHERE knowledge_index MATCH ? "
+                    "AND kn.node_type = ?"
+                )
+                cursor.execute(sql, (fts_query, node_type))
+            else:
+                sql = (
+                    "SELECT COUNT(*) FROM knowledge_nodes kn "
+                    "JOIN knowledge_index ki ON kn.id = ki.node_id "
+                    "WHERE knowledge_index MATCH ?"
+                )
+                cursor.execute(sql, (fts_query,))
+
+            return cursor.fetchone()[0]
     
     def find_path(
         self,

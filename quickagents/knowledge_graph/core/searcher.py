@@ -52,6 +52,7 @@ class KnowledgeSearcher:
             if node_types and len(node_types) == 1:
                 node_type_val = node_types[0].value
             
+            # FTS already handles LIMIT/OFFSET, no re-slicing needed
             matched_nodes = self._storage.search_fts(
                 query=query,
                 node_type=node_type_val,
@@ -65,33 +66,39 @@ class KnowledgeSearcher:
                     n for n in matched_nodes if n.node_type in type_set
                 ]
             
+            # Filter by direct attributes (project_name, feature_id are
+            # columns on the node, not inside metadata)
             for key in ['project_name', 'feature_id']:
                 if key in filters:
                     matched_nodes = [
                         n for n in matched_nodes
-                        if n.metadata.get(key) == filters[key]
+                        if getattr(n, key, None) == filters[key]
                     ]
+            
+            # Get total count from FTS (without pagination)
+            total = self._storage.count_fts(
+                query=query,
+                node_type=node_type_val,
+            )
         except Exception:
             matched_nodes = self._fallback_search(
                 query, node_types, filters, limit, offset
             )
+            total = len(matched_nodes)
         
         if sort_by == "importance":
             matched_nodes.sort(key=lambda n: n.importance, reverse=True)
         elif sort_by == "created_at":
             matched_nodes.sort(key=lambda n: n.created_at or 0, reverse=True)
         
-        total = len(matched_nodes)
-        paginated_nodes = matched_nodes[offset:offset + limit] if offset else matched_nodes[:limit]
-        
         related_nodes = []
-        if expand_relations and paginated_nodes:
-            related_nodes = self._expand_relations(paginated_nodes, relation_depth)
+        if expand_relations and matched_nodes:
+            related_nodes = self._expand_relations(matched_nodes, relation_depth)
         
         query_time_ms = (time.time() - start_time) * 1000
         
         return SearchResult(
-            nodes=paginated_nodes,
+            nodes=matched_nodes,
             total=total,
             has_more=(offset + limit) < total,
             query_time_ms=query_time_ms,
@@ -244,8 +251,9 @@ class KnowledgeSearcher:
             for edge in edges:
                 related_ids.add(edge.source_node_id)
         
-        for node in nodes:
-            related_ids.discard(node.id)
+        # Do NOT exclude matched nodes from related_nodes.
+        # related_nodes shows the full relationship neighborhood,
+        # even if some nodes also appear in the search results.
         
         related_nodes = []
         for node_id in related_ids:

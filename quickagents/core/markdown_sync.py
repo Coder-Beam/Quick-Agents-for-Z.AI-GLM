@@ -8,10 +8,11 @@ MarkdownSync - Markdown同步器
 - 异步同步，不阻塞主操作
 
 同步策略:
-- 写入: 先写SQLite → 异步同步到Markdown
-- 读取: 优先SQLite（精确查询）
+- 写入: 先写SQLite, 异步同步到Markdown
+- 读取: 优先SQLite(精确查询)
 - 恢复: SQLite损坏时从Markdown恢复
 - 版本: Markdown提交到Git
+- 保护: 自动检测手动编写的Markdown内容,防止被覆盖
 """
 
 import os
@@ -118,6 +119,36 @@ class MarkdownSync:
             'message': '同步完成'
         }
     
+    # ==================== 覆盖保护 ====================
+
+    # Marker present in every auto-generated Markdown file
+    _SYNC_MARKER = '此文件由 SQLite 自动同步生成'
+
+    def _is_safe_to_overwrite(self, file_path: Path) -> bool:
+        """
+        Check whether it is safe to overwrite *file_path* during sync.
+
+        Safe to overwrite:
+          - File does not exist yet
+          - File is empty / near-empty
+          - File already contains the auto-generated sync marker
+
+        NOT safe (skip sync):
+          - File has substantial manually-written content without the marker
+        """
+        if not file_path.exists():
+            return True
+        try:
+            content = file_path.read_text(encoding='utf-8')
+        except Exception:
+            return True
+        if len(content.strip()) < 20:
+            return True
+        if self._SYNC_MARKER in content:
+            return True
+        # Substantial manual content — protect it
+        return False
+
     # ==================== 三维记忆同步 ====================
     
     def sync_memory(self, check_conflicts: bool = True) -> bool:
@@ -147,8 +178,10 @@ class MarkdownSync:
             # 生成Markdown内容
             content = self._generate_memory_md(factual, experiential, working)
             
-            # 写入文件
+            # 写入文件（保护手动编写的内容）
             memory_path = self.docs_dir / 'MEMORY.md'
+            if not self._is_safe_to_overwrite(memory_path):
+                return True  # skip, not an error
             memory_path.write_text(content, encoding='utf-8')
             
             # 记录同步状态
@@ -264,8 +297,10 @@ class MarkdownSync:
             # 生成Markdown
             content = self._generate_tasks_md(completed, in_progress, pending, blocked)
             
-            # 写入文件
+            # 写入文件（保护手动编写的内容）
             tasks_path = self.docs_dir / 'TASKS.md'
+            if not self._is_safe_to_overwrite(tasks_path):
+                return True  # skip, not an error
             tasks_path.write_text(content, encoding='utf-8')
             
             # 记录同步状态
@@ -388,6 +423,8 @@ class MarkdownSync:
             content = self._generate_decisions_md(decisions)
             
             decisions_path = self.docs_dir / 'DECISIONS.md'
+            if not self._is_safe_to_overwrite(decisions_path):
+                return True  # skip, not an error
             decisions_path.write_text(content, encoding='utf-8')
             
             # 记录同步状态
