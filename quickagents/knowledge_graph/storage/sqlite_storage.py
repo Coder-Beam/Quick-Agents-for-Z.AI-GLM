@@ -6,6 +6,7 @@ Implements GraphStorageInterface using SQLite with FTS5.
 
 import sqlite3
 import json
+import threading
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -21,6 +22,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
     SQLite implementation of GraphStorageInterface.
 
     Uses SQLite with FTS5 for full-text search.
+    Thread-local persistent connection with WAL mode.
     """
 
     def __init__(self, db_path: str):
@@ -33,25 +35,52 @@ class SQLiteGraphStorage(GraphStorageInterface):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._initialized = False
+        self._local = threading.local()
 
-    @contextmanager
-    def _get_connection(self):
-        """Get database connection with context manager."""
+    def _create_connection(self) -> sqlite3.Connection:
+        """Create a new connection with performance PRAGMAs."""
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        conn.execute("PRAGMA cache_size = -8000")
+        conn.execute("PRAGMA temp_store = MEMORY")
+        conn.execute("PRAGMA busy_timeout = 5000")
+        try:
+            conn.execute("PRAGMA mmap_size = 67108864")
+        except sqlite3.Error:
+            pass
+        return conn
+
+    @contextmanager
+    def _get_connection(self):
+        """Get thread-local persistent connection."""
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = self._create_connection()
+            self._local.conn = conn
         try:
             yield conn
-            # 正常退出时自动 commit，防止数据丢失
             if conn.in_transaction:
                 conn.commit()
         except Exception:
-            # 异常时 rollback
             if conn.in_transaction:
                 conn.rollback()
             raise
-        finally:
-            conn.close()
+
+    def close(self) -> None:
+        """Close thread-local connection if open."""
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            self._local.conn = None
+
+    def __del__(self):
+        self.close()
 
     def _row_to_node(self, row: sqlite3.Row) -> KnowledgeNode:
         """Convert database row to KnowledgeNode."""
@@ -464,6 +493,65 @@ class SQLiteGraphStorage(GraphStorageInterface):
 
             rows = cursor.fetchall()
             return [self._row_to_edge(row) for row in rows]
+
+    def query_edges_batch(
+        self, node_ids: List[str], limit_per_node: int = 100
+    ) -> List[KnowledgeEdge]:
+        """
+        Batch query edges for multiple nodes in 2 SQL queries.
+
+        Replaces N calls to query_edges({"source_node_id": id}) and
+        query_edges({"target_node_id": id}) with just 2 queries.
+
+        Args:
+            node_ids: List of node IDs to fetch edges for.
+            limit_per_node: Max edges per node per direction.
+
+        Returns:
+            All edges where any node_id is source or target.
+        """
+        if not node_ids:
+            return []
+
+        placeholders = ",".join("?" * len(node_ids))
+
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"SELECT DISTINCT e.* FROM knowledge_edges e "
+                f"WHERE e.source_node_id IN ({placeholders}) "
+                f"OR e.target_node_id IN ({placeholders}) "
+                f"LIMIT ?",
+                node_ids + node_ids + [limit_per_node * len(node_ids)],
+            )
+
+            return [self._row_to_edge(row) for row in cursor.fetchall()]
+
+    def get_nodes_batch(self, node_ids: List[str]) -> List[KnowledgeNode]:
+        """
+        Fetch multiple nodes by ID in a single SQL query.
+
+        Replaces N calls to get_node(id).
+
+        Args:
+            node_ids: List of node IDs to fetch.
+
+        Returns:
+            List of found KnowledgeNode objects.
+        """
+        if not node_ids:
+            return []
+
+        placeholders = ",".join("?" * len(node_ids))
+
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                f"SELECT * FROM knowledge_nodes WHERE id IN ({placeholders})",
+                node_ids,
+            )
+            return [self._row_to_node(row) for row in cursor.fetchall()]
 
     @staticmethod
     def _build_fts_query(query: str) -> str:

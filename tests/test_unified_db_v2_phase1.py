@@ -30,7 +30,7 @@ from quickagents.core.migration_manager import MigrationManager, Migration
 @pytest.fixture
 def temp_db_path():
     """临时数据库路径"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         yield os.path.join(tmpdir, "test.db")
 
 
@@ -73,7 +73,7 @@ class TestConnectionManager:
     
     def test_init_creates_directory(self):
         """测试自动创建目录"""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "subdir", "test.db")
             mgr = ConnectionManager(db_path)
             

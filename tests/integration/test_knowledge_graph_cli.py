@@ -20,7 +20,7 @@ class TestKnowledgeCLI:
     @pytest.fixture
     def temp_db(self):
         """Create a temporary database for testing."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             yield db_path
     
@@ -330,7 +330,7 @@ class TestKnowledgeCLI:
     
     def test_sync_to_memory(self, kg):
         """Test sync command."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             memory_path = os.path.join(tmpdir, "MEMORY.md")
             
             kg.create_node(
@@ -450,7 +450,7 @@ class TestCLIEdgeCases:
     @pytest.fixture
     def kg(self):
         """Create a KnowledgeGraph instance with temp database."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             yield KnowledgeGraph(db_path)
     

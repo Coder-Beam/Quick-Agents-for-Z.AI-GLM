@@ -66,7 +66,7 @@ class TestSyncToMemory:
     
     def test_basic(self, memory_sync, node_manager, sample_nodes):
         """Test basic sync to memory file."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             memory_path = os.path.join(tmpdir, "MEMORY.md")
             
             # Mock query_nodes to return sample nodes
@@ -84,7 +84,7 @@ class TestSyncToMemory:
     
     def test_no_candidates(self, memory_sync, node_manager):
         """Test sync when no candidates match criteria."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             memory_path = os.path.join(tmpdir, "MEMORY.md")
             
             # Mock query_nodes to return empty list

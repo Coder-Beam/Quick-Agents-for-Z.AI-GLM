@@ -47,6 +47,7 @@ class TestEdgeManagerCreate:
         ))
         
         yield {"manager": manager, "storage": storage, "node1": node1, "node2": node2}
+        storage.close()
         os.unlink(db_path)
     
     def test_create_edge_basic(self, setup):
@@ -139,6 +140,7 @@ class TestEdgeManagerGet:
         ))
         
         yield {"manager": manager, "storage": storage, "node1": node1, "node2": node2}
+        storage.close()
         os.unlink(db_path)
     
     def test_get_edge_existing(self, setup):
@@ -192,6 +194,7 @@ class TestEdgeManagerDelete:
         ))
         
         yield {"manager": manager, "storage": storage, "node1": node1, "node2": node2}
+        storage.close()
         os.unlink(db_path)
     
     def test_delete_edge_basic(self, setup):
@@ -258,6 +261,7 @@ class TestEdgeManagerGetOutgoing:
         ))
         
         yield {"manager": manager, "storage": storage, "node1": node1, "node2": node2, "node3": node3}
+        storage.close()
         os.unlink(db_path)
     
     def test_get_outgoing_edges_basic(self, setup):
@@ -341,6 +345,7 @@ class TestEdgeManagerGetIncoming:
         ))
         
         yield {"manager": manager, "storage": storage, "node1": node1, "node2": node2, "node3": node3}
+        storage.close()
         os.unlink(db_path)
     
     def test_get_incoming_edges_basic(self, setup):
@@ -418,6 +423,7 @@ class TestEdgeManagerIdGeneration:
         ))
         
         yield {"manager": manager, "node1": node1, "node2": node2}
+        storage.close()
         os.unlink(db_path)
     
     def test_generate_id_format(self, setup):
@@ -495,6 +501,7 @@ class TestEdgeManagerInvalidType:
         manager = EdgeManager(storage)
         
         yield {"manager": manager}
+        storage.close()
         os.unlink(db_path)
     
     def test_create_edge_invalid_type(self, setup):

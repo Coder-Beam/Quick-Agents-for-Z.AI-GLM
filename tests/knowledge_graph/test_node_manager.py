@@ -31,6 +31,7 @@ class TestNodeManagerCreate:
         storage.initialize({})
         manager = NodeManager(storage)
         yield manager
+        storage.close()
         os.unlink(db_path)
     
     def test_create_node_basic(self, manager):
@@ -111,6 +112,7 @@ class TestNodeManagerGet:
         storage.initialize({})
         manager = NodeManager(storage)
         yield manager
+        storage.close()
         os.unlink(db_path)
     
     def test_get_node_existing(self, manager):
@@ -148,6 +150,7 @@ class TestNodeManagerUpdate:
         storage.initialize({})
         manager = NodeManager(storage)
         yield manager
+        storage.close()
         os.unlink(db_path)
     
     def test_update_node_title(self, manager):
@@ -212,6 +215,7 @@ class TestNodeManagerDelete:
         storage.initialize({})
         manager = NodeManager(storage)
         yield manager
+        storage.close()
         os.unlink(db_path)
     
     def test_delete_node_basic(self, manager):
@@ -272,6 +276,7 @@ class TestNodeManagerList:
         storage.initialize({})
         manager = NodeManager(storage)
         yield manager
+        storage.close()
         os.unlink(db_path)
     
     def test_list_nodes_all(self, manager):
@@ -329,6 +334,7 @@ class TestNodeManagerIdGeneration:
         storage.initialize({})
         manager = NodeManager(storage)
         yield manager
+        storage.close()
         os.unlink(db_path)
     
     def test_generate_id_format(self, manager):

@@ -37,7 +37,7 @@ from quickagents.core.repositories.task_repo import TaskRepository
 @pytest.fixture
 def temp_db_path():
     """临时数据库路径"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         yield os.path.join(tmpdir, "test_phase3.db")
 
 

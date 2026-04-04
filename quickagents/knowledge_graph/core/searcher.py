@@ -221,34 +221,32 @@ class KnowledgeSearcher:
         """
         Expand relations for given nodes.
 
+        Uses batch queries to avoid N+1:
+          1 query for all edges (query_edges_batch)
+          1 query for all related nodes (get_nodes_batch)
+
         Args:
             nodes: List of nodes to expand relations for
             depth: Depth of expansion
 
         Returns:
-            List of related KnowledgeNode objects
+            List of related KnowledgeNode objects (may overlap with nodes)
         """
-        if depth <= 0:
+        if depth <= 0 or not nodes:
             return []
 
+        node_ids = {n.id for n in nodes}
+
+        edges = self._storage.query_edges_batch(list(node_ids), limit_per_node=100)
+
         related_ids = set()
-        for node in nodes:
-            edges = self._storage.query_edges({"source_node_id": node.id}, limit=100)
-            for edge in edges:
-                related_ids.add(edge.target_node_id)
+        for edge in edges:
+            related_ids.add(edge.target_node_id)
+            related_ids.add(edge.source_node_id)
 
-            edges = self._storage.query_edges({"target_node_id": node.id}, limit=100)
-            for edge in edges:
-                related_ids.add(edge.source_node_id)
+        # Include full relationship neighborhood, even if some nodes
+        # also appear in the search results (intentional per spec).
+        if not related_ids:
+            return []
 
-        # Do NOT exclude matched nodes from related_nodes.
-        # related_nodes shows the full relationship neighborhood,
-        # even if some nodes also appear in the search results.
-
-        related_nodes = []
-        for node_id in related_ids:
-            node = self._storage.get_node(node_id)
-            if node:
-                related_nodes.append(node)
-
-        return related_nodes
+        return self._storage.get_nodes_batch(list(related_ids))

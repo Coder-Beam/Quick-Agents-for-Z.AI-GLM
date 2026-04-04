@@ -37,6 +37,7 @@ class TestKnowledgeSearcherSearch:
             'edge_manager': edge_manager,
             'searcher': searcher
         }
+        storage.close()
         os.unlink(db_path)
 
     def test_search_basic(self, setup):
@@ -253,6 +254,7 @@ class TestKnowledgeSearcherTags:
             'node_manager': node_manager,
             'searcher': searcher
         }
+        storage.close()
         os.unlink(db_path)
 
     def test_search_by_tags_single_tag(self, setup):
@@ -352,6 +354,7 @@ class TestKnowledgeSearcherDateRange:
             'node_manager': node_manager,
             'searcher': searcher
         }
+        storage.close()
         os.unlink(db_path)
 
     def test_search_by_date_range_basic(self, setup):

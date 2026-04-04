@@ -35,6 +35,7 @@ class TestDiscoverDirectRelations:
         discovery = RelationDiscovery(storage, edge_manager)
         
         yield {"storage": storage, "edge_manager": edge_manager, "discovery": discovery}
+        storage.close()
         os.unlink(db_path)
     
     def test_discover_direct_relations_by_reference(self, setup):
@@ -132,6 +133,7 @@ class TestDiscoverSemanticRelations:
         discovery = RelationDiscovery(storage, edge_manager)
         
         yield {"storage": storage, "discovery": discovery}
+        storage.close()
         os.unlink(db_path)
     
     def test_discover_semantic_relations_high_similarity(self, setup):
@@ -229,6 +231,7 @@ class TestDiscoverStructuralRelations:
         discovery = RelationDiscovery(storage, edge_manager)
         
         yield {"storage": storage, "discovery": discovery}
+        storage.close()
         os.unlink(db_path)
     
     def test_discover_structural_relations_same_feature(self, setup):
@@ -333,6 +336,7 @@ class TestDiscoverTransitiveRelations:
         discovery = RelationDiscovery(storage, edge_manager)
         
         yield {"storage": storage, "edge_manager": edge_manager, "discovery": discovery}
+        storage.close()
         os.unlink(db_path)
     
     def test_discover_transitive_relations_two_hop(self, setup):
@@ -475,6 +479,7 @@ class TestFindPath:
         discovery = RelationDiscovery(storage, edge_manager)
         
         yield {"storage": storage, "edge_manager": edge_manager, "discovery": discovery}
+        storage.close()
         os.unlink(db_path)
     
     def test_find_path_direct(self, setup):
@@ -640,6 +645,7 @@ class TestTraceRequirement:
         discovery = RelationDiscovery(storage, edge_manager)
         
         yield {"storage": storage, "edge_manager": edge_manager, "discovery": discovery}
+        storage.close()
         os.unlink(db_path)
     
     def test_trace_requirement_full_chain(self, setup):

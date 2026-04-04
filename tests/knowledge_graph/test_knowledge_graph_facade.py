@@ -25,7 +25,7 @@ class TestKnowledgeGraphInit:
         """Test that KnowledgeGraph initializes all sub-components."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -41,7 +41,7 @@ class TestKnowledgeGraphInit:
         """Test that KnowledgeGraph creates database tables."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -52,6 +52,7 @@ class TestKnowledgeGraphInit:
             assert 'total_edges' in stats
 
 
+        kg.close()
 class TestNodeOperations:
     """Tests for node operations delegation."""
     
@@ -59,7 +60,7 @@ class TestNodeOperations:
         """Test create_node and get_node round-trip."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -85,7 +86,7 @@ class TestNodeOperations:
         """Test update_node and delete_node cycle."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -109,7 +110,7 @@ class TestNodeOperations:
         """Test list_nodes with type filter."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -127,6 +128,7 @@ class TestNodeOperations:
             assert len(dec_nodes) == 1
 
 
+        kg.close()
 class TestEdgeOperations:
     """Tests for edge operations delegation."""
     
@@ -134,7 +136,7 @@ class TestEdgeOperations:
         """Test create_edge and get_edge round-trip."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -158,6 +160,7 @@ class TestEdgeOperations:
             assert retrieved.id == edge.id
 
 
+        kg.close()
 class TestSearchOperations:
     """Tests for search operations delegation."""
     
@@ -165,7 +168,7 @@ class TestSearchOperations:
         """Test search returns matching nodes."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -183,7 +186,7 @@ class TestSearchOperations:
         """Test search_by_tags returns matching nodes."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -210,6 +213,7 @@ class TestSearchOperations:
             assert len(nodes) == 2
 
 
+        kg.close()
 class TestDiscoveryOperations:
     """Tests for discovery operations delegation."""
     
@@ -217,7 +221,7 @@ class TestDiscoveryOperations:
         """Test discover with default strategies ['direct', 'semantic']."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -242,7 +246,7 @@ class TestDiscoveryOperations:
         """Test discover with explicit strategies."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -263,7 +267,7 @@ class TestDiscoveryOperations:
         """Test find_path between connected nodes."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -285,7 +289,7 @@ class TestDiscoveryOperations:
         """Test trace_requirement follows DEPENDS_ON and MAPS_TO edges."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -303,6 +307,7 @@ class TestDiscoveryOperations:
             assert "related" in result
 
 
+        kg.close()
 class TestExtractionOperations:
     """Tests for extraction operations delegation."""
     
@@ -310,7 +315,7 @@ class TestExtractionOperations:
         """Test extract_from_text creates knowledge nodes."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -325,7 +330,7 @@ class TestExtractionOperations:
         """Test import_from_file imports knowledge from markdown."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             md_path = os.path.join(tmpdir, "test.md")
             kg = KnowledgeGraph(db_path)
@@ -339,6 +344,7 @@ class TestExtractionOperations:
             assert result['nodes_created'] >= 0
 
 
+        kg.close()
 class TestSyncOperations:
     """Tests for sync operations delegation."""
     
@@ -346,7 +352,7 @@ class TestSyncOperations:
         """Test sync_to_memory syncs high-importance nodes."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             memory_path = os.path.join(tmpdir, "MEMORY.md")
             kg = KnowledgeGraph(db_path)
@@ -372,6 +378,7 @@ class TestSyncOperations:
             assert os.path.exists(memory_path)
 
 
+        kg.close()
 class TestStatsAndRelations:
     """Tests for stats and show_relations methods."""
     
@@ -379,7 +386,7 @@ class TestStatsAndRelations:
         """Test show_relations with both directions."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             
@@ -401,7 +408,7 @@ class TestStatsAndRelations:
         """Test get_stats returns statistics dict."""
         from quickagents.knowledge_graph.knowledge_graph import KnowledgeGraph
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             kg = KnowledgeGraph(db_path)
             

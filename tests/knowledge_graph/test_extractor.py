@@ -31,6 +31,7 @@ class TestExtractFromText:
         node_manager = NodeManager(storage)
         extractor = KnowledgeExtractor(node_manager)
         yield extractor
+        storage.close()
         os.unlink(db_path)
     
     def test_extract_single_requirement(self, extractor):
@@ -90,6 +91,7 @@ class TestImportFromFile:
         node_manager = NodeManager(storage)
         extractor = KnowledgeExtractor(node_manager)
         yield extractor
+        storage.close()
         os.unlink(db_path)
     
     def test_import_markdown_file(self, extractor):
@@ -160,6 +162,7 @@ class TestValidateConfidence:
         node_manager = NodeManager(storage)
         extractor = KnowledgeExtractor(node_manager, confidence_threshold=0.8)
         yield extractor
+        storage.close()
         os.unlink(db_path)
     
     def test_validate_high_confidence(self, extractor):
@@ -205,6 +208,7 @@ class TestCheckDuplicate:
         node_manager = NodeManager(storage)
         extractor = KnowledgeExtractor(node_manager)
         yield extractor
+        storage.close()
         os.unlink(db_path)
     
     def test_check_duplicate_exact_match(self, extractor):

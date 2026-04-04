@@ -24,7 +24,7 @@ class TestKnowledgePropertyAccess:
     
     def test_knowledge_property_returns_knowledge_graph(self):
         """knowledge property returns KnowledgeGraph instance."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 kg = db.knowledge
@@ -35,7 +35,7 @@ class TestKnowledgePropertyAccess:
     
     def test_knowledge_property_lazy_loaded(self):
         """knowledge property is lazy-loaded (same instance on repeated access)."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 kg1 = db.knowledge
@@ -45,7 +45,7 @@ class TestKnowledgePropertyAccess:
     
     def test_knowledge_works_with_default_db_path(self):
         """knowledge property works with default db_path."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, '.quickagents', 'unified.db')
             with UnifiedDB(db_path) as db:
                 kg = db.knowledge
@@ -57,7 +57,7 @@ class TestNodeOpsViaUnifiedDB:
     
     def test_create_node_and_get_node_round_trip(self):
         """create_node + get_node round-trip works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 node = db.knowledge.create_node(
@@ -75,7 +75,7 @@ class TestNodeOpsViaUnifiedDB:
     
     def test_list_nodes_with_type_filter(self):
         """list_nodes with type filter works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 db.knowledge.create_node(
@@ -106,7 +106,7 @@ class TestEdgeOpsViaUnifiedDB:
     
     def test_create_edge_between_nodes(self):
         """create_edge between nodes works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 node1 = db.knowledge.create_node(
@@ -132,7 +132,7 @@ class TestEdgeOpsViaUnifiedDB:
     
     def test_get_outgoing_edges(self):
         """get_outgoing_edges works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 node1 = db.knowledge.create_node(
@@ -174,7 +174,7 @@ class TestSearchViaUnifiedDB:
     
     def test_search_returns_results(self):
         """search returns results via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 db.knowledge.create_node(
@@ -195,7 +195,7 @@ class TestSearchViaUnifiedDB:
     
     def test_search_by_tags(self):
         """search_by_tags works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 db.knowledge.create_node(
@@ -223,7 +223,7 @@ class TestDiscoveryViaUnifiedDB:
     
     def test_discover_relations(self):
         """discover relations works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 node1 = db.knowledge.create_node(
@@ -250,7 +250,7 @@ class TestDiscoveryViaUnifiedDB:
     
     def test_find_path(self):
         """find_path works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 node1 = db.knowledge.create_node(
@@ -290,7 +290,7 @@ class TestTraceViaUnifiedDB:
     
     def test_trace_requirement(self):
         """trace_requirement works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 req = db.knowledge.create_node(
@@ -320,7 +320,7 @@ class TestSyncViaUnifiedDB:
     
     def test_sync_to_memory(self):
         """sync_to_memory works via UnifiedDB."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             memory_path = os.path.join(tmpdir, 'MEMORY.md')
             with UnifiedDB(db_path) as db:
@@ -340,7 +340,7 @@ class TestStatsIntegration:
     
     def test_knowledge_stats_accessible_from_get_stats(self):
         """Knowledge stats should be accessible from db.get_stats() or knowledge.get_stats()."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 db.knowledge.create_node(
@@ -359,7 +359,7 @@ class TestCrossSystemCoexistence:
     
     def test_unified_db_memory_and_knowledge_coexist(self):
         """UnifiedDB memory operations and knowledge operations work together."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             with UnifiedDB(db_path) as db:
                 db.set_memory('project.name', 'TestProject', MemoryType.FACTUAL)

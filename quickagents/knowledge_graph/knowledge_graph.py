@@ -183,3 +183,8 @@ class KnowledgeGraph:
             result["incoming"] = self.edges.get_incoming_edges(node_id)
 
         return result
+
+    def close(self) -> None:
+        """Close underlying storage connections."""
+        if hasattr(self.storage, "close"):
+            self.storage.close()

@@ -31,7 +31,7 @@ class TestKnowledgeGraphE2E:
     @pytest.fixture
     def temp_dir(self):
         """Create a temporary directory for test files."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             yield tmpdir
     
     @pytest.fixture

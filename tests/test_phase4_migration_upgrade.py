@@ -26,14 +26,14 @@ from quickagents.core.connection_manager import ConnectionManager
 @pytest.fixture
 def temp_dir():
     """临时目录（用于迁移文件）"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         yield tmpdir
 
 
 @pytest.fixture
 def db_path():
     """临时数据库路径"""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         yield os.path.join(tmpdir, "test.db")
 
 

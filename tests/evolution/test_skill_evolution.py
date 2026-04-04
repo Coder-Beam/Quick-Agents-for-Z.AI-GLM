@@ -597,7 +597,7 @@ class TestGlobalInstance:
     
     def test_get_evolution_returns_instance(self):
         """Get evolution returns instance."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             reset_evolution()
             evolution = get_evolution(db_path=db_path)
@@ -607,7 +607,7 @@ class TestGlobalInstance:
     
     def test_get_evolution_returns_singleton(self):
         """Get evolution returns singleton."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             reset_evolution()
             evolution1 = get_evolution(db_path=db_path)
@@ -617,7 +617,7 @@ class TestGlobalInstance:
     
     def test_get_evolution_with_project_name(self):
         """Get evolution with project name."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             db_path = os.path.join(tmpdir, 'test.db')
             reset_evolution()
             evolution = get_evolution(db_path=db_path, project_name='TestProject')

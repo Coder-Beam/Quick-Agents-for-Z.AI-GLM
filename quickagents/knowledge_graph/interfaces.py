@@ -72,6 +72,29 @@ class GraphStorageInterface(ABC):
         """Query edges with filters."""
         pass
 
+    def query_edges_batch(
+        self, node_ids: List[str], limit_per_node: int = 100
+    ) -> List[KnowledgeEdge]:
+        """Batch query edges for multiple nodes. Default: fall back to per-node queries."""
+        all_edges = []
+        for nid in node_ids:
+            all_edges.extend(
+                self.query_edges({"source_node_id": nid}, limit=limit_per_node)
+            )
+            all_edges.extend(
+                self.query_edges({"target_node_id": nid}, limit=limit_per_node)
+            )
+        return all_edges
+
+    def get_nodes_batch(self, node_ids: List[str]) -> List["KnowledgeNode"]:
+        """Batch fetch nodes by IDs. Default: fall back to per-node get_node."""
+        results = []
+        for nid in node_ids:
+            node = self.get_node(nid)
+            if node is not None:
+                results.append(node)
+        return results
+
     @abstractmethod
     def find_path(
         self, from_node: str, to_node: str, max_depth: int = 5
