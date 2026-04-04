@@ -93,7 +93,7 @@ class TaskRepository(BaseRepository[Task]):
         )
 
     def get_by_priority(
-        self, priority: TaskPriority, status: TaskStatus = None, limit: int = 100
+        self, priority: TaskPriority, status: Optional[TaskStatus] = None, limit: int = 100
     ) -> List[Task]:
         """
         获取指定优先级的任务
@@ -113,7 +113,7 @@ class TaskRepository(BaseRepository[Task]):
         return self.get_all(filters=filters, order_by="created_at ASC", limit=limit)
 
     def get_by_assignee(
-        self, assignee: str, status: TaskStatus = None, limit: int = 100
+        self, assignee: str, status: Optional[TaskStatus] = None, limit: int = 100
     ) -> List[Task]:
         """
         获取指定负责人的任务
@@ -149,7 +149,7 @@ class TaskRepository(BaseRepository[Task]):
                 f"""
                 SELECT * FROM {self.table_name}
                 WHERE status IN ('pending', 'in_progress')
-                ORDER BY 
+                ORDER BY
                     CASE priority
                         WHEN 'P0' THEN 1
                         WHEN 'P1' THEN 2
@@ -280,7 +280,7 @@ class TaskRepository(BaseRepository[Task]):
     # ==================== 状态流转方法 ====================
 
     def update_status(
-        self, task_id: str, status: TaskStatus, notes: str = None
+        self, task_id: str, status: TaskStatus, notes: Optional[str] = None
     ) -> Optional[Task]:
         """
         更新任务状态
@@ -340,7 +340,7 @@ class TaskRepository(BaseRepository[Task]):
         """
         return self.update_status(task_id, TaskStatus.IN_PROGRESS)
 
-    def complete_task(self, task_id: str, notes: str = None) -> Optional[Task]:
+    def complete_task(self, task_id: str, notes: Optional[str] = None) -> Optional[Task]:
         """
         完成任务
 
@@ -353,7 +353,7 @@ class TaskRepository(BaseRepository[Task]):
         """
         return self.update_status(task_id, TaskStatus.COMPLETED, notes)
 
-    def block_task(self, task_id: str, reason: str = None) -> Optional[Task]:
+    def block_task(self, task_id: str, reason: Optional[str] = None) -> Optional[Task]:
         """
         阻塞任务
 
@@ -366,7 +366,7 @@ class TaskRepository(BaseRepository[Task]):
         """
         return self.update_status(task_id, TaskStatus.BLOCKED, reason)
 
-    def cancel_task(self, task_id: str, reason: str = None) -> Optional[Task]:
+    def cancel_task(self, task_id: str, reason: Optional[str] = None) -> Optional[Task]:
         """
         取消任务
 

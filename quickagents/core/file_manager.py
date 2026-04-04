@@ -70,7 +70,7 @@ class FileManager:
 
         if force:
             content = self._read_file(file_path)
-            self.cache.update(file_path, content)
+            self.cache.update(file_path, content)  # type: ignore[attr-defined]
             self._update_last_read(file_path, content)
             return content
 
@@ -226,7 +226,7 @@ class FileManager:
         Returns:
             编辑结果
         """
-        from ..utils.smart_editor import SmartEditor
+        from ..utils.smart_editor import SmartEditor  # type: ignore[attr-defined]
 
         editor = SmartEditor()
         return editor.fuzzy_edit(file_path, old_str, new_str, threshold)
@@ -288,7 +288,7 @@ class FileManager:
             是否已缓存
         """
         file_path = self._normalize_path(file_path)
-        return self.cache.is_cached(file_path)
+        return self.cache.is_cached(file_path)  # type: ignore[attr-defined]
 
     def invalidate(self, file_path: str) -> None:
         """

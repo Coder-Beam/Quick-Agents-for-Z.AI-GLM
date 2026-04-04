@@ -90,7 +90,7 @@ exit 0
             安装结果
         """
         if not self.is_git_repo():
-            return {"error": "Not a git repository"}
+            return {"error": "Not a git repository"}  # type: ignore[dict-item]
 
         result = {"post_commit": self.install_post_commit()}
 

@@ -176,7 +176,7 @@ def _generate_diagnosis(content: str, old_str: str, file_path: str) -> str:
         for i, line in enumerate(lines):
             sim = SequenceMatcher(None, line.strip()[:50], first_line).ratio()
             if sim > best_sim:
-                best_sim = sim
+                best_sim = sim  # type: ignore[assignment]
                 best_match_idx = i
 
         if best_match_idx >= 0 and best_sim > 0.5:

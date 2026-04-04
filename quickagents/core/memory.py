@@ -13,7 +13,7 @@ MemoryManager - 三维记忆管理器
 """
 
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Optional, Dict, List, Any
 from datetime import datetime
 
 
@@ -91,7 +91,7 @@ class MemoryManager:
             print(f"保存记忆失败: {e}")
             return False
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: Optional[Any] = None) -> Any:
         """
         获取记忆值
 
@@ -126,7 +126,7 @@ class MemoryManager:
         self._set_nested(self.working, key, value)
 
     def add_experiential(
-        self, category: str, content: str, tags: List[str] = None
+        self, category: str, content: str, tags: Optional[List[str]] = None
     ) -> None:
         """添加经验记忆"""
         if not self._loaded:

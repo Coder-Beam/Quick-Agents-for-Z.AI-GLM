@@ -21,6 +21,7 @@ QuickAgents 全局使用 UTF-8 编码（无BOM）
 - 特殊符号: ✅ 完美支持
 """
 
+from typing import Optional
 import sys
 import os
 import locale
@@ -72,7 +73,7 @@ def configure_utf8():
         pass
 
 
-def safe_decode(content: bytes, encoding: str = None) -> str:
+def safe_decode(content: bytes, encoding: Optional[str] = None) -> str:
     """
     安全解码字节数据
 

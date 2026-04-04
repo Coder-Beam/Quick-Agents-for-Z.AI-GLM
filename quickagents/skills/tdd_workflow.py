@@ -51,7 +51,7 @@ class TDDWorkflow:
     """
     
     def __init__(self, project_root: str = '.', 
-                 test_command: str = None,
+                 test_command: Optional[str] = None,
                  state_file: str = '.quickagents/tdd_state.json'):
         """
         初始化TDD工作流
@@ -100,7 +100,7 @@ class TDDWorkflow:
         # 默认
         return 'npm test'
     
-    def run_red(self, test_file: str = None) -> Dict:
+    def run_red(self, test_file: Optional[str] = None) -> Dict:
         """
         RED阶段：运行测试，验证失败
         
@@ -115,9 +115,9 @@ class TDDWorkflow:
                 'phase': str           # 当前阶段
             }
         """
-        return self._run_tests(test_file, TDDPhase.RED)
+        return self._run_tests(test_file, TDDPhase.RED)  # type: ignore[arg-type]
     
-    def run_green(self, test_file: str = None) -> Dict:
+    def run_green(self, test_file: Optional[str] = None) -> Dict:
         """
         GREEN阶段：运行测试，验证通过
         
@@ -127,9 +127,9 @@ class TDDWorkflow:
         Returns:
             同run_red
         """
-        return self._run_tests(test_file, TDDPhase.GREEN)
+        return self._run_tests(test_file, TDDPhase.GREEN)  # type: ignore[arg-type]
     
-    def run_refactor(self, test_file: str = None) -> Dict:
+    def run_refactor(self, test_file: Optional[str] = None) -> Dict:
         """
         REFACTOR阶段：确保测试仍通过
         
@@ -139,7 +139,7 @@ class TDDWorkflow:
         Returns:
             同run_red
         """
-        return self._run_tests(test_file, TDDPhase.REFACTOR)
+        return self._run_tests(test_file, TDDPhase.REFACTOR)  # type: ignore[arg-type]
     
     def _run_tests(self, test_file: str, phase: TDDPhase) -> Dict:
         """运行测试"""

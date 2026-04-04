@@ -297,8 +297,8 @@ class GitCommit:
         return result.returncode == 0
     
     def generate_commit_message(self, commit_type: str, scope: str, 
-                                subject: str, body: str = None,
-                                footer: str = None) -> str:
+                                subject: str, body: Optional[str] = None,
+                                footer: Optional[str] = None) -> str:
         """
         生成Conventional Commit格式的提交信息
         
@@ -334,7 +334,7 @@ class GitCommit:
         
         return '\n'.join(lines)
     
-    def stage_files(self, files: List[str] = None, all_staged: bool = False) -> bool:
+    def stage_files(self, files: Optional[List[str]] = None, all_staged: bool = False) -> bool:
         """
         暂存文件
         
@@ -372,7 +372,7 @@ class GitCommit:
             return False
     
     def commit(self, commit_type: str, scope: str, subject: str,
-               body: str = None, footer: str = None,
+               body: Optional[str] = None, footer: Optional[str] = None,
                run_checks: bool = True) -> Dict:
         """
         执行提交
@@ -460,7 +460,7 @@ class GitCommit:
         
         return result
     
-    def push(self, remote: str = 'origin', branch: str = None) -> Dict:
+    def push(self, remote: str = 'origin', branch: Optional[str] = None) -> Dict:
         """
         推送到远程
         

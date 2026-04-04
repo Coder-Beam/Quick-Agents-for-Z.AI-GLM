@@ -59,7 +59,7 @@ class FilterCondition:
 
     __slots__ = ("field", "op", "value")
 
-    def __init__(self, field: str, op: FilterOp, value: Any = None):
+    def __init__(self, field: str, op: FilterOp, value: Optional[Any] = None):
         self.field = field
         self.op = op
         self.value = value
@@ -71,11 +71,11 @@ class FilterCondition:
 class QueryBuilder(Generic[T]):
     """
     链式查询构建器
-    
+
     使用方式:
         # 简单查询
         results = repo.query().filter(type='factual').order_by('-created_at').limit(10).all()
-        
+
         # 复杂条件
         results = repo.query() \\
             .filter(importance_score__gte=0.8) \\
@@ -84,14 +84,14 @@ class QueryBuilder(Generic[T]):
             .order_by('-updated_at') \\
             .limit(20) \\
             .all()
-        
+
         # 聚合
         count = repo.query().filter(type='factual').count()
         exists = repo.query().filter(key='project.name').exists()
-        
+
         # 选择字段
         results = repo.query().filter(type='factual').only(['key', 'value']).all()
-    
+
     设计:
         - 不可变: 每次链式调用返回新的 QueryBuilder 实例
         - 延迟执行: 构建完成后调用终结方法 (all/count/exists/first) 才执行
@@ -120,7 +120,7 @@ class QueryBuilder(Generic[T]):
 
     def _clone(self) -> "QueryBuilder[T]":
         """创建当前构建器的副本"""
-        clone = QueryBuilder(self._table_name, self._row_mapper, self._conn_provider)
+        clone = QueryBuilder(self._table_name, self._row_mapper, self._conn_provider)  # type: ignore[var-annotated]
         clone._filters = list(self._filters)
         clone._excludes = list(self._excludes)
         clone._order_clauses = list(self._order_clauses)
@@ -381,12 +381,12 @@ class QueryBuilder(Generic[T]):
             return f"{cond.field} IS NOT NULL", None
 
         if cond.op == FilterOp.IN:
-            placeholders = ", ".join("?" * len(cond.value))
-            return f"{cond.field} IN ({placeholders})", list(cond.value)
+            placeholders = ", ".join("?" * len(cond.value))  # type: ignore[arg-type]
+            return f"{cond.field} IN ({placeholders})", list(cond.value)  # type: ignore[arg-type]
 
         if cond.op == FilterOp.NOT_IN:
-            placeholders = ", ".join("?" * len(cond.value))
-            return f"{cond.field} NOT IN ({placeholders})", list(cond.value)
+            placeholders = ", ".join("?" * len(cond.value))  # type: ignore[arg-type]
+            return f"{cond.field} NOT IN ({placeholders})", list(cond.value)  # type: ignore[arg-type]
 
         if cond.op == FilterOp.LIKE:
             return f"{cond.field} LIKE ?", [cond.value]

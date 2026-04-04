@@ -65,7 +65,7 @@ class KnowledgeGraph:
         return self.nodes.delete_node(node_id, cascade=cascade)
 
     def list_nodes(
-        self, node_type: NodeType = None, limit: int = 100, offset: int = 0
+        self, node_type: Optional[NodeType] = None, limit: int = 100, offset: int = 0
     ) -> List[KnowledgeNode]:
         """List nodes with optional filter."""
         return self.nodes.list_nodes(node_type=node_type, limit=limit, offset=offset)
@@ -85,13 +85,13 @@ class KnowledgeGraph:
         return self.edges.delete_edge(edge_id)
 
     def get_outgoing_edges(
-        self, node_id: str, edge_type: EdgeType = None
+        self, node_id: str, edge_type: Optional[EdgeType] = None
     ) -> List[KnowledgeEdge]:
         """Get outgoing edges for a node."""
         return self.edges.get_outgoing_edges(node_id, edge_type=edge_type)
 
     def get_incoming_edges(
-        self, node_id: str, edge_type: EdgeType = None
+        self, node_id: str, edge_type: Optional[EdgeType] = None
     ) -> List[KnowledgeEdge]:
         """Get incoming edges for a node."""
         return self.edges.get_incoming_edges(node_id, edge_type=edge_type)
@@ -105,7 +105,7 @@ class KnowledgeGraph:
         return self.searcher.search_by_tags(tags, limit=limit)
 
     def discover(
-        self, node_id: str, strategies: List[str] = None
+        self, node_id: str, strategies: Optional[List[str]] = None
     ) -> List[KnowledgeEdge]:
         """
         Discover relations using specified strategies.

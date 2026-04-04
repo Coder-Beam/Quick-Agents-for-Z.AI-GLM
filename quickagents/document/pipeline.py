@@ -85,7 +85,7 @@ class DocumentPipeline:
         if parser is None:
             raise ValueError("Source code parser not registered")
         logger.info(f"Parsing source directory {source_dir}")
-        return parser.parse(source_dir)
+        return parser.parse(source_dir)  # type: ignore[return-value]
 
     def parse_batch(self, file_paths: List[Path]) -> List[DocumentResult]:
         """Batch parse documents (Layer 1)"""

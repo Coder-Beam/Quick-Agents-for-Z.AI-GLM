@@ -84,7 +84,7 @@ class MemoryRepository(BaseRepository[Memory]):
     # ==================== 专用查询方法 ====================
 
     def get_by_key(
-        self, key: str, memory_type: MemoryType = None, category: str = None
+        self, key: str, memory_type: Optional[MemoryType] = None, category: Optional[str] = None
     ) -> Optional[Memory]:
         """
         根据 key 获取记忆
@@ -124,7 +124,7 @@ class MemoryRepository(BaseRepository[Memory]):
         )
 
     def get_by_category(
-        self, category: str, memory_type: MemoryType = None, limit: int = 100
+        self, category: str, memory_type: Optional[MemoryType] = None, limit: int = 100
     ) -> List[Memory]:
         """
         获取指定分类的所有记忆
@@ -167,7 +167,7 @@ class MemoryRepository(BaseRepository[Memory]):
             return [self._row_to_entity(row) for row in cursor.fetchall()]
 
     def get_recent(
-        self, limit: int = 10, memory_type: MemoryType = None
+        self, limit: int = 10, memory_type: Optional[MemoryType] = None
     ) -> List[Memory]:
         """
         获取最近访问的记忆
@@ -206,7 +206,7 @@ class MemoryRepository(BaseRepository[Memory]):
     # ==================== 搜索方法 ====================
 
     def search(
-        self, query: str, memory_type: MemoryType = None, limit: int = 10
+        self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10
     ) -> List[Memory]:
         """
         搜索记忆（简单文本匹配）
@@ -230,14 +230,14 @@ class MemoryRepository(BaseRepository[Memory]):
             params.append(memory_type.value)
 
         sql += " ORDER BY importance_score DESC, updated_at DESC LIMIT ?"
-        params.append(limit)
+        params.append(limit)  # type: ignore[arg-type]
 
         with self.conn_mgr.get_connection() as conn:
             cursor = conn.execute(sql, params)
             return [self._row_to_entity(row) for row in cursor.fetchall()]
 
     def search_with_scoring(
-        self, query: str, config: RetrievalConfig = None, memory_type: MemoryType = None
+        self, query: str, config: Optional[RetrievalConfig] = None, memory_type: Optional[MemoryType] = None
     ) -> List[SearchResult]:
         """
         带评分的检索
@@ -433,8 +433,8 @@ class MemoryRepository(BaseRepository[Memory]):
         key: str,
         value: str,
         memory_type: MemoryType = MemoryType.FACTUAL,
-        category: str = None,
-        importance_score: float = None,
+        category: Optional[str] = None,
+        importance_score: Optional[float] = None,
     ) -> Memory:
         """
         插入或更新记忆

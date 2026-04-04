@@ -18,7 +18,7 @@ Memory Helper - 记忆更新辅助工具
     })
 """
 
-from typing import Dict, Any
+from typing import Optional, Dict, Any
 from ..core.unified_db import UnifiedDB, MemoryType, get_unified_db
 from ..core.markdown_sync import MarkdownSync, get_markdown_sync
 
@@ -27,10 +27,10 @@ def update_memory(
     key: str,
     value: Any,
     memory_type: MemoryType = MemoryType.FACTUAL,
-    category: str = None,
+    category: Optional[str] = None,
     auto_sync: bool = True,
-    db: UnifiedDB = None,
-    sync: MarkdownSync = None,
+    db: Optional[UnifiedDB] = None,
+    sync: Optional[MarkdownSync] = None,
 ) -> bool:
     """
     更新单个记忆项
@@ -62,16 +62,16 @@ def update_memory(
         sync = sync or get_markdown_sync(db)
         sync.sync_memory()
 
-    return success
+    return success  # type: ignore[return-value]
 
 
 def update_memories(
     memories: Dict[str, Any],
     memory_type: MemoryType = MemoryType.FACTUAL,
-    categories: Dict[str, str] = None,
+    categories: Optional[Dict[str, str]] = None,
     auto_sync: bool = True,
-    db: UnifiedDB = None,
-    sync: MarkdownSync = None,
+    db: Optional[UnifiedDB] = None,
+    sync: Optional[MarkdownSync] = None,
 ) -> Dict[str, bool]:
     """
     批量更新记忆
@@ -108,15 +108,15 @@ def update_memories(
         sync = sync or get_markdown_sync(db)
         sync.sync_memory()
 
-    return results
+    return results  # type: ignore[return-value]
 
 
 def add_experiential_memory(
     content: str,
     category: str = "general",
     auto_sync: bool = True,
-    db: UnifiedDB = None,
-    sync: MarkdownSync = None,
+    db: Optional[UnifiedDB] = None,
+    sync: Optional[MarkdownSync] = None,
 ) -> bool:
     """
     添加经验记忆（快捷方法）
@@ -155,8 +155,8 @@ def update_working_memory(
     key: str,
     value: Any,
     auto_sync: bool = True,
-    db: UnifiedDB = None,
-    sync: MarkdownSync = None,
+    db: Optional[UnifiedDB] = None,
+    sync: Optional[MarkdownSync] = None,
 ) -> bool:
     """
     更新工作记忆（快捷方法）
@@ -179,7 +179,7 @@ def update_working_memory(
     )
 
 
-def sync_all_memory(db: UnifiedDB = None) -> Dict[str, bool]:
+def sync_all_memory(db: Optional[UnifiedDB] = None) -> Dict[str, bool]:
     """
     同步所有记忆到 Markdown
 

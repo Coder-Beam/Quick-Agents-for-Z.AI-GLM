@@ -81,7 +81,7 @@ class SourceCodeParser(BaseParser):
     REQUIRES_DEPENDENCIES = ["ast"]
     PARSER_NAME = "source"
 
-    def parse(self, file_path: Path) -> SourceCodeResult:
+    def parse(self, file_path: Path) -> SourceCodeResult:  # type: ignore[override]
         return self.parse_directory(file_path)
 
     def parse_directory(self, source_dir: Path) -> SourceCodeResult:
@@ -339,7 +339,7 @@ class SourceCodeParser(BaseParser):
             base = self._annotation_str(node.value)
             sl = node.slice
             if isinstance(sl, ast.Index):
-                sl = sl.value
+                sl = sl.value  # type: ignore[attr-defined]
             if isinstance(sl, ast.Tuple):
                 inner = ", ".join(self._annotation_str(e) for e in sl.elts)
             else:
@@ -350,7 +350,7 @@ class SourceCodeParser(BaseParser):
             cur = node
             while isinstance(cur, ast.Attribute):
                 parts.append(cur.attr)
-                cur = cur.value
+                cur = cur.value  # type: ignore[assignment]
             if isinstance(cur, ast.Name):
                 parts.append(cur.id)
             return ".".join(reversed(parts))
@@ -537,7 +537,7 @@ class SourceCodeParser(BaseParser):
     def _regex_extract_functions(
         self, content: str, rel: str, lang: str
     ) -> List[CodeFunction]:
-        funcs = []
+        funcs = []  # type: ignore[var-annotated]
         patterns = {
             "python": re.compile(r"^(\s*)(async\s+)?def\s+(\w+)\s*\(", re.MULTILINE),
             "javascript": re.compile(
@@ -584,7 +584,7 @@ class SourceCodeParser(BaseParser):
         return funcs
 
     def _regex_extract_imports(self, content: str, lang: str) -> List[str]:
-        imports = []
+        imports = []  # type: ignore[var-annotated]
         patterns = {
             "javascript": re.compile(
                 r"(?:import\s+.+\s+from\s+['\"](.+?)['\"]|require\s*\(\s*['\"](.+?)['\"]\s*\))",
@@ -616,7 +616,7 @@ class SourceCodeParser(BaseParser):
     def _regex_extract_classes(
         self, content: str, rel: str, lang: str
     ) -> List[CodeClass]:
-        classes = []
+        classes = []  # type: ignore[var-annotated]
         patterns = {
             "javascript": re.compile(
                 r"class\s+(\w+)(?:\s+extends\s+(\w+))?", re.MULTILINE

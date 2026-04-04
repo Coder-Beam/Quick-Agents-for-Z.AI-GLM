@@ -114,14 +114,14 @@ class BaseRepository(ABC, Generic[T]):
     def query(self) -> QueryBuilder[T]:
         """
         创建链式查询构建器
-        
+
         Returns:
             QueryBuilder[T]: 查询构建器实例
-        
+
         示例:
             # 简单过滤
             results = repo.query().filter(type='factual').order_by('-created_at').limit(10).all()
-            
+
             # 复杂条件
             results = repo.query() \\
                 .filter(importance_score__gte=0.8) \\
@@ -130,7 +130,7 @@ class BaseRepository(ABC, Generic[T]):
                 .order_by('-updated_at') \\
                 .limit(20) \\
                 .all()
-            
+
             # 聚合
             count = repo.query().filter(type='factual').count()
         """
@@ -161,10 +161,10 @@ class BaseRepository(ABC, Generic[T]):
 
     def get_all(
         self,
-        filters: Dict[str, Any] = None,
-        order_by: str = None,
-        limit: int = None,
-        offset: int = None,
+        filters: Optional[Dict[str, Any]] = None,
+        order_by: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> List[T]:
         """
         获取所有实体（支持过滤）
@@ -240,7 +240,7 @@ class BaseRepository(ABC, Generic[T]):
             )
             return cursor.fetchone() is not None
 
-    def count(self, filters: Dict[str, Any] = None) -> int:
+    def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
         """
         计数
 
@@ -322,7 +322,7 @@ class BaseRepository(ABC, Generic[T]):
             sql = f"INSERT INTO {self.table_name} ({field_str}) VALUES {values_clause}"
 
             # 展平参数
-            flat_params = []
+            flat_params = []  # type: ignore[var-annotated]
             for data in batch:
                 flat_params.extend(data[f] for f in fields)
 
@@ -423,7 +423,7 @@ class BaseRepository(ABC, Generic[T]):
             conn.commit()
             return cursor.rowcount
 
-    def delete_all(self, filters: Dict[str, Any] = None) -> int:
+    def delete_all(self, filters: Optional[Dict[str, Any]] = None) -> int:
         """
         删除所有匹配的实体
 

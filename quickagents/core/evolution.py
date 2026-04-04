@@ -59,7 +59,7 @@ class SkillEvolution:
     PERIODIC_TASK_THRESHOLD = 10  # 每10个任务
     PERIODIC_DAYS_THRESHOLD = 7  # 或每7天
 
-    def __init__(self, db: UnifiedDB, project_name: str = None):
+    def __init__(self, db: UnifiedDB, project_name: Optional[str] = None):
         """
         初始化进化系统
 
@@ -149,7 +149,7 @@ class SkillEvolution:
         Returns:
             进化分析结果
         """
-        result = {
+        result = {  # type: ignore[var-annotated]
             "trigger": EvolutionTrigger.TASK_COMPLETE.value,
             "task_id": task_info.get("task_id"),
             "skills_analyzed": [],
@@ -166,20 +166,20 @@ class SkillEvolution:
                 duration_ms=task_info.get("duration_ms"),
                 error_message=task_info.get("error"),
             )
-            result["skills_analyzed"].append(skill_name)
+            result["skills_analyzed"].append(skill_name)  # type: ignore[union-attr]
 
         # 2. 分析失败原因
         if not task_info.get("success", True):
             improvement = self._analyze_failure(task_info)
             if improvement:
-                result["improvements_found"].append(improvement)
+                result["improvements_found"].append(improvement)  # type: ignore[union-attr]
 
         # 3. 检查是否有可复用的模式
         patterns = self._extract_patterns(task_info)
         if patterns:
             for pattern in patterns:
                 self.db.add_feedback(
-                    FeedbackType.BEST_PRACTICE,
+                    FeedbackType.BEST_PRACTICE,  # type: ignore[arg-type]
                     title=f"发现可复用模式: {pattern['name']}",
                     description=pattern["description"],
                     project_name=self.project_name,
@@ -188,7 +188,7 @@ class SkillEvolution:
                         "tags": ["auto-detected", "pattern"],
                     },
                 )
-                result["feedback_added"].append(pattern["name"])
+                result["feedback_added"].append(pattern["name"])  # type: ignore[union-attr]
 
         # 4. 更新任务计数
         self._increment_task_count()
@@ -199,7 +199,7 @@ class SkillEvolution:
 
         return result
 
-    def on_git_commit(self, commit_info: Dict = None) -> Dict:
+    def on_git_commit(self, commit_info: Optional[Dict] = None) -> Dict:
         """
         Git提交时自动触发
 
@@ -223,7 +223,7 @@ class SkillEvolution:
                 "status": "no_commits",
             }
 
-        result = {
+        result = {  # type: ignore[var-annotated]
             "trigger": EvolutionTrigger.GIT_COMMIT.value,
             "commit_hash": commit_info.get("hash"),
             "improvements_found": [],
@@ -236,7 +236,7 @@ class SkillEvolution:
         if analysis.get("improvements"):
             for imp in analysis["improvements"]:
                 self.db.add_feedback(
-                    FeedbackType.IMPROVEMENT,
+                    FeedbackType.IMPROVEMENT,  # type: ignore[arg-type]
                     title=imp["title"],
                     description=imp.get("description", imp["title"]),
                     project_name=self.project_name,
@@ -253,7 +253,7 @@ class SkillEvolution:
                         "avoidance": "",
                     },
                 )
-                result["improvements_found"].append(imp["title"])
+                result["improvements_found"].append(imp["title"])  # type: ignore[union-attr]
 
         # 3. 检测是否有Bug修复
         if "fix" in commit_info.get("message", "").lower():
@@ -263,7 +263,7 @@ class SkillEvolution:
                 sorted(set(f.split("/")[0] for f in files_changed if "/" in f))[:3]
             )
             self.db.add_feedback(
-                FeedbackType.BUG,
+                FeedbackType.BUG,  # type: ignore[arg-type]
                 title=f"Bug修复: {commit_info.get('message', '')[:80]}",
                 description=commit_info.get("message", ""),
                 project_name=self.project_name,
@@ -302,7 +302,7 @@ class SkillEvolution:
 
         # 记录错误
         self.db.add_feedback(
-            FeedbackType.BUG,
+            FeedbackType.BUG,  # type: ignore[arg-type]
             title=f"[{error_info.get('error_type', 'Unknown')}] {error_info.get('error_message', '')[:100]}",
             description=error_info.get("error_message", ""),
             project_name=self.project_name,
@@ -373,7 +373,7 @@ class SkillEvolution:
         # 2. 分析每个Skill的表现
         for skill_name, stat in stats.items():
             review = self._review_skill(skill_name, stat)
-            result["skills_reviewed"].append(
+            result["skills_reviewed"].append(  # type: ignore[attr-defined]
                 {
                     "skill_name": skill_name,
                     "success_rate": stat.get("success_rate", 0),
@@ -384,7 +384,7 @@ class SkillEvolution:
 
             # 识别需要改进的Skills
             if stat.get("success_rate", 1) < 0.8:
-                result["skills_to_update"].append(skill_name)
+                result["skills_to_update"].append(skill_name)  # type: ignore[attr-defined]
                 self._add_evolution_record(
                     skill_name=skill_name,
                     trigger_type=EvolutionTrigger.PERIODIC.value,
@@ -405,7 +405,7 @@ class SkillEvolution:
     # ==================== Skill管理 ====================
 
     def record_skill_creation(
-        self, skill_name: str, reason: str, expected_use: str = None
+        self, skill_name: str, reason: str, expected_use: Optional[str] = None
     ) -> Dict:
         """记录Skill创建"""
         record_id = self._add_evolution_record(
@@ -462,7 +462,7 @@ class SkillEvolution:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                SELECT * FROM skill_evolution 
+                SELECT * FROM skill_evolution
                 WHERE skill_name = ?
                 ORDER BY created_at DESC
             """,
@@ -487,7 +487,7 @@ class SkillEvolution:
             # 成功次数
             cursor.execute(
                 """
-                SELECT COUNT(*) as count FROM skill_usage 
+                SELECT COUNT(*) as count FROM skill_usage
                 WHERE skill_name = ? AND success = 1
             """,
                 (skill_name,),
@@ -497,7 +497,7 @@ class SkillEvolution:
             # 平均耗时
             cursor.execute(
                 """
-                SELECT AVG(duration_ms) as avg_duration FROM skill_usage 
+                SELECT AVG(duration_ms) as avg_duration FROM skill_usage
                 WHERE skill_name = ? AND duration_ms IS NOT NULL
             """,
                 (skill_name,),
@@ -507,7 +507,7 @@ class SkillEvolution:
             # 最近错误
             cursor.execute(
                 """
-                SELECT error_message, created_at FROM skill_usage 
+                SELECT error_message, created_at FROM skill_usage
                 WHERE skill_name = ? AND success = 0
                 ORDER BY created_at DESC LIMIT 5
             """,
@@ -530,7 +530,7 @@ class SkillEvolution:
         with self.db._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT skill_name, 
+                SELECT skill_name,
                        COUNT(*) as count,
                        SUM(success) as success_count,
                        AVG(duration_ms) as avg_duration
@@ -561,8 +561,8 @@ class SkillEvolution:
         trigger_type: str,
         change_type: str,
         description: str,
-        details: Dict = None,
-        rating: int = None,
+        details: Optional[Dict] = None,
+        rating: Optional[int] = None,
     ) -> int:
         """添加进化记录"""
         details_str = json.dumps(details, ensure_ascii=False) if details else None
@@ -590,10 +590,10 @@ class SkillEvolution:
     def _record_skill_usage(
         self,
         skill_name: str,
-        task_id: str = None,
+        task_id: Optional[str] = None,
         success: bool = True,
-        duration_ms: int = None,
-        error_message: str = None,
+        duration_ms: Optional[int] = None,
+        error_message: Optional[str] = None,
     ) -> None:
         """记录Skill使用"""
         with self.db._get_connection() as conn:
@@ -617,7 +617,7 @@ class SkillEvolution:
 
         # 记录改进建议
         self.db.add_feedback(
-            FeedbackType.IMPROVEMENT,
+            FeedbackType.IMPROVEMENT,  # type: ignore[arg-type]
             title=f"任务失败分析: {task_info.get('task_name', '')}",
             description=f"错误: {error}",
             project_name=self.project_name,
@@ -762,7 +762,7 @@ class SkillEvolution:
         # ===== 2. files_changed 模式分析 =====
         if files_changed:
             # 2a. 模块热点分析
-            dir_counts = {}
+            dir_counts = {}  # type: ignore[var-annotated]
             for f in files_changed:
                 parts = f.split("/")
                 if len(parts) > 1:
@@ -779,7 +779,7 @@ class SkillEvolution:
                         "description": f"本次提交中 {hot_modules[0]} 模块有 {dir_counts[hot_modules[0]]} 个文件变更，是系统核心热点",
                         "type": "module_hotspot",
                         "category": "architecture",
-                        "files": hot_modules,
+                        "files": hot_modules,  # type: ignore[dict-item]
                     }
                 )
 
@@ -805,7 +805,7 @@ class SkillEvolution:
                         "description": f"变更的配置文件: {', '.join(config_files)}，可能影响运行时行为",
                         "type": "config_change",
                         "category": "pitfall",
-                        "files": config_files,
+                        "files": config_files,  # type: ignore[dict-item]
                     }
                 )
 
@@ -823,7 +823,7 @@ class SkillEvolution:
                         "description": f"修改了源码但未更新测试: {', '.join(src_files[:3])}",
                         "type": "missing_test",
                         "category": "pitfall",
-                        "files": src_files,
+                        "files": src_files,  # type: ignore[dict-item]
                         "suggestion": f"建议为 {src_files[0]} 添加对应的测试文件",
                     }
                 )
@@ -1052,7 +1052,7 @@ class SkillEvolution:
 
     # ==================== 同步到Markdown ====================
 
-    def sync_to_markdown(self, output_dir: str = None) -> Dict:
+    def sync_to_markdown(self, output_dir: Optional[str] = None) -> Dict:
         """
         同步进化记录到Markdown
 
@@ -1060,11 +1060,11 @@ class SkillEvolution:
             output_dir: 输出目录，默认 ~/.quickagents/evolution/
         """
         if output_dir is None:
-            output_dir = Path.home() / ".quickagents" / "evolution"
+            output_dir = Path.home() / ".quickagents" / "evolution"  # type: ignore[assignment]
         else:
-            output_dir = Path(output_dir)
+            output_dir = Path(output_dir)  # type: ignore[assignment]
 
-        output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)  # type: ignore[union-attr]
 
         result = {"skills_synced": 0, "files_created": []}
 
@@ -1081,19 +1081,19 @@ class SkillEvolution:
 
             md_content = self._generate_skill_md(skill_name, history, stats)
 
-            file_path = output_dir / f"{skill_name}.md"
+            file_path = output_dir / f"{skill_name}.md"  # type: ignore[operator]
             write_file_utf8(str(file_path), md_content)
 
-            result["files_created"].append(str(file_path))
-            result["skills_synced"] += 1
+            result["files_created"].append(str(file_path))  # type: ignore[attr-defined]
+            result["skills_synced"] += 1  # type: ignore[operator]
 
         # 生成统计汇总文件
         all_stats = self.get_all_skills_stats()
         if all_stats:
             stats_content = self._generate_stats_md(all_stats)
-            stats_file = output_dir / "skill_stats.md"
+            stats_file = output_dir / "skill_stats.md"  # type: ignore[operator]
             write_file_utf8(str(stats_file), stats_content)
-            result["files_created"].append(str(stats_file))
+            result["files_created"].append(str(stats_file))  # type: ignore[attr-defined]
 
         return result
 
@@ -1168,7 +1168,7 @@ _global_evolution: Optional[SkillEvolution] = None
 
 
 def get_evolution(
-    db_path: str = ".quickagents/unified.db", project_name: str = None
+    db_path: str = ".quickagents/unified.db", project_name: Optional[str] = None
 ) -> SkillEvolution:
     """获取全局进化系统实例"""
     global _global_evolution

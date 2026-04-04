@@ -46,7 +46,7 @@ class FeedbackCollector:
         'agent': 'agent-review.md'
     }
     
-    def __init__(self, base_dir: str = None):
+    def __init__(self, base_dir: Optional[str] = None):
         """
         初始化收集器
         
@@ -66,8 +66,8 @@ class FeedbackCollector:
                 filepath.write_text('# Feedback Collection\n\n', encoding='utf-8')
     
     def record(self, feedback_type: str, description: str, 
-               scenario: str = None, suggestion: str = None,
-               project: str = None, dedup_hours: int = 1) -> bool:
+               scenario: Optional[str] = None, suggestion: Optional[str] = None,
+               project: Optional[str] = None, dedup_hours: int = 1) -> bool:
         """
         记录反馈
         
@@ -90,7 +90,7 @@ class FeedbackCollector:
             return False
         
         # 生成记录
-        record = self._format_record(description, scenario, suggestion, project)
+        record = self._format_record(description, scenario, suggestion, project)  # type: ignore[arg-type]
         
         # 追加到文件
         filepath = self.base_dir / self.FEEDBACK_TYPES[feedback_type]
@@ -101,7 +101,7 @@ class FeedbackCollector:
         
         return True
     
-    def get_feedback(self, feedback_type: str = None, limit: int = 20) -> List[Dict]:
+    def get_feedback(self, feedback_type: Optional[str] = None, limit: int = 20) -> List[Dict]:
         """
         获取反馈记录
         
@@ -117,7 +117,7 @@ class FeedbackCollector:
         if feedback_type:
             files = {feedback_type: self.FEEDBACK_TYPES.get(feedback_type)}
         else:
-            files = self.FEEDBACK_TYPES
+            files = self.FEEDBACK_TYPES  # type: ignore[assignment]
         
         for ftype, filename in files.items():
             if filename is None:
@@ -148,12 +148,12 @@ class FeedbackCollector:
             if filepath.exists():
                 content = filepath.read_text(encoding='utf-8')
                 count = content.count('## ') - 1  # 简单统计记录数
-                stats['by_type'][ftype] = max(0, count)
-                stats['total'] += count
+                stats['by_type'][ftype] = max(0, count)  # type: ignore[index]
+                stats['total'] += count  # type: ignore[operator]
         
         return stats
     
-    def clear(self, feedback_type: str = None) -> int:
+    def clear(self, feedback_type: Optional[str] = None) -> int:
         """
         清空反馈
         
@@ -168,7 +168,7 @@ class FeedbackCollector:
         if feedback_type:
             files = {feedback_type: self.FEEDBACK_TYPES.get(feedback_type)}
         else:
-            files = self.FEEDBACK_TYPES
+            files = self.FEEDBACK_TYPES  # type: ignore[assignment]
         
         for ftype, filename in files.items():
             if filename is None:

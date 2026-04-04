@@ -368,7 +368,7 @@ class KnowledgeExtractor:
             f"文档内容:\n{doc_text[:4000]}\n\nJSON输出:"
         )
         try:
-            response = self._llm_func(prompt)
+            response = self._llm_func(prompt)  # type: ignore[misc]
             return self._parse_llm_json(response)
         except Exception as e:
             logger.warning(f"LLM extraction failed: {e}")

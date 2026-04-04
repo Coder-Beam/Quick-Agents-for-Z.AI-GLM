@@ -228,7 +228,7 @@ class LoopDetector:
             print(f"检测到循环: {info}")
     """
 
-    def __init__(self, config: LoopDetectorConfig = None):
+    def __init__(self, config: Optional[LoopDetectorConfig] = None):
         """
         初始化检测器
 
@@ -298,7 +298,7 @@ class LoopDetector:
         self._record_call(tool_name, tool_args, fingerprint, result)
 
         # 3. 如果有结果，分析失败
-        failure_info = {}  # 初始化 failure_info
+        failure_info: Dict[str, Any] = {}
         if result is not None:
             is_failure, failure_info = self._analyze_result(result)
 

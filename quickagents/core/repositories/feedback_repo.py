@@ -10,7 +10,7 @@ FeedbackRepository - 反馈仓储
 import time
 import json
 import logging
-from typing import List, Dict, Any
+from typing import Optional, List, Dict, Any
 
 from .base import BaseRepository
 from .models import Feedback, FeedbackType
@@ -90,7 +90,7 @@ class FeedbackRepository(BaseRepository[Feedback]):
         )
 
     def get_by_project(
-        self, project_name: str, feedback_type: FeedbackType = None, limit: int = 100
+        self, project_name: str, feedback_type: Optional[FeedbackType] = None, limit: int = 100
     ) -> List[Feedback]:
         """
         获取指定项目的反馈
@@ -122,7 +122,7 @@ class FeedbackRepository(BaseRepository[Feedback]):
         return self.get_all(order_by="created_at DESC", limit=limit)
 
     def search(
-        self, query: str, feedback_type: FeedbackType = None, limit: int = 20
+        self, query: str, feedback_type: Optional[FeedbackType] = None, limit: int = 20
     ) -> List[Feedback]:
         """
         搜索反馈
@@ -146,7 +146,7 @@ class FeedbackRepository(BaseRepository[Feedback]):
             params.append(feedback_type.value)
 
         sql += " ORDER BY created_at DESC LIMIT ?"
-        params.append(limit)
+        params.append(limit)  # type: ignore[arg-type]
 
         with self.conn_mgr.get_connection() as conn:
             cursor = conn.execute(sql, params)
@@ -186,9 +186,9 @@ class FeedbackRepository(BaseRepository[Feedback]):
         self,
         feedback_type: FeedbackType,
         title: str,
-        description: str = None,
-        project_name: str = None,
-        metadata: Dict[str, Any] = None,
+        description: Optional[str] = None,
+        project_name: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Feedback:
         """
         添加反馈（便捷方法）

@@ -29,10 +29,10 @@ class User:
         self._password_hash = None
 
     def set_password(self, password: str) -> None:
-        self._password_hash = hash_password(password)
+        self._password_hash = hash_password(password)  # type: ignore[assignment]
 
     def check_password(self, password: str) -> bool:
-        return verify_password(password, self._password_hash)
+        return verify_password(password, self._password_hash)  # type: ignore[arg-type]
 
 
 class AdminUser(User):

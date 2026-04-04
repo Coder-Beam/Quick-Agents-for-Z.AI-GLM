@@ -30,8 +30,8 @@ class KnowledgeSearcher:
     def search(
         self,
         query: str,
-        node_types: List[NodeType] = None,
-        filters: Dict[str, Any] = None,
+        node_types: Optional[List[NodeType]] = None,
+        filters: Optional[Dict[str, Any]] = None,
         sort_by: str = "relevance",
         limit: int = 20,
         offset: int = 0,
@@ -128,7 +128,7 @@ class KnowledgeSearcher:
         return matched_nodes[:limit]
 
     def search_by_date_range(
-        self, start_date: str, end_date: str, node_type: NodeType = None
+        self, start_date: str, end_date: str, node_type: Optional[NodeType] = None
     ) -> List[KnowledgeNode]:
         """
         Search by date range.

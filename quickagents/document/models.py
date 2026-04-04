@@ -34,7 +34,7 @@ class DocumentSection:
         """添加子章节"""
         self.children_ids.append(child_id)
 
-    def get_full_path(self, sections: "List[DocumentSection]" = None) -> str:
+    def get_full_path(self, sections: Optional["List[DocumentSection]"] = None) -> str:
         """获取完整路径（如 "Section > Subsection > Title"）"""
         parts = [self.title]
         if sections is None:

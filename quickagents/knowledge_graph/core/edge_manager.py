@@ -106,7 +106,7 @@ class EdgeManager:
         return self._storage.delete_edge(edge_id)
 
     def get_outgoing_edges(
-        self, node_id: str, edge_type: EdgeType = None
+        self, node_id: str, edge_type: Optional[EdgeType] = None
     ) -> List[KnowledgeEdge]:
         """
         Get edges where node is source.
@@ -125,7 +125,7 @@ class EdgeManager:
         return self._storage.query_edges(filters)
 
     def get_incoming_edges(
-        self, node_id: str, edge_type: EdgeType = None
+        self, node_id: str, edge_type: Optional[EdgeType] = None
     ) -> List[KnowledgeEdge]:
         """
         Get edges where node is target.

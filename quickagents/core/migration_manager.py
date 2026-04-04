@@ -132,13 +132,13 @@ class MigrationManager:
                     metadata TEXT,
                     UNIQUE(key, memory_type, category)
                 );
-                
+
                 CREATE INDEX IF NOT EXISTS idx_memory_type ON memory(memory_type);
                 CREATE INDEX IF NOT EXISTS idx_memory_category ON memory(category);
                 CREATE INDEX IF NOT EXISTS idx_memory_key ON memory(key);
                 CREATE INDEX IF NOT EXISTS idx_memory_importance ON memory(importance_score);
                 CREATE INDEX IF NOT EXISTS idx_memory_created ON memory(created_at);
-                
+
                 -- ==================== 任务表 ====================
                 CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY,
@@ -152,10 +152,10 @@ class MigrationManager:
                     updated_at REAL DEFAULT (strftime('%s', 'now')),
                     metadata TEXT
                 );
-                
+
                 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
                 CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
-                
+
                 -- ==================== 进度表 ====================
                 CREATE TABLE IF NOT EXISTS progress (
                     id TEXT PRIMARY KEY,
@@ -167,7 +167,7 @@ class MigrationManager:
                     created_at REAL DEFAULT (strftime('%s', 'now')),
                     updated_at REAL DEFAULT (strftime('%s', 'now'))
                 );
-                
+
                 -- ==================== 反馈表 ====================
                 CREATE TABLE IF NOT EXISTS feedback (
                     id TEXT PRIMARY KEY,
@@ -178,10 +178,10 @@ class MigrationManager:
                     metadata TEXT,
                     created_at REAL DEFAULT (strftime('%s', 'now'))
                 );
-                
+
                 CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(feedback_type);
                 CREATE INDEX IF NOT EXISTS idx_feedback_project ON feedback(project_name);
-                
+
                 -- ==================== 迁移历史表 ====================
                 CREATE TABLE IF NOT EXISTS migration_history (
                     version TEXT PRIMARY KEY,
@@ -189,7 +189,7 @@ class MigrationManager:
                     checksum TEXT NOT NULL,
                     applied_at REAL DEFAULT (strftime('%s', 'now'))
                 );
-                
+
                 -- ==================== 操作历史表 ====================
                 CREATE TABLE IF NOT EXISTS operation_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -199,7 +199,7 @@ class MigrationManager:
                     operation_data TEXT,
                     created_at REAL DEFAULT (strftime('%s', 'now'))
                 );
-                
+
                 CREATE INDEX IF NOT EXISTS idx_op_history_type ON operation_history(operation_type);
                 CREATE INDEX IF NOT EXISTS idx_op_history_table ON operation_history(table_name);
                 CREATE INDEX IF NOT EXISTS idx_op_history_time ON operation_history(created_at);

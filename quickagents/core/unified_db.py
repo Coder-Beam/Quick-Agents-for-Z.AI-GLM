@@ -178,9 +178,9 @@ class UnifiedDB:
     def get_memory(
         self,
         key: str,
-        memory_type: MemoryType = None,
-        category: str = None,
-        default: Any = None,
+        memory_type: Optional[MemoryType] = None,
+        category: Optional[str] = None,
+        default: Optional[Any] = None,
     ) -> Any:
         """
         获取记忆值
@@ -205,9 +205,9 @@ class UnifiedDB:
         key: str,
         value: Any,
         memory_type: MemoryType = MemoryType.FACTUAL,
-        category: str = None,
-        importance_score: float = None,
-        metadata: Dict[str, Any] = None,
+        category: Optional[str] = None,
+        importance_score: Optional[float] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Memory:
         """
         设置记忆
@@ -248,7 +248,7 @@ class UnifiedDB:
         return memory
 
     def search_memory(
-        self, query: str, memory_type: MemoryType = None, limit: int = 10
+        self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10
     ) -> List[Memory]:
         """
         搜索记忆
@@ -264,7 +264,7 @@ class UnifiedDB:
         return self._memory_repo.search(query, memory_type, limit)
 
     def search_memory_with_scoring(
-        self, query: str, config: RetrievalConfig = None, memory_type: MemoryType = None
+        self, query: str, config: Optional[RetrievalConfig] = None, memory_type: Optional[MemoryType] = None
     ) -> List[SearchResult]:
         """
         带评分的搜索
@@ -280,7 +280,7 @@ class UnifiedDB:
         return self._memory_repo.search_with_scoring(query, config, memory_type)
 
     def delete_memory(
-        self, key: str, memory_type: MemoryType = None, category: str = None
+        self, key: str, memory_type: Optional[MemoryType] = None, category: Optional[str] = None
     ) -> bool:
         """
         删除记忆
@@ -332,9 +332,9 @@ class UnifiedDB:
         task_id: str,
         name: str,
         priority: str = "P2",
-        description: str = None,
-        assignee: str = None,
-        metadata: Dict[str, Any] = None,
+        description: Optional[str] = None,
+        assignee: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Task:
         """
         添加任务
@@ -363,7 +363,7 @@ class UnifiedDB:
         return self._task_repo.add(task)
 
     def update_task_status(
-        self, task_id: str, status: str, notes: str = None
+        self, task_id: str, status: str, notes: Optional[str] = None
     ) -> Optional[Task]:
         """
         更新任务状态
@@ -391,7 +391,7 @@ class UnifiedDB:
         return self._task_repo.get(task_id)
 
     def get_tasks(
-        self, status: str = None, priority: str = None, limit: int = 100
+        self, status: Optional[str] = None, priority: Optional[str] = None, limit: int = 100
     ) -> List[Task]:
         """
         获取任务列表
@@ -466,7 +466,7 @@ class UnifiedDB:
         """
         return self._task_repo.get_next_task()
 
-    def complete_task(self, task_id: str, notes: str = None) -> Optional[Task]:
+    def complete_task(self, task_id: str, notes: Optional[str] = None) -> Optional[Task]:
         """
         完成任务
 
@@ -479,7 +479,7 @@ class UnifiedDB:
         """
         return self._task_repo.complete_task(task_id, notes)
 
-    def block_task(self, task_id: str, reason: str = None) -> Optional[Task]:
+    def block_task(self, task_id: str, reason: Optional[str] = None) -> Optional[Task]:
         """
         阻塞任务
 
@@ -507,7 +507,7 @@ class UnifiedDB:
         """
         return self._progress_repo.init_progress(project_name, total_tasks)
 
-    def get_progress(self, project_name: str = None) -> Optional[Progress]:
+    def get_progress(self, project_name: Optional[str] = None) -> Optional[Progress]:
         """
         获取进度
 
@@ -525,7 +525,7 @@ class UnifiedDB:
             return results[0] if results else None
 
     def update_progress(
-        self, project_name: str, current_task: str = None, completed_increment: int = 0
+        self, project_name: str, current_task: Optional[str] = None, completed_increment: int = 0
     ) -> Optional[Progress]:
         """
         更新进度
@@ -582,9 +582,9 @@ class UnifiedDB:
         self,
         feedback_type: str,
         title: str,
-        description: str = None,
-        project_name: str = None,
-        metadata: Dict[str, Any] = None,
+        description: Optional[str] = None,
+        project_name: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Feedback:
         """
         添加反馈
@@ -608,7 +608,7 @@ class UnifiedDB:
         )
 
     def get_feedbacks(
-        self, feedback_type: str = None, project_name: str = None, limit: int = 100
+        self, feedback_type: Optional[str] = None, project_name: Optional[str] = None, limit: int = 100
     ) -> List[Feedback]:
         """
         获取反馈列表
@@ -684,7 +684,7 @@ class UnifiedDB:
                 # 异常时 rollback（由 get_connection 的 finally 处理）
                 raise
 
-    def _execute_sql(self, sql: str, params: tuple = None) -> Any:
+    def _execute_sql(self, sql: str, params: Optional[tuple] = None) -> Any:
         """
         V1 兼容：执行原始 SQL
 

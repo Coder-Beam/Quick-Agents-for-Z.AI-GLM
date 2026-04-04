@@ -200,10 +200,10 @@ class SQLiteGraphStorage(GraphStorageInterface):
                     confidence REAL DEFAULT 1.0,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
-                    
+
                     FOREIGN KEY (source_node_id) REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
                     FOREIGN KEY (target_node_id) REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
-                    
+
                     UNIQUE(source_node_id, target_node_id, edge_type)
                 )
             """)
@@ -233,7 +233,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
             """)
 
             cursor.execute("""
-                CREATE TRIGGER IF NOT EXISTS idx_node_insert 
+                CREATE TRIGGER IF NOT EXISTS idx_node_insert
                 AFTER INSERT ON knowledge_nodes BEGIN
                     INSERT INTO knowledge_index(node_id, title, content, tags, source_uri)
                     VALUES (NEW.id, NEW.title, NEW.content, NEW.tags, NEW.source_uri);
@@ -241,16 +241,16 @@ class SQLiteGraphStorage(GraphStorageInterface):
             """)
 
             cursor.execute("""
-                CREATE TRIGGER IF NOT EXISTS idx_node_update 
+                CREATE TRIGGER IF NOT EXISTS idx_node_update
                 AFTER UPDATE ON knowledge_nodes BEGIN
-                    UPDATE knowledge_index 
+                    UPDATE knowledge_index
                     SET title=NEW.title, content=NEW.content, tags=NEW.tags, source_uri=NEW.source_uri
                     WHERE node_id=NEW.id;
                 END
             """)
 
             cursor.execute("""
-                CREATE TRIGGER IF NOT EXISTS idx_node_delete 
+                CREATE TRIGGER IF NOT EXISTS idx_node_delete
                 AFTER DELETE ON knowledge_nodes BEGIN
                     DELETE FROM knowledge_index WHERE node_id=OLD.id;
                 END
@@ -300,7 +300,9 @@ class SQLiteGraphStorage(GraphStorageInterface):
             )
             conn.commit()
 
-        return self.get_node(node.id)
+        result = self.get_node(node.id)
+        assert result is not None, f"Node {node.id} not found after creation"
+        return result
 
     def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
         """Get a knowledge node by ID."""
@@ -317,7 +319,9 @@ class SQLiteGraphStorage(GraphStorageInterface):
     def update_node(self, node_id: str, updates: Dict[str, Any]) -> KnowledgeNode:
         """Update a knowledge node."""
         if not updates:
-            return self.get_node(node_id)
+            result = self.get_node(node_id)
+            assert result is not None
+            return result
 
         valid_fields = {
             "node_type",
@@ -338,7 +342,9 @@ class SQLiteGraphStorage(GraphStorageInterface):
         filtered_updates = {k: v for k, v in updates.items() if k in valid_fields}
 
         if not filtered_updates:
-            return self.get_node(node_id)
+            result = self.get_node(node_id)
+            assert result is not None
+            return result
 
         filtered_updates["updated_at"] = datetime.now()
 
@@ -372,7 +378,9 @@ class SQLiteGraphStorage(GraphStorageInterface):
             if cursor.rowcount == 0:
                 raise NodeNotFoundError(node_id)
 
-        return self.get_node(node_id)
+        result = self.get_node(node_id)
+        assert result is not None
+        return result
 
     def delete_node(self, node_id: str, cascade: bool = True) -> bool:
         """Delete a knowledge node."""
@@ -422,7 +430,9 @@ class SQLiteGraphStorage(GraphStorageInterface):
                 )
             raise
 
-        return self.get_edge(edge.id)
+        result = self.get_edge(edge.id)
+        assert result is not None
+        return result
 
     def get_edge(self, edge_id: str) -> Optional[KnowledgeEdge]:
         """Get a knowledge edge by ID."""

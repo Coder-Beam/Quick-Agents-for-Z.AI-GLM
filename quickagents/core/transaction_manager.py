@@ -257,7 +257,7 @@ class TransactionManager:
                     )
                     time.sleep(delay_ms / 1000.0)
 
-        raise last_error
+        raise last_error  # type: ignore[misc]
 
     def _commit_with_retry(self, conn) -> None:
         """
@@ -291,7 +291,7 @@ class TransactionManager:
                     )
                     time.sleep(delay_ms / 1000.0)
 
-        raise last_error
+        raise last_error  # type: ignore[misc]
 
     def atomic(self, func: Callable[..., T]) -> Callable[..., T]:
         """

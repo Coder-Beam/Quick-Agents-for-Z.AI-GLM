@@ -95,6 +95,24 @@ class GraphStorageInterface(ABC):
                 results.append(node)
         return results
 
+    def search_fts(
+        self,
+        query: str,
+        node_type: Optional[str] = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> List["KnowledgeNode"]:
+        """Full-text search. Default: fall back to query_nodes + Python filter."""
+        return self.query_nodes({}, limit=limit, offset=offset)
+
+    def count_fts(
+        self,
+        query: str,
+        node_type: Optional[str] = None,
+    ) -> int:
+        """Count FTS matches. Default: fall back to search_fts length."""
+        return len(self.search_fts(query, node_type=node_type, limit=10000))
+
     @abstractmethod
     def find_path(
         self, from_node: str, to_node: str, max_depth: int = 5

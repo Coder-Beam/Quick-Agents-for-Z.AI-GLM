@@ -134,7 +134,7 @@ class ConventionMatcher:
                     tags.setdefault(sec_num, []).append(self._make_loc(module, func))
                 for line in func.docstring.split("\n"):
                     line = line.lstrip("#/ *")
-                    ms = self.SECTION_NUMBER_PATTERN.match(line.strip())
+                    ms = self.SECTION_NUMBER_PATTERN.match(line.strip())  # type: ignore[assignment]
                     if ms:
                         sec_num = ms.group(1)
                         tags.setdefault(sec_num, []).append(
@@ -142,11 +142,11 @@ class ConventionMatcher:
                         )
 
             name_lower = func.name.lower()
-            m = self.REQ_ID_PATTERN.search(name_lower)
+            m = self.REQ_ID_PATTERN.search(name_lower)  # type: ignore[assignment]
             if m:
                 tag = m.group(0).upper()
                 tags.setdefault(tag, []).append(self._make_loc(module, func))
-            mf = self.FEATURE_TAG_PATTERN.search(name_lower)
+            mf = self.FEATURE_TAG_PATTERN.search(name_lower)  # type: ignore[assignment]
             if mf:
                 tag = mf.group(0).upper()
                 tags.setdefault(tag, []).append(self._make_loc(module, func))

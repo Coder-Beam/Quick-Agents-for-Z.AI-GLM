@@ -237,7 +237,7 @@ class MarkdownExporter:
             lines.append("## Directory Structure")
             lines.append("")
             lines.append("```")
-            lines.append(code.structure_tree)
+            lines.append(code.structure_tree)  # type: ignore[arg-type]
             lines.append("```")
             lines.append("")
 
@@ -251,7 +251,7 @@ class MarkdownExporter:
                 for cls in mod.classes:
                     lines.append(f"- **class {cls.name}** ({len(cls.methods)} methods)")
                 for func in mod.functions:
-                    params = ", ".join(func.parameters) if func.parameters else ""
+                    params = ", ".join(func.parameters) if func.parameters else ""  # type: ignore[arg-type]
                     lines.append(f"- `{func.name}({params})`")
                 lines.append("")
 

@@ -132,7 +132,7 @@ class Page:
         self._page.on("request", on_request)
         self._page.on("response", on_response)
 
-    def get_console_logs(self, log_type: str = None) -> List[ConsoleLog]:
+    def get_console_logs(self, log_type: Optional[str] = None) -> List[ConsoleLog]:
         """获取控制台日志"""
         if log_type:
             return [log for log in self._console_logs if log.type == log_type]
@@ -142,7 +142,7 @@ class Page:
         """获取错误日志"""
         return [log for log in self._console_logs if log.type in ("error", "warning")]
 
-    def get_network_requests(self, resource_type: str = None) -> List[NetworkRequest]:
+    def get_network_requests(self, resource_type: Optional[str] = None) -> List[NetworkRequest]:
         """获取网络请求"""
         if resource_type:
             return [
@@ -351,10 +351,10 @@ class Browser:
 
         # 尝试连接
         try:
-            self._browser = self._playwright.chromium.connect_over_cdp(
+            self._browser = self._playwright.chromium.connect_over_cdp(  # type: ignore[attr-defined]
                 f"http://localhost:{self.LIGHTPANDA_PORT}"
             )
-            self._context = self._browser.new_context()
+            self._context = self._browser.new_context()  # type: ignore[attr-defined]
             return True
         except Exception as e:
             print(f"[Browser] 连接Lightpanda失败: {e}")

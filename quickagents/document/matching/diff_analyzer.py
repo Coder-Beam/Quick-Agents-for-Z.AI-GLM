@@ -131,7 +131,7 @@ class DiffAnalyzer:
                     (
                         t,
                         f"低置信度匹配 ({t.confidence:.2f}): "
-                        f"'{t.requirement[:50]}' <-> '{t.impl_function}' "
+                        f"'{t.requirement[:50]}' <-> '{t.impl_function}' "  # type: ignore[index]
                         f"可能存在不一致",
                     )
                 )

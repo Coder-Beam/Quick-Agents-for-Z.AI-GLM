@@ -127,7 +127,7 @@ class NodeManager:
         return self._storage.delete_node(node_id, cascade=cascade)
 
     def list_nodes(
-        self, node_type: NodeType = None, limit: int = 100, offset: int = 0
+        self, node_type: Optional[NodeType] = None, limit: int = 100, offset: int = 0
     ) -> List[KnowledgeNode]:
         """
         List nodes with optional type filter.

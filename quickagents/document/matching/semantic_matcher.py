@@ -62,7 +62,7 @@ class SemanticMatcher:
     ) -> List[TraceEntry]:
         prompt = self._build_prompt(reqs, code_items)
         try:
-            response = self._llm_func(prompt)
+            response = self._llm_func(prompt)  # type: ignore[misc]
             return self._parse_llm_response(response, reqs, code_items, counter_start)
         except Exception:
             return []

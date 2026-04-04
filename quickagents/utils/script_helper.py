@@ -155,7 +155,7 @@ class ScriptHelper:
     @staticmethod
     def run_command(
         cmd: str,
-        cwd: str = None,
+        cwd: Optional[str] = None,
         timeout: int = 60,
         capture: bool = True,
         check: bool = False,
@@ -241,7 +241,7 @@ class ScriptHelper:
         cmd = f'powershell -ExecutionPolicy Bypass -Command "{script}"'
 
         if admin and not ScriptHelper.is_admin():
-            return ScriptHelper.run_as_admin(cmd)
+            return ScriptHelper.run_as_admin(cmd)  # type: ignore[return-value]
 
         return ScriptHelper.run_command(cmd)
 
@@ -347,7 +347,7 @@ class ScriptHelper:
             return []
 
     @staticmethod
-    def kill_process(pid: int = None, name: str = None, force: bool = False) -> bool:
+    def kill_process(pid: Optional[int] = None, name: Optional[str] = None, force: bool = False) -> bool:
         """
         终止进程
 
@@ -374,7 +374,7 @@ class ScriptHelper:
         return False
 
     @staticmethod
-    def start_process(cmd: str, cwd: str = None, hidden: bool = False) -> Dict:
+    def start_process(cmd: str, cwd: Optional[str] = None, hidden: bool = False) -> Dict:
         """
         启动进程
 

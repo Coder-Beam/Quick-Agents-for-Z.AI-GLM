@@ -180,7 +180,7 @@ class SyncConflictDetector:
 
         return None
 
-    def check_conflicts(self, file_keys: List[str] = None) -> List[Dict[str, Any]]:
+    def check_conflicts(self, file_keys: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """
         检查所有文件的冲突
 
@@ -201,11 +201,11 @@ class SyncConflictDetector:
 
         return conflicts
 
-    def has_conflicts(self, file_keys: List[str] = None) -> bool:
+    def has_conflicts(self, file_keys: Optional[List[str]] = None) -> bool:
         """检查是否存在冲突"""
         return len(self.check_conflicts(file_keys)) > 0
 
-    def get_conflict_report(self, file_keys: List[str] = None) -> str:
+    def get_conflict_report(self, file_keys: Optional[List[str]] = None) -> str:
         """
         获取冲突报告
 
@@ -244,7 +244,7 @@ class SyncConflictDetector:
 
         return "\n".join(lines)
 
-    def clear_conflict_state(self, file_key: str = None) -> None:
+    def clear_conflict_state(self, file_key: Optional[str] = None) -> None:
         """
         清除冲突状态（用于强制同步后）
 
@@ -277,7 +277,7 @@ def get_sync_conflict_detector() -> SyncConflictDetector:
     return _detector_instance
 
 
-def check_sync_conflicts(file_keys: List[str] = None) -> List[Dict[str, Any]]:
+def check_sync_conflicts(file_keys: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """
     检查同步冲突的便捷函数
 
@@ -290,7 +290,7 @@ def check_sync_conflicts(file_keys: List[str] = None) -> List[Dict[str, Any]]:
     return get_sync_conflict_detector().check_conflicts(file_keys)
 
 
-def get_sync_conflict_report(file_keys: List[str] = None) -> str:
+def get_sync_conflict_report(file_keys: Optional[List[str]] = None) -> str:
     """
     获取同步冲突报告的便捷函数
 

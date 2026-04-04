@@ -116,7 +116,7 @@ class Session:
 
     # ==================== 便捷方法 ====================
 
-    def execute(self, sql: str, params: tuple = None) -> Any:
+    def execute(self, sql: str, params: Optional[tuple] = None) -> Any:
         """
         执行单条 SQL 语句（自动 commit）
 
@@ -150,7 +150,7 @@ class Session:
             conn.executescript(sql)
             conn.commit()
 
-    def query_one(self, sql: str, params: tuple = None) -> Optional[tuple]:
+    def query_one(self, sql: str, params: Optional[tuple] = None) -> Optional[tuple]:
         """
         查询单行
 
@@ -168,7 +168,7 @@ class Session:
                 cursor = conn.execute(sql)
             return cursor.fetchone()
 
-    def query_all(self, sql: str, params: tuple = None) -> list:
+    def query_all(self, sql: str, params: Optional[tuple] = None) -> list:
         """
         查询所有行
 

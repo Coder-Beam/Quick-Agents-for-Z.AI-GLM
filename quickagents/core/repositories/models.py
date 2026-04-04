@@ -253,7 +253,7 @@ class SearchResult:
         relevance: float,
         recency: float,
         importance: float,
-        weights: Dict[str, float] = None,
+        weights: Optional[Dict[str, float]] = None,
     ) -> float:
         """
         计算综合分数

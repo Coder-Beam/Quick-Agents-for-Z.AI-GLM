@@ -91,11 +91,11 @@ class CacheDB:
 
             # 创建索引
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_file_cache_hash 
+                CREATE INDEX IF NOT EXISTS idx_file_cache_hash
                 ON file_cache(content_hash)
             """)
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_file_cache_path 
+                CREATE INDEX IF NOT EXISTS idx_file_cache_path
                 ON file_cache(path)
             """)
 
@@ -152,7 +152,7 @@ class CacheDB:
 
     # ==================== 文件缓存操作 ====================
 
-    def cache_file(self, path: str, content: str, content_hash: str = None) -> bool:
+    def cache_file(self, path: str, content: str, content_hash: Optional[str] = None) -> bool:
         """
         缓存文件内容
 
@@ -219,7 +219,7 @@ class CacheDB:
                 # 更新访问计数
                 cursor.execute(
                     """
-                    UPDATE file_cache SET access_count = access_count + 1 
+                    UPDATE file_cache SET access_count = access_count + 1
                     WHERE path = ?
                 """,
                     (path,),
@@ -267,7 +267,7 @@ class CacheDB:
     # ==================== 记忆操作 ====================
 
     def set_memory(
-        self, key: str, value: Any, memory_type: str = "factual", tags: List[str] = None
+        self, key: str, value: Any, memory_type: str = "factual", tags: Optional[List[str]] = None
     ) -> bool:
         """
         设置记忆
@@ -303,7 +303,7 @@ class CacheDB:
 
         return True
 
-    def get_memory(self, key: str, default: Any = None) -> Any:
+    def get_memory(self, key: str, default: Optional[Any] = None) -> Any:
         """获取记忆"""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -318,7 +318,7 @@ class CacheDB:
 
         return default
 
-    def search_memory(self, keyword: str, memory_type: str = None) -> List[Dict]:
+    def search_memory(self, keyword: str, memory_type: Optional[str] = None) -> List[Dict]:
         """搜索记忆"""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -326,7 +326,7 @@ class CacheDB:
             if memory_type:
                 cursor.execute(
                     """
-                    SELECT * FROM memory 
+                    SELECT * FROM memory
                     WHERE (key LIKE ? OR value LIKE ?) AND memory_type = ?
                     ORDER BY updated_at DESC
                 """,
@@ -335,7 +335,7 @@ class CacheDB:
             else:
                 cursor.execute(
                     """
-                    SELECT * FROM memory 
+                    SELECT * FROM memory
                     WHERE key LIKE ? OR value LIKE ?
                     ORDER BY updated_at DESC
                 """,
@@ -356,9 +356,9 @@ class CacheDB:
     def log_operation(
         self,
         operation: str,
-        target: str = None,
-        params: Dict = None,
-        result: Dict = None,
+        target: Optional[str] = None,
+        params: Optional[Dict] = None,
+        result: Optional[Dict] = None,
         token_cost: int = 0,
         duration_ms: int = 0,
     ) -> bool:
@@ -367,7 +367,7 @@ class CacheDB:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO operation_history 
+                INSERT INTO operation_history
                 (operation, target, params, result, token_cost, duration_ms)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,
@@ -384,7 +384,7 @@ class CacheDB:
         return True
 
     def get_operation_history(
-        self, limit: int = 100, operation: str = None
+        self, limit: int = 100, operation: Optional[str] = None
     ) -> List[Dict]:
         """获取操作历史"""
         with self._get_connection() as conn:
@@ -393,7 +393,7 @@ class CacheDB:
             if operation:
                 cursor.execute(
                     """
-                    SELECT * FROM operation_history 
+                    SELECT * FROM operation_history
                     WHERE operation = ?
                     ORDER BY created_at DESC LIMIT ?
                 """,
@@ -402,7 +402,7 @@ class CacheDB:
             else:
                 cursor.execute(
                     """
-                    SELECT * FROM operation_history 
+                    SELECT * FROM operation_history
                     ORDER BY created_at DESC LIMIT ?
                 """,
                     (limit,),
@@ -445,7 +445,7 @@ class CacheDB:
                 new_count = row["count"] + 1
                 cursor.execute(
                     """
-                    UPDATE loop_detection 
+                    UPDATE loop_detection
                     SET count = ?, last_seen = ?
                     WHERE fingerprint = ?
                 """,

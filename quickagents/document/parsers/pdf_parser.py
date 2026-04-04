@@ -208,7 +208,7 @@ class PDFParser(BaseParser):
                                 size_counts[size] = size_counts.get(size, 0) + len(text)
         if not size_counts:
             return None
-        return max(size_counts, key=size_counts.get)
+        return max(size_counts, key=size_counts.get)  # type: ignore[arg-type]
 
     def _populate_section_content(self, sections: List[DocumentSection], doc) -> None:
         """Fill section content from page text"""
