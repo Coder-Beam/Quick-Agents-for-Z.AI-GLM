@@ -11,23 +11,25 @@ Models - 数据模型（实体类）
 
 import time
 import hashlib
-import json
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from enum import Enum
 
 
 # ==================== 枚举定义 ====================
 
+
 class MemoryType(Enum):
     """记忆类型"""
-    FACTUAL = "factual"           # 事实记忆
+
+    FACTUAL = "factual"  # 事实记忆
     EXPERIENTIAL = "experiential"  # 经验记忆
-    WORKING = "working"           # 工作记忆
+    WORKING = "working"  # 工作记忆
 
 
 class TaskStatus(Enum):
     """任务状态"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -37,6 +39,7 @@ class TaskStatus(Enum):
 
 class TaskPriority(Enum):
     """任务优先级"""
+
     P0 = "P0"  # 紧急
     P1 = "P1"  # 高
     P2 = "P2"  # 中
@@ -45,22 +48,24 @@ class TaskPriority(Enum):
 
 class FeedbackType(Enum):
     """反馈类型"""
+
     BUG = "bug"
     IMPROVEMENT = "improvement"
     BEST_PRACTICE = "best_practice"
     PITFALL = "pitfall"
     QUESTION = "question"
-    SKILL_REVIEW = "skill_review"    # Skills评估反馈
-    AGENT_REVIEW = "agent_review"    # Agent评估反馈
+    SKILL_REVIEW = "skill_review"  # Skills评估反馈
+    AGENT_REVIEW = "agent_review"  # Agent评估反馈
 
 
 # ==================== 实体类定义 ====================
+
 
 @dataclass
 class Memory:
     """
     记忆实体
-    
+
     属性:
         id: 唯一标识
         memory_type: 记忆类型
@@ -75,6 +80,7 @@ class Memory:
         metadata: 元数据
         content_hash: 内容哈希
     """
+
     id: str
     memory_type: MemoryType
     key: str
@@ -87,18 +93,18 @@ class Memory:
     updated_at: float = field(default_factory=time.time)
     metadata: Dict[str, Any] = field(default_factory=dict)
     content_hash: Optional[str] = None
-    
+
     def touch(self) -> None:
         """更新访问时间和计数"""
         self.access_count += 1
         self.last_accessed_at = time.time()
         self.updated_at = time.time()
-    
+
     def calculate_hash(self) -> str:
         """计算内容哈希"""
         content = f"{self.key}:{self.value}:{self.category or ''}"
         return hashlib.sha256(content.encode()).hexdigest()[:16]
-    
+
     def update_hash(self) -> None:
         """更新内容哈希"""
         self.content_hash = self.calculate_hash()
@@ -108,7 +114,7 @@ class Memory:
 class Task:
     """
     任务实体
-    
+
     属性:
         id: 唯一标识
         name: 任务名称
@@ -121,6 +127,7 @@ class Task:
         updated_at: 更新时间戳
         metadata: 元数据
     """
+
     id: str
     name: str
     priority: TaskPriority = TaskPriority.P2
@@ -131,24 +138,24 @@ class Task:
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def start(self) -> None:
         """开始任务"""
         self.status = TaskStatus.IN_PROGRESS
         self.start_time = time.time()
         self.updated_at = time.time()
-    
+
     def complete(self) -> None:
         """完成任务"""
         self.status = TaskStatus.COMPLETED
         self.end_time = time.time()
         self.updated_at = time.time()
-    
+
     def block(self) -> None:
         """阻塞任务"""
         self.status = TaskStatus.BLOCKED
         self.updated_at = time.time()
-    
+
     def cancel(self) -> None:
         """取消任务"""
         self.status = TaskStatus.CANCELLED
@@ -160,7 +167,7 @@ class Task:
 class Progress:
     """
     进度实体
-    
+
     属性:
         id: 唯一标识
         project_name: 项目名称
@@ -171,6 +178,7 @@ class Progress:
         created_at: 创建时间戳
         updated_at: 更新时间戳
     """
+
     id: str
     project_name: str
     current_task: Optional[str] = None
@@ -179,19 +187,19 @@ class Progress:
     last_checkpoint: Optional[str] = None
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
-    
+
     @property
     def percentage(self) -> float:
         """完成百分比"""
         if self.total_tasks == 0:
             return 0.0
         return (self.completed_tasks / self.total_tasks) * 100
-    
+
     @property
     def remaining_tasks(self) -> int:
         """剩余任务数"""
         return max(0, self.total_tasks - self.completed_tasks)
-    
+
     def increment(self) -> None:
         """增加完成计数"""
         self.completed_tasks += 1
@@ -202,7 +210,7 @@ class Progress:
 class Feedback:
     """
     反馈实体
-    
+
     属性:
         id: 唯一标识
         feedback_type: 反馈类型
@@ -212,6 +220,7 @@ class Feedback:
         metadata: 元数据
         created_at: 创建时间戳
     """
+
     id: str
     feedback_type: FeedbackType
     title: str
@@ -223,62 +232,61 @@ class Feedback:
 
 # ==================== 检索结果模型 ====================
 
+
 @dataclass
 class SearchResult:
     """
     检索结果
-    
+
     用于带评分的检索
     """
+
     memory: Memory
-    relevance_score: float      # 相关性分数
-    recency_score: float        # 时序分数
-    importance_score: float     # 重要性分数
-    final_score: float          # 综合分数
-    
+    relevance_score: float  # 相关性分数
+    recency_score: float  # 时序分数
+    importance_score: float  # 重要性分数
+    final_score: float  # 综合分数
+
     @classmethod
     def calculate_final_score(
         cls,
         relevance: float,
         recency: float,
         importance: float,
-        weights: Dict[str, float] = None
+        weights: Dict[str, float] = None,
     ) -> float:
         """
         计算综合分数
-        
+
         公式: S = α·R + β·γ + δ·I
         - R: 相关性
         - γ: 时序衰减
         - I: 重要性
         - α, β, δ: 权重系数
         """
-        w = weights or {
-            'relevance': 0.5,
-            'recency': 0.3,
-            'importance': 0.2
-        }
-        
+        w = weights or {"relevance": 0.5, "recency": 0.3, "importance": 0.2}
+
         return (
-            w['relevance'] * relevance +
-            w['recency'] * recency +
-            w['importance'] * importance
+            w["relevance"] * relevance
+            + w["recency"] * recency
+            + w["importance"] * importance
         )
 
 
 @dataclass
 class RetrievalConfig:
     """检索配置"""
+
     # 权重配置
     relevance_weight: float = 0.5
     recency_weight: float = 0.3
     importance_weight: float = 0.2
-    
+
     # 时序衰减
     decay_rate: float = 0.995  # γ (0.99-0.999)
-    
+
     # 检索限制
     max_results: int = 10
-    
+
     # 最小分数阈值
     min_score: float = 0.3

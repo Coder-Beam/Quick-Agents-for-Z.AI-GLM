@@ -17,9 +17,11 @@ import hashlib
 
 # ============== 文档解析结果 ==============
 
+
 @dataclass
 class DocumentSection:
     """文档章节"""
+
     section_id: str
     title: str
     level: int
@@ -27,11 +29,11 @@ class DocumentSection:
     content: str = ""
     parent_id: Optional[str] = None
     children_ids: List[str] = field(default_factory=list)
-    
+
     def add_child(self, child_id: str) -> None:
         """添加子章节"""
         self.children_ids.append(child_id)
-    
+
     def get_full_path(self, sections: "List[DocumentSection]" = None) -> str:
         """获取完整路径（如 "Section > Subsection > Title"）"""
         parts = [self.title]
@@ -44,7 +46,7 @@ class DocumentSection:
             parts.insert(0, parent.title)
             current_id = parent.parent_id
         return " > ".join(parts)
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -56,7 +58,7 @@ class DocumentSection:
             "parent_id": self.parent_id,
             "children_ids": self.children_ids,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "DocumentSection":
         """从字典创建"""
@@ -69,17 +71,15 @@ class DocumentSection:
             parent_id=data.get("parent_id"),
             children_ids=data.get("children_ids", []),
         )
-    
+
     def __repr__(self) -> str:
         return f"DocumentSection(id={self.section_id}, title='{self.title}', level={self.level})"
 
-
-    
     def __eq__(self, other) -> bool:
         if not isinstance(other, DocumentSection):
             return False
         return self.section_id == other.section_id
-    
+
     def __hash__(self) -> int:
         return hash((self.section_id, self.title, self.content))
 
@@ -87,13 +87,14 @@ class DocumentSection:
 @dataclass
 class DocumentTable:
     """文档表格"""
+
     table_id: str
     page_number: int
     caption: Optional[str] = None
     headers: List[str] = field(default_factory=list)
     rows: List[List[str]] = field(default_factory=list)
     section_id: Optional[str] = None
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -104,7 +105,7 @@ class DocumentTable:
             "section_id": self.section_id,
             "page_number": self.page_number,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "DocumentTable":
         """从字典创建"""
@@ -116,15 +117,15 @@ class DocumentTable:
             section_id=data.get("section_id"),
             page_number=data["page_number"],
         )
-    
+
     def get_row_count(self) -> int:
         """获取行数（不含表头）"""
         return len(self.rows)
-    
+
     def get_column_count(self) -> int:
         """获取列数"""
         return len(self.headers)
-    
+
     def to_markdown(self) -> str:
         """转换为 Markdown 表格"""
         if not self.headers:
@@ -134,15 +135,15 @@ class DocumentTable:
         for row in self.rows:
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
-    
+
     def __repr__(self) -> str:
         return f"DocumentTable(id={self.table_id}, rows={len(self.rows)})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, DocumentTable):
             return False
         return self.table_id == other.table_id
-    
+
     def __hash__(self) -> int:
         return hash((self.table_id, tuple(self.rows)))
 
@@ -150,13 +151,14 @@ class DocumentTable:
 @dataclass
 class DocumentImage:
     """文档图片"""
+
     image_id: str
     image_type: str
     page_number: int
     caption: Optional[str] = None
     description: Optional[str] = None
     section_id: Optional[str] = None
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -167,7 +169,7 @@ class DocumentImage:
             "section_id": self.section_id,
             "page_number": self.page_number,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "DocumentImage":
         """从字典创建"""
@@ -179,15 +181,15 @@ class DocumentImage:
             section_id=data.get("section_id"),
             page_number=data["page_number"],
         )
-    
+
     def __repr__(self) -> str:
         return f"DocumentImage(id={self.image_id}, type={self.image_type})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, DocumentImage):
             return False
         return self.image_id == other.image_id
-    
+
     def __hash__(self) -> int:
         return hash((self.image_id, self.image_type))
 
@@ -195,13 +197,14 @@ class DocumentImage:
 @dataclass
 class DocumentFormula:
     """Excel公式 / 计算逻辑"""
+
     formula_id: str
     formula_text: str
     description: str = ""
     cell_ref: Optional[str] = None
     dependencies: List[str] = field(default_factory=list)
     sheet_name: Optional[str] = None
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -212,7 +215,7 @@ class DocumentFormula:
             "dependencies": self.dependencies,
             "sheet_name": self.sheet_name,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "DocumentFormula":
         """从字典创建"""
@@ -224,15 +227,15 @@ class DocumentFormula:
             dependencies=data.get("dependencies", []),
             sheet_name=data.get("sheet_name"),
         )
-    
+
     def __repr__(self) -> str:
         return f"DocumentFormula(id={self.formula_id}, cell={self.cell_ref})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, DocumentFormula):
             return False
         return self.formula_id == other.formula_id
-    
+
     def __hash__(self) -> int:
         return hash((self.formula_id, self.formula_text))
 
@@ -240,8 +243,9 @@ class DocumentFormula:
 @dataclass
 class DocumentResult:
     """第1层解析结果 -- 统一中间表示"""
+
     source_file: str
-    source_format: str                # pdf/docx/xlsx/xmind/mm/opml/md
+    source_format: str  # pdf/docx/xlsx/xmind/mm/opml/md
     title: Optional[str] = None
     sections: List[DocumentSection] = field(default_factory=list)
     paragraphs: List[str] = field(default_factory=list)
@@ -252,7 +256,7 @@ class DocumentResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
     raw_text: str = ""
     errors: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -269,7 +273,7 @@ class DocumentResult:
             "raw_text": self.raw_text,
             "errors": self.errors,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "DocumentResult":
         """从字典创建"""
@@ -287,55 +291,57 @@ class DocumentResult:
             raw_text=data.get("raw_text", ""),
             errors=data.get("errors", []),
         )
-    
+
     def get_hash(self) -> str:
         """计算内容哈希"""
         content = self.raw_text + str(len(self.sections)) + str(len(self.tables))
         return hashlib.sha256(content.encode()).hexdigest()[:16]
-    
+
     def has_errors(self) -> bool:
         """检查是否有错误"""
         return len(self.errors) > 0
-    
+
     def get_section_count(self) -> int:
         """获取章节数"""
         return len(self.sections)
-    
+
     def get_table_count(self) -> int:
         """获取表格数"""
         return len(self.tables)
-    
+
     def get_image_count(self) -> int:
         """获取图片数"""
         return len(self.images)
-    
+
     def find_section_by_title(self, title: str) -> Optional[DocumentSection]:
         """按标题查找章节"""
         for section in self.sections:
             if section.title == title:
                 return section
         return None
-    
+
     def find_sections_by_level(self, level: int) -> List[DocumentSection]:
         """按层级查找章节"""
         return [s for s in self.sections if s.level == level]
-    
+
     def get_all_text(self) -> str:
         """获取所有文本内容"""
         parts = [self.raw_text]
         for section in self.sections:
             parts.append(f"\n## {section.title}\n{section.content}")
         return "\n\n".join(parts)
-    
+
     def __repr__(self) -> str:
-        return (f"DocumentResult(file={self.source_file}, "
-                f"sections={len(self.sections)}, tables={len(self.tables)})")
-    
+        return (
+            f"DocumentResult(file={self.source_file}, "
+            f"sections={len(self.sections)}, tables={len(self.tables)})"
+        )
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, DocumentResult):
             return False
         return self.source_file == other.source_file
-    
+
     def __hash__(self) -> int:
         return hash((self.source_file, self.get_hash()))
 
@@ -344,6 +350,7 @@ class DocumentResult:
 @dataclass
 class CodeFunction:
     """代码函数/方法"""
+
     func_id: str
     name: str
     signature: str
@@ -354,7 +361,7 @@ class CodeFunction:
     return_type: Optional[str] = None
     decorators: List[str] = field(default_factory=list)
     calls: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -369,7 +376,7 @@ class CodeFunction:
             "start_line": self.start_line,
             "end_line": self.end_line,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "CodeFunction":
         """从字典创建"""
@@ -385,19 +392,19 @@ class CodeFunction:
             start_line=data["start_line"],
             end_line=data["end_line"],
         )
-    
+
     def get_loc(self) -> int:
         """获取代码行数"""
         return self.end_line - self.start_line + 1
-    
+
     def __repr__(self) -> str:
         return f"CodeFunction(id={self.func_id}, name={self.name}, lines={self.start_line}-{self.end_line})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, CodeFunction):
             return False
         return self.func_id == other.func_id
-    
+
     def __hash__(self) -> int:
         return hash((self.func_id, self.name, self.start_line, self.end_line))
 
@@ -405,6 +412,7 @@ class CodeFunction:
 @dataclass
 class CodeClass:
     """代码类"""
+
     class_id: str
     name: str
     docstring: Optional[str] = None
@@ -412,7 +420,7 @@ class CodeClass:
     methods: List[CodeFunction] = field(default_factory=list)
     attributes: List[str] = field(default_factory=list)
     decorators: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -424,7 +432,7 @@ class CodeClass:
             "attributes": self.attributes,
             "decorators": self.decorators,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "CodeClass":
         """从字典创建"""
@@ -437,26 +445,26 @@ class CodeClass:
             attributes=data.get("attributes", []),
             decorators=data.get("decorators", []),
         )
-    
+
     def get_method_count(self) -> int:
         """获取方法数"""
         return len(self.methods)
-    
+
     def find_method_by_name(self, name: str) -> Optional[CodeFunction]:
         """按名称查找方法"""
         for method in self.methods:
             if method.name == name:
                 return method
         return None
-    
+
     def __repr__(self) -> str:
         return f"CodeClass(id={self.class_id}, name={self.name}, methods={len(self.methods)})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, CodeClass):
             return False
         return self.class_id == other.class_id
-    
+
     def __hash__(self) -> int:
         return hash((self.class_id, self.name))
 
@@ -464,6 +472,7 @@ class CodeClass:
 @dataclass
 class CodeModule:
     """代码模块/文件"""
+
     module_id: str
     file_path: str
     language: str
@@ -473,7 +482,7 @@ class CodeModule:
     classes: List[CodeClass] = field(default_factory=list)
     functions: List[CodeFunction] = field(default_factory=list)
     variables: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -487,7 +496,7 @@ class CodeModule:
             "variables": self.variables,
             "loc": self.loc,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "CodeModule":
         """从字典创建"""
@@ -502,45 +511,47 @@ class CodeModule:
             variables=data.get("variables", []),
             loc=data["loc"],
         )
-    
+
     def get_function_count(self) -> int:
         """获取函数数"""
         return len(self.functions)
-    
+
     def get_class_count(self) -> int:
         """获取类数"""
         return len(self.classes)
-    
+
     def find_function_by_name(self, name: str) -> Optional[CodeFunction]:
         """按名称查找函数"""
         for func in self.functions:
             if func.name == name:
                 return func
         return None
-    
+
     def find_class_by_name(self, name: str) -> Optional[CodeClass]:
         """按名称查找类"""
         for cls in self.classes:
             if cls.name == name:
                 return cls
         return None
-    
+
     def get_all_functions(self) -> List[CodeFunction]:
         """获取所有函数（包括类方法）"""
         funcs = list(self.functions)
         for cls in self.classes:
             funcs.extend(cls.methods)
         return funcs
-    
+
     def __repr__(self) -> str:
-        return (f"CodeModule(id={self.module_id}, path={self.file_path}, "
-                f"funcs={len(self.functions)}, classes={len(self.classes)})")
-    
+        return (
+            f"CodeModule(id={self.module_id}, path={self.file_path}, "
+            f"funcs={len(self.functions)}, classes={len(self.classes)})"
+        )
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, CodeModule):
             return False
         return self.module_id == other.module_id
-    
+
     def __hash__(self) -> int:
         return hash((self.module_id, self.file_path))
 
@@ -548,10 +559,11 @@ class CodeModule:
 @dataclass
 class CodeDependency:
     """模块间依赖"""
+
     source_module: str
     target_module: str
-    dep_type: str              # import/inheritance/call
-    
+    dep_type: str  # import/inheritance/call
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -559,7 +571,7 @@ class CodeDependency:
             "target_module": self.target_module,
             "dep_type": self.dep_type,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "CodeDependency":
         """从字典创建"""
@@ -568,16 +580,18 @@ class CodeDependency:
             target_module=data["target_module"],
             dep_type=data["dep_type"],
         )
-    
+
     def __repr__(self) -> str:
         return f"CodeDependency({self.source_module} -> {self.target_module})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, CodeDependency):
             return False
-        return (self.source_module == other.source_module 
-                and self.target_module == other.target_module)
-    
+        return (
+            self.source_module == other.source_module
+            and self.target_module == other.target_module
+        )
+
     def __hash__(self) -> int:
         return hash((self.source_module, self.target_module, self.dep_type))
 
@@ -585,6 +599,7 @@ class CodeDependency:
 @dataclass
 class SourceCodeResult:
     """源码分析结果"""
+
     source_dir: str
     languages: List[str] = field(default_factory=list)
     modules: List[CodeModule] = field(default_factory=list)
@@ -593,7 +608,7 @@ class SourceCodeResult:
     stats: Dict[str, Any] = field(default_factory=dict)
     raw_text: Dict[str, str] = field(default_factory=dict)
     errors: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -606,7 +621,7 @@ class SourceCodeResult:
             "raw_text": self.raw_text,
             "errors": self.errors,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "SourceCodeResult":
         """从字典创建"""
@@ -614,21 +629,23 @@ class SourceCodeResult:
             source_dir=data["source_dir"],
             languages=data.get("languages", []),
             modules=[CodeModule.from_dict(m) for m in data.get("modules", [])],
-            dependencies=[CodeDependency.from_dict(d) for d in data.get("dependencies", [])],
+            dependencies=[
+                CodeDependency.from_dict(d) for d in data.get("dependencies", [])
+            ],
             structure_tree=data.get("structure_tree", {}),
             stats=data.get("stats", {}),
             raw_text=data.get("raw_text", {}),
             errors=data.get("errors", []),
         )
-    
+
     def get_module_count(self) -> int:
         """获取模块数"""
         return len(self.modules)
-    
+
     def get_total_loc(self) -> int:
         """获取总代码行数"""
         return sum(m.loc for m in self.modules)
-    
+
     def get_all_functions(self) -> List[CodeFunction]:
         """获取所有函数"""
         funcs = []
@@ -637,34 +654,36 @@ class SourceCodeResult:
             for cls in module.classes:
                 funcs.extend(cls.methods)
         return funcs
-    
+
     def get_all_classes(self) -> List[CodeClass]:
         """获取所有类"""
         classes = []
         for module in self.modules:
             classes.extend(module.classes)
         return classes
-    
+
     def find_module_by_path(self, file_path: str) -> Optional[CodeModule]:
         """按路径查找模块"""
         for module in self.modules:
             if module.file_path == file_path:
                 return module
         return None
-    
+
     def has_errors(self) -> bool:
         """检查是否有错误"""
         return len(self.errors) > 0
-    
+
     def __repr__(self) -> str:
-        return (f"SourceCodeResult(dir={self.source_dir}, "
-                f"modules={len(self.modules)}, langs={self.languages})")
-    
+        return (
+            f"SourceCodeResult(dir={self.source_dir}, "
+            f"modules={len(self.modules)}, langs={self.languages})"
+        )
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, SourceCodeResult):
             return False
         return self.source_dir == other.source_dir
-    
+
     def __hash__(self) -> int:
         return hash((self.source_dir, tuple(self.languages)))
 
@@ -672,35 +691,38 @@ class SourceCodeResult:
 # ============== 联合分析结果 ==============
 class TraceType(Enum):
     """追踪类型"""
-    CONVENTION = "convention"     # 结构化约定匹配
-    KEYWORD = "keyword"           # 关键词匹配
-    SEMANTIC = "semantic"         # LLM语义匹配
+
+    CONVENTION = "convention"  # 结构化约定匹配
+    KEYWORD = "keyword"  # 关键词匹配
+    SEMANTIC = "semantic"  # LLM语义匹配
 
 
 class TraceStatus(Enum):
     """追踪状态"""
-    COVERED = "covered"          # 已覆盖
-    PARTIAL = "partial"          # 部分覆盖
-    UNCOVERED = "uncovered"      # 未覆盖
-    EXTRA = "extra"              # 无文档对应
+
+    COVERED = "covered"  # 已覆盖
+    PARTIAL = "partial"  # 部分覆盖
+    UNCOVERED = "uncovered"  # 未覆盖
+    EXTRA = "extra"  # 无文档对应
 
 
 @dataclass
 class TraceEntry:
     """需求-代码追踪条目"""
+
     trace_id: str
     requirement: Optional[str] = None
     req_node_id: Optional[str] = None
-    req_source: Optional[str] = None       # 来源文档+章节
+    req_source: Optional[str] = None  # 来源文档+章节
     implementation: Optional[str] = None
     impl_node_id: Optional[str] = None
     impl_file: Optional[str] = None
     impl_function: Optional[str] = None
-    impl_lines: Optional[str] = None       # "L15-42"
+    impl_lines: Optional[str] = None  # "L15-42"
     trace_type: str = ""
     confidence: float = 0.0
     status: str = ""
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -717,7 +739,7 @@ class TraceEntry:
             "confidence": self.confidence,
             "status": self.status,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "TraceEntry":
         """从字典创建"""
@@ -735,15 +757,15 @@ class TraceEntry:
             confidence=data.get("confidence", 0.0),
             status=data.get("status", ""),
         )
-    
+
     def __repr__(self) -> str:
         return f"TraceEntry(id={self.trace_id}, status={self.status}, conf={self.confidence:.2f})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, TraceEntry):
             return False
         return self.trace_id == other.trace_id
-    
+
     def __hash__(self) -> int:
         return hash(self.trace_id)
 
@@ -751,14 +773,15 @@ class TraceEntry:
 @dataclass
 class DiffEntry:
     """差异条目"""
+
     diff_id: str
-    diff_type: str                   # gap/extra/inconsistency
+    diff_type: str  # gap/extra/inconsistency
     description: str = ""
-    req_side: Optional[str] = None          # 需求侧描述
-    code_side: Optional[str] = None         # 代码侧描述
-    suggestion_by_code: Optional[str] = None # 以代码为准的修正建议
+    req_side: Optional[str] = None  # 需求侧描述
+    code_side: Optional[str] = None  # 代码侧描述
+    suggestion_by_code: Optional[str] = None  # 以代码为准的修正建议
     suggestion_by_doc: Optional[str] = None  # 以文档为准的修正建议
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -770,7 +793,7 @@ class DiffEntry:
             "suggestion_by_code": self.suggestion_by_code,
             "suggestion_by_doc": self.suggestion_by_doc,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "DiffEntry":
         """从字典创建"""
@@ -783,15 +806,15 @@ class DiffEntry:
             suggestion_by_code=data.get("suggestion_by_code"),
             suggestion_by_doc=data.get("suggestion_by_doc"),
         )
-    
+
     def __repr__(self) -> str:
         return f"DiffEntry(id={self.diff_id}, type={self.diff_type})"
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, DiffEntry):
             return False
         return self.diff_id == other.diff_id
-    
+
     def __hash__(self) -> int:
         return hash((self.diff_id, self.diff_type))
 
@@ -799,12 +822,13 @@ class DiffEntry:
 @dataclass
 class CrossReferenceResult:
     """文档 <-> 源码交叉引用结果"""
+
     trace_matrix: List[TraceEntry] = field(default_factory=list)
     diff_report: List[DiffEntry] = field(default_factory=list)
     coverage_report: Dict = field(default_factory=dict)
     unmatched_reqs: List[str] = field(default_factory=list)
     unmatched_code: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -814,43 +838,47 @@ class CrossReferenceResult:
             "unmatched_reqs": self.unmatched_reqs,
             "unmatched_code": self.unmatched_code,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "CrossReferenceResult":
         """从字典创建"""
         return cls(
-            trace_matrix=[TraceEntry.from_dict(t) for t in data.get("trace_matrix", [])],
+            trace_matrix=[
+                TraceEntry.from_dict(t) for t in data.get("trace_matrix", [])
+            ],
             diff_report=[DiffEntry.from_dict(d) for d in data.get("diff_report", [])],
             coverage_report=data.get("coverage_report", {}),
             unmatched_reqs=data.get("unmatched_reqs", []),
             unmatched_code=data.get("unmatched_code", []),
         )
-    
+
     def get_coverage_rate(self) -> float:
         """获取覆盖率"""
         return self.coverage_report.get("rate", 0.0)
-    
+
     def get_covered_count(self) -> int:
         """获取已覆盖数"""
         return self.coverage_report.get("covered", 0)
-    
+
     def get_uncovered_count(self) -> int:
         """获取未覆盖数"""
         return self.coverage_report.get("uncovered", 0)
-    
+
     def has_diffs(self) -> bool:
         """检查是否有差异"""
         return len(self.diff_report) > 0
-    
+
     def __repr__(self) -> str:
-        return (f"CrossReferenceResult(traces={len(self.trace_matrix)}, "
-                f"diffs={len(self.diff_report)}, coverage={self.get_coverage_rate():.1%})")
-    
+        return (
+            f"CrossReferenceResult(traces={len(self.trace_matrix)}, "
+            f"diffs={len(self.diff_report)}, coverage={self.get_coverage_rate():.1%})"
+        )
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, CrossReferenceResult):
             return False
         return self.trace_matrix == other.trace_matrix
-    
+
     def __hash__(self) -> int:
         return hash((tuple(self.trace_matrix), tuple(self.diff_report)))
 
@@ -859,22 +887,25 @@ class CrossReferenceResult:
 @dataclass
 class RefinedDocumentResult(DocumentResult):
     """第2层交叉验证后的精炼文档结果"""
+
     corrections: List[Dict] = field(default_factory=list)
     supplements: List[Dict] = field(default_factory=list)
     confidence: float = 0.0
     layer2_notes: str = ""
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         base_dict = super().to_dict()
-        base_dict.update({
-            "corrections": self.corrections,
-            "supplements": self.supplements,
-            "confidence": self.confidence,
-            "layer2_notes": self.layer2_notes,
-        })
+        base_dict.update(
+            {
+                "corrections": self.corrections,
+                "supplements": self.supplements,
+                "confidence": self.confidence,
+                "layer2_notes": self.layer2_notes,
+            }
+        )
         return base_dict
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "RefinedDocumentResult":
         """从字典创建"""
@@ -897,7 +928,7 @@ class RefinedDocumentResult(DocumentResult):
             confidence=data.get("confidence", 0.0),
             layer2_notes=data.get("layer2_notes", ""),
         )
-    
+
     def __repr__(self) -> str:
         return f"RefinedDocumentResult(file={self.source_file}, conf={self.confidence:.2f})"
 
@@ -905,22 +936,25 @@ class RefinedDocumentResult(DocumentResult):
 @dataclass
 class RefinedCodeResult(SourceCodeResult):
     """第2层交叉验证后的精炼源码结果"""
+
     corrections: List[Dict] = field(default_factory=list)
     supplements: List[Dict] = field(default_factory=list)
     confidence: float = 0.0
     layer2_notes: str = ""
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         base_dict = super().to_dict()
-        base_dict.update({
-            "corrections": self.corrections,
-            "supplements": self.supplements,
-            "confidence": self.confidence,
-            "layer2_notes": self.layer2_notes,
-        })
+        base_dict.update(
+            {
+                "corrections": self.corrections,
+                "supplements": self.supplements,
+                "confidence": self.confidence,
+                "layer2_notes": self.layer2_notes,
+            }
+        )
         return base_dict
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "RefinedCodeResult":
         """从字典创建"""
@@ -939,7 +973,7 @@ class RefinedCodeResult(SourceCodeResult):
             confidence=data.get("confidence", 0.0),
             layer2_notes=data.get("layer2_notes", ""),
         )
-    
+
     def __repr__(self) -> str:
         return f"RefinedCodeResult(dir={self.source_dir}, conf={self.confidence:.2f})"
 
@@ -948,14 +982,15 @@ class RefinedCodeResult(SourceCodeResult):
 @dataclass
 class ExtractedRequirement:
     """提取的需求"""
+
     req_id: str
     title: str = ""
     description: str = ""
-    req_type: str = ""            # functional/non-functional/constraint
-    priority: Optional[str] = None   # high/medium/low
+    req_type: str = ""  # functional/non-functional/constraint
+    priority: Optional[str] = None  # high/medium/low
     source_section: str = ""
     confidence: float = 0.0
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -967,7 +1002,7 @@ class ExtractedRequirement:
             "source_section": self.source_section,
             "confidence": self.confidence,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "ExtractedRequirement":
         """从字典创建"""
@@ -980,7 +1015,7 @@ class ExtractedRequirement:
             source_section=data.get("source_section", ""),
             confidence=data.get("confidence", 0.0),
         )
-    
+
     def __repr__(self) -> str:
         return f"ExtractedRequirement(id={self.req_id}, title={self.title[:30]}...)"
 
@@ -988,6 +1023,7 @@ class ExtractedRequirement:
 @dataclass
 class ExtractedDecision:
     """提取的决策"""
+
     decision_id: str
     title: str = ""
     description: str = ""
@@ -995,7 +1031,7 @@ class ExtractedDecision:
     alternatives: List[str] = field(default_factory=list)
     source_section: str = ""
     confidence: float = 0.0
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -1007,7 +1043,7 @@ class ExtractedDecision:
             "source_section": self.source_section,
             "confidence": self.confidence,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "ExtractedDecision":
         """从字典创建"""
@@ -1020,7 +1056,7 @@ class ExtractedDecision:
             source_section=data.get("source_section", ""),
             confidence=data.get("confidence", 0.0),
         )
-    
+
     def __repr__(self) -> str:
         return f"ExtractedDecision(id={self.decision_id}, title={self.title[:30]}...)"
 
@@ -1028,12 +1064,13 @@ class ExtractedDecision:
 @dataclass
 class ExtractedFact:
     """提取的事实"""
+
     fact_id: str
     content: str = ""
     category: str = ""
     source_section: str = ""
     confidence: float = 0.0
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -1043,7 +1080,7 @@ class ExtractedFact:
             "source_section": self.source_section,
             "confidence": self.confidence,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "ExtractedFact":
         """从字典创建"""
@@ -1054,7 +1091,7 @@ class ExtractedFact:
             source_section=data.get("source_section", ""),
             confidence=data.get("confidence", 0.0),
         )
-    
+
     def __repr__(self) -> str:
         return f"ExtractedFact(id={self.fact_id}, category={self.category})"
 
@@ -1062,6 +1099,7 @@ class ExtractedFact:
 @dataclass
 class KnowledgeExtractionResult:
     """第3层深度分析结果"""
+
     requirements: List[ExtractedRequirement] = field(default_factory=list)
     decisions: List[ExtractedDecision] = field(default_factory=list)
     facts: List[ExtractedFact] = field(default_factory=list)
@@ -1069,7 +1107,7 @@ class KnowledgeExtractionResult:
     relationships: List[Dict] = field(default_factory=list)
     summary: str = ""
     layer3_notes: str = ""
-    
+
     def to_dict(self) -> Dict:
         """转换为字典"""
         return {
@@ -1081,34 +1119,38 @@ class KnowledgeExtractionResult:
             "summary": self.summary,
             "layer3_notes": self.layer3_notes,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "KnowledgeExtractionResult":
         """从字典创建"""
         return cls(
-            requirements=[ExtractedRequirement.from_dict(r) for r in data.get("requirements", [])],
-            decisions=[ExtractedDecision.from_dict(d) for d in data.get("decisions", [])],
+            requirements=[
+                ExtractedRequirement.from_dict(r) for r in data.get("requirements", [])
+            ],
+            decisions=[
+                ExtractedDecision.from_dict(d) for d in data.get("decisions", [])
+            ],
             facts=[ExtractedFact.from_dict(f) for f in data.get("facts", [])],
             concepts=data.get("concepts", []),
             relationships=data.get("relationships", []),
             summary=data.get("summary", ""),
             layer3_notes=data.get("layer3_notes", ""),
         )
-    
+
     def get_requirement_count(self) -> int:
         """获取需求数"""
         return len(self.requirements)
-    
+
     def get_decision_count(self) -> int:
         """获取决策数"""
         return len(self.decisions)
-    
+
     def get_fact_count(self) -> int:
         """获取事实数"""
         return len(self.facts)
-    
+
     def __repr__(self) -> str:
-        return (f"KnowledgeExtractionResult(reqs={len(self.requirements)}, "
-                f"decisions={len(self.decisions)}, facts={len(self.facts)})")
-
-
+        return (
+            f"KnowledgeExtractionResult(reqs={len(self.requirements)}, "
+            f"decisions={len(self.decisions)}, facts={len(self.facts)})"
+        )

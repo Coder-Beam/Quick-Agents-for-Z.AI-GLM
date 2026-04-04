@@ -28,10 +28,31 @@ _REQ_ID_PATTERNS = [
 ]
 
 _MATRIX_HEADER_KEYWORDS = {
-    "需求", "功能", "编号", "id", "no", "序号", "标题", "名称",
-    "描述", "优先级", "状态", "模块", "负责人", "备注", "说明",
-    "requirement", "feature", "priority", "status", "module",
-    "description", "assignee", "remark", "title", "name",
+    "需求",
+    "功能",
+    "编号",
+    "id",
+    "no",
+    "序号",
+    "标题",
+    "名称",
+    "描述",
+    "优先级",
+    "状态",
+    "模块",
+    "负责人",
+    "备注",
+    "说明",
+    "requirement",
+    "feature",
+    "priority",
+    "status",
+    "module",
+    "description",
+    "assignee",
+    "remark",
+    "title",
+    "name",
 }
 
 
@@ -47,6 +68,7 @@ class ExcelParser(BaseParser):
         self._openpyxl = None
         if self._deps_available:
             import openpyxl
+
             self._openpyxl = openpyxl
 
     def parse(self, file_path: Path) -> DocumentResult:
@@ -64,7 +86,9 @@ class ExcelParser(BaseParser):
         metadata = self._extract_metadata(file_path)
 
         wb = self._openpyxl.load_workbook(
-            str(file_path), data_only=False, read_only=True,
+            str(file_path),
+            data_only=False,
+            read_only=True,
         )
 
         try:
@@ -125,13 +149,15 @@ class ExcelParser(BaseParser):
             ws = wb[sheet_name]
             max_r = ws.max_row or 0
             max_c = ws.max_column or 0
-            sections.append(DocumentSection(
-                section_id=f"S{counter:03d}",
-                title=sheet_name,
-                level=1,
-                page_number=counter,
-                content=f"Sheet with {max_r} rows x {max_c} columns",
-            ))
+            sections.append(
+                DocumentSection(
+                    section_id=f"S{counter:03d}",
+                    title=sheet_name,
+                    level=1,
+                    page_number=counter,
+                    content=f"Sheet with {max_r} rows x {max_c} columns",
+                )
+            )
         return sections
 
     def _extract_paragraphs(self, wb) -> List[str]:
@@ -184,19 +210,19 @@ class ExcelParser(BaseParser):
             caption = self._find_table_caption(ws, sheet_name, matrix_info)
 
             table_counter += 1
-            tables.append(DocumentTable(
-                table_id=f"T{table_counter:03d}",
-                page_number=sheet_idx + 1,
-                caption=caption,
-                headers=headers,
-                rows=data_rows,
-            ))
+            tables.append(
+                DocumentTable(
+                    table_id=f"T{table_counter:03d}",
+                    page_number=sheet_idx + 1,
+                    caption=caption,
+                    headers=headers,
+                    rows=data_rows,
+                )
+            )
 
         return tables
 
-    def _read_all_rows(
-        self, ws, max_row: int, max_col: int
-    ) -> List[List[str]]:
+    def _read_all_rows(self, ws, max_row: int, max_col: int) -> List[List[str]]:
         rows_data: List[List[str]] = []
         for row in ws.iter_rows(min_row=1, max_row=max_row, max_col=max_col):
             cells = []
@@ -228,14 +254,16 @@ class ExcelParser(BaseParser):
                         seen.add(cell_ref)
                         counter += 1
                         deps = self._parse_formula_dependencies(val)
-                        formulas.append(DocumentFormula(
-                            formula_id=f"F{counter:03d}",
-                            formula_text=val,
-                            description=self._describe_formula(val),
-                            cell_ref=f"{sheet_name}!{cell_ref}",
-                            dependencies=deps,
-                            sheet_name=sheet_name,
-                        ))
+                        formulas.append(
+                            DocumentFormula(
+                                formula_id=f"F{counter:03d}",
+                                formula_text=val,
+                                description=self._describe_formula(val),
+                                cell_ref=f"{sheet_name}!{cell_ref}",
+                                dependencies=deps,
+                                sheet_name=sheet_name,
+                            )
+                        )
         return formulas
 
     def _parse_formula_dependencies(self, formula: str) -> List[str]:
@@ -311,8 +339,7 @@ class ExcelParser(BaseParser):
                 header_row.append(str(val).strip().lower())
 
         matrix_score = sum(
-            1 for h in header_row
-            if any(kw in h for kw in _MATRIX_HEADER_KEYWORDS)
+            1 for h in header_row if any(kw in h for kw in _MATRIX_HEADER_KEYWORDS)
         )
 
         has_req_ids = False

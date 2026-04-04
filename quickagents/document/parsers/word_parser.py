@@ -5,7 +5,7 @@ Uses python-docx for text, heading, table, and image extraction.
 """
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import logging
 
 from . import BaseParser
@@ -20,10 +20,18 @@ from ..models import (
 logger = logging.getLogger(__name__)
 
 _HEADING_LEVELS = {
-    "Heading 1": 1, "Heading 2": 2, "Heading 3": 3,
-    "Heading 4": 4, "Heading 5": 5, "Heading 6": 6,
-    "Heading1": 1, "Heading2": 2, "Heading3": 3,
-    "Heading4": 4, "Heading5": 5, "Heading6": 6,
+    "Heading 1": 1,
+    "Heading 2": 2,
+    "Heading 3": 3,
+    "Heading 4": 4,
+    "Heading 5": 5,
+    "Heading 6": 6,
+    "Heading1": 1,
+    "Heading2": 2,
+    "Heading3": 3,
+    "Heading4": 4,
+    "Heading5": 5,
+    "Heading6": 6,
     "Title": 1,
 }
 
@@ -40,6 +48,7 @@ class WordParser(BaseParser):
         self._docx = None
         if self._deps_available:
             from docx import Document
+
             self._docx = Document
 
     def parse(self, file_path: Path) -> DocumentResult:
@@ -208,13 +217,15 @@ class WordParser(BaseParser):
                 if lower.startswith("table") or lower.startswith("表"):
                     caption = para_text
 
-            tables.append(DocumentTable(
-                table_id=f"T{idx + 1:03d}",
-                page_number=1,
-                caption=caption,
-                headers=headers,
-                rows=data_rows,
-            ))
+            tables.append(
+                DocumentTable(
+                    table_id=f"T{idx + 1:03d}",
+                    page_number=1,
+                    caption=caption,
+                    headers=headers,
+                    rows=data_rows,
+                )
+            )
         return tables
 
     def _extract_images(self, doc) -> List[DocumentImage]:
@@ -238,11 +249,13 @@ class WordParser(BaseParser):
                 if ext in ("png", "jpeg", "jpg", "gif", "bmp", "tiff", "svg"):
                     img_type = ext
 
-            images.append(DocumentImage(
-                image_id=f"IMG{img_counter:03d}",
-                image_type=img_type,
-                page_number=1,
-                description=f"Image {img_counter} ({target})",
-            ))
+            images.append(
+                DocumentImage(
+                    image_id=f"IMG{img_counter:03d}",
+                    image_type=img_type,
+                    page_number=1,
+                    description=f"Image {img_counter} ({target})",
+                )
+            )
 
         return images

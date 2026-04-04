@@ -97,16 +97,16 @@ class TraceMatchEngine:
             total_reqs += len(doc.sections)
             total_reqs += sum(len(t.rows) for t in doc.tables)
 
-        total_code = sum(
-            len(m.get_all_functions()) for m in code_result.modules
-        )
+        total_code = sum(len(m.get_all_functions()) for m in code_result.modules)
 
         covered_reqs = len({t.req_source for t in traces if t.req_source})
-        covered_code = len({
-            (t.impl_file, t.impl_function)
-            for t in traces
-            if t.impl_file and t.impl_function
-        })
+        covered_code = len(
+            {
+                (t.impl_file, t.impl_function)
+                for t in traces
+                if t.impl_file and t.impl_function
+            }
+        )
 
         by_type: Dict[str, int] = {}
         for t in traces:

@@ -2,7 +2,7 @@
 
 import hashlib
 import os
-from typing import Optional, List
+from typing import Optional
 
 
 def hash_password(password: str, salt: Optional[str] = None) -> str:

@@ -41,15 +41,36 @@ _LANG_MAP = {
 
 _AST_LANGUAGES = {"python"}
 _TREE_SITTER_LANGUAGES = {
-    "javascript", "typescript", "java", "go", "rust", "c", "cpp",
+    "javascript",
+    "typescript",
+    "java",
+    "go",
+    "rust",
+    "c",
+    "cpp",
 }
 
 _CONFIG_EXTENSIONS = {".json", ".yaml", ".yml", ".toml", ".ini", ".cfg"}
 
 _SKIP_DIRS = {
-    "__pycache__", ".git", ".svn", "node_modules", ".venv", "venv",
-    ".env", ".tox", ".mypy_cache", ".pytest_cache", "dist", "build",
-    ".eggs", ".idea", ".vscode", "target", "bin", "obj",
+    "__pycache__",
+    ".git",
+    ".svn",
+    "node_modules",
+    ".venv",
+    "venv",
+    ".env",
+    ".tox",
+    ".mypy_cache",
+    ".pytest_cache",
+    "dist",
+    "build",
+    ".eggs",
+    ".idea",
+    ".vscode",
+    "target",
+    "bin",
+    "obj",
 }
 
 
@@ -190,9 +211,7 @@ class SourceCodeParser(BaseParser):
                     imports.append(f"from {mod} import {alias.name}")
         return imports
 
-    def _extract_python_classes(
-        self, tree: ast.AST, rel: str
-    ) -> List[CodeClass]:
+    def _extract_python_classes(self, tree: ast.AST, rel: str) -> List[CodeClass]:
         classes = []
         for node in ast.iter_child_nodes(tree):
             if not isinstance(node, ast.ClassDef):
@@ -220,29 +239,27 @@ class SourceCodeParser(BaseParser):
                         if isinstance(target, ast.Name):
                             attrs.append(target.id)
 
-            classes.append(CodeClass(
-                class_id=f"C{hash(f'{rel}:{node.name}') & 0xFFFF:04x}",
-                name=node.name,
-                docstring=ast.get_docstring(node),
-                bases=bases,
-                methods=methods,
-                attributes=attrs,
-                decorators=decorators,
-            ))
+            classes.append(
+                CodeClass(
+                    class_id=f"C{hash(f'{rel}:{node.name}') & 0xFFFF:04x}",
+                    name=node.name,
+                    docstring=ast.get_docstring(node),
+                    bases=bases,
+                    methods=methods,
+                    attributes=attrs,
+                    decorators=decorators,
+                )
+            )
         return classes
 
-    def _extract_python_functions(
-        self, tree: ast.AST, rel: str
-    ) -> List[CodeFunction]:
+    def _extract_python_functions(self, tree: ast.AST, rel: str) -> List[CodeFunction]:
         funcs = []
         for node in ast.iter_child_nodes(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 funcs.append(self._parse_function_def(node, rel))
         return funcs
 
-    def _parse_function_def(
-        self, node, rel: str
-    ) -> CodeFunction:
+    def _parse_function_def(self, node, rel: str) -> CodeFunction:
         name = node.name
         params = self._parse_function_params(node)
         ret_type = self._parse_return_type(node)
@@ -393,6 +410,7 @@ class SourceCodeParser(BaseParser):
     def _get_tree_sitter_language(self, lang_name: str):
         try:
             import tree_sitter_languages
+
             return tree_sitter_languages.get_language(lang_name)
         except ImportError:
             pass
@@ -412,9 +430,17 @@ class SourceCodeParser(BaseParser):
         imports = []
         source = content.encode("utf-8")
         for node in self._ts_query_nodes(tree, "import_statement"):
-            imports.append(source[node.start_byte:node.end_byte].decode("utf-8", errors="replace")[:120])
+            imports.append(
+                source[node.start_byte : node.end_byte].decode(
+                    "utf-8", errors="replace"
+                )[:120]
+            )
         for node in self._ts_query_nodes(tree, "import_from_statement"):
-            imports.append(source[node.start_byte:node.end_byte].decode("utf-8", errors="replace")[:120])
+            imports.append(
+                source[node.start_byte : node.end_byte].decode(
+                    "utf-8", errors="replace"
+                )[:120]
+            )
         return imports
 
     def _ts_extract_classes(self, tree, content: str, rel: str) -> List[CodeClass]:
@@ -422,55 +448,66 @@ class SourceCodeParser(BaseParser):
         source = content.encode("utf-8")
         for node in self._ts_query_nodes(tree, "class_declaration"):
             name = self._ts_get_child_text(node, "identifier", source) or "Anonymous"
-            classes.append(CodeClass(
-                class_id=f"C{hash(f'{rel}:{name}') & 0xFFFF:04x}",
-                name=name,
-                docstring=None,
-                bases=[],
-                methods=[],
-                attributes=[],
-            ))
+            classes.append(
+                CodeClass(
+                    class_id=f"C{hash(f'{rel}:{name}') & 0xFFFF:04x}",
+                    name=name,
+                    docstring=None,
+                    bases=[],
+                    methods=[],
+                    attributes=[],
+                )
+            )
         return classes
 
-    def _ts_extract_functions(
-        self, tree, content: str, rel: str
-    ) -> List[CodeFunction]:
+    def _ts_extract_functions(self, tree, content: str, rel: str) -> List[CodeFunction]:
         funcs = []
         source = content.encode("utf-8")
         for node in self._ts_query_nodes(tree, "function_declaration"):
             name = self._ts_get_child_text(node, "identifier", source) or "anonymous"
-            funcs.append(CodeFunction(
-                func_id=f"F{hash(f'{rel}:{name}:{node.start_point[0]}') & 0xFFFF:04x}",
-                name=name,
-                signature=f"{name}(...)",
-                start_line=node.start_point[0] + 1,
-                end_line=node.end_point[0] + 1,
-            ))
+            funcs.append(
+                CodeFunction(
+                    func_id=f"F{hash(f'{rel}:{name}:{node.start_point[0]}') & 0xFFFF:04x}",
+                    name=name,
+                    signature=f"{name}(...)",
+                    start_line=node.start_point[0] + 1,
+                    end_line=node.end_point[0] + 1,
+                )
+            )
         for node in self._ts_query_nodes(tree, "method_definition"):
-            name = self._ts_get_child_text(node, "property_identifier", source) or "anonymous"
-            funcs.append(CodeFunction(
-                func_id=f"F{hash(f'{rel}:{name}:{node.start_point[0]}') & 0xFFFF:04x}",
-                name=name,
-                signature=f"{name}(...)",
-                start_line=node.start_point[0] + 1,
-                end_line=node.end_point[0] + 1,
-            ))
+            name = (
+                self._ts_get_child_text(node, "property_identifier", source)
+                or "anonymous"
+            )
+            funcs.append(
+                CodeFunction(
+                    func_id=f"F{hash(f'{rel}:{name}:{node.start_point[0]}') & 0xFFFF:04x}",
+                    name=name,
+                    signature=f"{name}(...)",
+                    start_line=node.start_point[0] + 1,
+                    end_line=node.end_point[0] + 1,
+                )
+            )
         return funcs
 
     def _ts_query_nodes(self, tree, type_name: str) -> list:
         results = []
+
         def walk(node):
             if node.type == type_name:
                 results.append(node)
             for child in node.children:
                 walk(child)
+
         walk(tree.root_node)
         return results
 
     def _ts_get_child_text(self, node, child_type: str, source: bytes) -> Optional[str]:
         for child in node.children:
             if child.type == child_type:
-                return source[child.start_byte:child.end_byte].decode("utf-8", errors="replace")
+                return source[child.start_byte : child.end_byte].decode(
+                    "utf-8", errors="replace"
+                )
         return None
 
     # ---------- Generic / Regex Parser ----------
@@ -502,9 +539,7 @@ class SourceCodeParser(BaseParser):
     ) -> List[CodeFunction]:
         funcs = []
         patterns = {
-            "python": re.compile(
-                r"^(\s*)(async\s+)?def\s+(\w+)\s*\(", re.MULTILINE
-            ),
+            "python": re.compile(r"^(\s*)(async\s+)?def\s+(\w+)\s*\(", re.MULTILINE),
             "javascript": re.compile(
                 r"(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))",
                 re.MULTILINE,
@@ -518,12 +553,8 @@ class SourceCodeParser(BaseParser):
                 re.MULTILINE,
             ),
             "go": re.compile(r"func\s+(?:\([^)]+\)\s*)?(\w+)\s*\(", re.MULTILINE),
-            "rust": re.compile(
-                r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)", re.MULTILINE
-            ),
-            "c": re.compile(
-                r"(?:[\w*]+\s+)+(\w+)\s*\([^)]*\)\s*\{", re.MULTILINE
-            ),
+            "rust": re.compile(r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)", re.MULTILINE),
+            "c": re.compile(r"(?:[\w*]+\s+)+(\w+)\s*\([^)]*\)\s*\{", re.MULTILINE),
             "cpp": re.compile(
                 r"(?:[\w*]+\s+)+(\w+)\s*\([^)]*\)\s*(?:const)?\s*(?:\{|:)", re.MULTILINE
             ),
@@ -533,17 +564,23 @@ class SourceCodeParser(BaseParser):
             return funcs
 
         for m in pat.finditer(content):
-            name = m.group(1) or m.group(2) if m.lastindex and m.lastindex >= 2 else m.group(1)
+            name = (
+                m.group(1) or m.group(2)
+                if m.lastindex and m.lastindex >= 2
+                else m.group(1)
+            )
             if not name:
                 continue
-            line_num = content[:m.start()].count("\n") + 1
-            funcs.append(CodeFunction(
-                func_id=f"F{hash(f'{rel}:{name}:{line_num}') & 0xFFFF:04x}",
-                name=name,
-                signature=f"{name}(...)",
-                start_line=line_num,
-                end_line=line_num,
-            ))
+            line_num = content[: m.start()].count("\n") + 1
+            funcs.append(
+                CodeFunction(
+                    func_id=f"F{hash(f'{rel}:{name}:{line_num}') & 0xFFFF:04x}",
+                    name=name,
+                    signature=f"{name}(...)",
+                    start_line=line_num,
+                    end_line=line_num,
+                )
+            )
         return funcs
 
     def _regex_extract_imports(self, content: str, lang: str) -> List[str]:
@@ -557,9 +594,7 @@ class SourceCodeParser(BaseParser):
                 r"import\s+.+\s+from\s+['\"](.+?)['\"]", re.MULTILINE
             ),
             "java": re.compile(r"import\s+([\w.]+)\s*;", re.MULTILINE),
-            "go": re.compile(
-                r'import\s+(?:"([^"]+)"|\(\s*([^)]+)\s*\))', re.MULTILINE
-            ),
+            "go": re.compile(r'import\s+(?:"([^"]+)"|\(\s*([^)]+)\s*\))', re.MULTILINE),
             "rust": re.compile(r"use\s+([\w:]+)", re.MULTILINE),
             "c": re.compile(r'#include\s*[<"]([^>"]+)[>"]', re.MULTILINE),
             "cpp": re.compile(r'#include\s*[<"]([^>"]+)[>"]', re.MULTILINE),
@@ -586,17 +621,13 @@ class SourceCodeParser(BaseParser):
             "javascript": re.compile(
                 r"class\s+(\w+)(?:\s+extends\s+(\w+))?", re.MULTILINE
             ),
-            "typescript": re.compile(
-                r"(?:export\s+)?class\s+(\w+)", re.MULTILINE
-            ),
+            "typescript": re.compile(r"(?:export\s+)?class\s+(\w+)", re.MULTILINE),
             "java": re.compile(
                 r"(?:public|private|protected)?\s*(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?",
                 re.MULTILINE,
             ),
             "go": re.compile(r"type\s+(\w+)\s+struct\s*\{", re.MULTILINE),
-            "rust": re.compile(
-                r"(?:pub\s+)?struct\s+(\w+)", re.MULTILINE
-            ),
+            "rust": re.compile(r"(?:pub\s+)?struct\s+(\w+)", re.MULTILINE),
             "cpp": re.compile(r"class\s+(\w+)(?:\s*:\s*public\s+(\w+))?", re.MULTILINE),
         }
         pat = patterns.get(lang)
@@ -608,12 +639,14 @@ class SourceCodeParser(BaseParser):
             bases = []
             if m.lastindex and m.lastindex >= 2 and m.group(2):
                 bases.append(m.group(2))
-            classes.append(CodeClass(
-                class_id=f"C{hash(f'{rel}:{name}') & 0xFFFF:04x}",
-                name=name,
-                docstring=None,
-                bases=bases,
-            ))
+            classes.append(
+                CodeClass(
+                    class_id=f"C{hash(f'{rel}:{name}') & 0xFFFF:04x}",
+                    name=name,
+                    docstring=None,
+                    bases=bases,
+                )
+            )
         return classes
 
     # ---------- Config File Parser (T032) ----------
@@ -637,14 +670,16 @@ class SourceCodeParser(BaseParser):
 
                 lang = ext.lstrip(".")  # json, yaml, toml, etc.
 
-                modules.append(CodeModule(
-                    module_id=f"M{hash(rel) & 0xFFFF:04x}",
-                    file_path=rel,
-                    language=lang,
-                    loc=loc,
-                    module_docstring=None,
-                    imports=imports,
-                ))
+                modules.append(
+                    CodeModule(
+                        module_id=f"M{hash(rel) & 0xFFFF:04x}",
+                        file_path=rel,
+                        language=lang,
+                        loc=loc,
+                        module_docstring=None,
+                        imports=imports,
+                    )
+                )
             except Exception as e:
                 logger.warning(f"Error parsing config {p}: {e}")
         return modules
@@ -661,9 +696,7 @@ class SourceCodeParser(BaseParser):
 
     # ---------- Dependencies (T031) ----------
 
-    def _build_dependencies(
-        self, modules: List[CodeModule]
-    ) -> List[CodeDependency]:
+    def _build_dependencies(self, modules: List[CodeModule]) -> List[CodeDependency]:
         deps = []
         seen = set()
         for mod in modules:
@@ -677,25 +710,32 @@ class SourceCodeParser(BaseParser):
                         key = (mod.file_path, other.file_path, "import")
                         if key not in seen:
                             seen.add(key)
-                            deps.append(CodeDependency(
-                                source_module=mod.file_path,
-                                target_module=other.file_path,
-                                dep_type="import",
-                            ))
+                            deps.append(
+                                CodeDependency(
+                                    source_module=mod.file_path,
+                                    target_module=other.file_path,
+                                    dep_type="import",
+                                )
+                            )
 
             for cls in mod.classes:
                 for base in cls.bases:
                     for other in modules:
                         for other_cls in other.classes:
-                            if other_cls.name == base and other.file_path != mod.file_path:
+                            if (
+                                other_cls.name == base
+                                and other.file_path != mod.file_path
+                            ):
                                 key = (mod.file_path, other.file_path, "inheritance")
                                 if key not in seen:
                                     seen.add(key)
-                                    deps.append(CodeDependency(
-                                        source_module=mod.file_path,
-                                        target_module=other.file_path,
-                                        dep_type="inheritance",
-                                    ))
+                                    deps.append(
+                                        CodeDependency(
+                                            source_module=mod.file_path,
+                                            target_module=other.file_path,
+                                            dep_type="inheritance",
+                                        )
+                                    )
         return deps
 
     # ---------- Stats & Structure Tree ----------
@@ -733,11 +773,13 @@ class SourceCodeParser(BaseParser):
                     found = {"name": part, "type": "directory", "children": []}
                     current["children"].append(found)
                 current = found
-            current["children"].append({
-                "name": parts[-1],
-                "type": "file",
-                "language": mod.language,
-                "id": mod.module_id,
-                "loc": mod.loc,
-            })
+            current["children"].append(
+                {
+                    "name": parts[-1],
+                    "type": "file",
+                    "language": mod.language,
+                    "id": mod.module_id,
+                    "loc": mod.loc,
+                }
+            )
         return root

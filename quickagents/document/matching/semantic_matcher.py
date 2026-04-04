@@ -63,15 +63,11 @@ class SemanticMatcher:
         prompt = self._build_prompt(reqs, code_items)
         try:
             response = self._llm_func(prompt)
-            return self._parse_llm_response(
-                response, reqs, code_items, counter_start
-            )
+            return self._parse_llm_response(response, reqs, code_items, counter_start)
         except Exception:
             return []
 
-    def _build_prompt(
-        self, reqs: List[Dict], code_items: List[Dict]
-    ) -> str:
+    def _build_prompt(self, reqs: List[Dict], code_items: List[Dict]) -> str:
         req_lines = []
         for i, r in enumerate(reqs):
             req_lines.append(f"  R{i}: {r['text'][:200]}")
@@ -103,9 +99,7 @@ class SemanticMatcher:
 
         entries: List[TraceEntry] = []
         counter = counter_start
-        pattern = re.compile(
-            r'R(\d+)\s*<->\s*C(\d+)\s*\|\s*([\d.]+)\s*\|\s*(.+)'
-        )
+        pattern = re.compile(r"R(\d+)\s*<->\s*C(\d+)\s*\|\s*([\d.]+)\s*\|\s*(.+)")
 
         for line in response.strip().split("\n"):
             m = pattern.search(line)
@@ -114,7 +108,7 @@ class SemanticMatcher:
             req_idx = int(m.group(1))
             code_idx = int(m.group(2))
             confidence = float(m.group(3))
-            reason = m.group(4).strip()
+            m.group(4).strip()
 
             if confidence < self.MIN_CONFIDENCE:
                 continue
@@ -125,18 +119,20 @@ class SemanticMatcher:
             code = code_items[code_idx]
             counter += 1
 
-            entries.append(TraceEntry(
-                trace_id=f"TRACE-S{counter:03d}",
-                requirement=req["text"],
-                req_source=req["source"],
-                implementation=f"{code['file']}:{code['name']}",
-                impl_file=code["file"],
-                impl_function=code["name"],
-                impl_lines=code.get("lines", ""),
-                trace_type="semantic",
-                confidence=round(confidence, 2),
-                status="covered",
-            ))
+            entries.append(
+                TraceEntry(
+                    trace_id=f"TRACE-S{counter:03d}",
+                    requirement=req["text"],
+                    req_source=req["source"],
+                    implementation=f"{code['file']}:{code['name']}",
+                    impl_file=code["file"],
+                    impl_function=code["name"],
+                    impl_lines=code.get("lines", ""),
+                    trace_type="semantic",
+                    confidence=round(confidence, 2),
+                    status="covered",
+                )
+            )
 
         return entries
 
@@ -183,18 +179,20 @@ class SemanticMatcher:
 
             if best_score >= self.MIN_CONFIDENCE and best_code:
                 counter += 1
-                entries.append(TraceEntry(
-                    trace_id=f"TRACE-S{counter:03d}",
-                    requirement=req["text"],
-                    req_source=req["source"],
-                    implementation=f"{best_code['file']}:{best_code['name']}",
-                    impl_file=best_code["file"],
-                    impl_function=best_code["name"],
-                    impl_lines=best_code.get("lines", ""),
-                    trace_type="semantic",
-                    confidence=round(best_score, 2),
-                    status="covered",
-                ))
+                entries.append(
+                    TraceEntry(
+                        trace_id=f"TRACE-S{counter:03d}",
+                        requirement=req["text"],
+                        req_source=req["source"],
+                        implementation=f"{best_code['file']}:{best_code['name']}",
+                        impl_file=best_code["file"],
+                        impl_function=best_code["name"],
+                        impl_lines=best_code.get("lines", ""),
+                        trace_type="semantic",
+                        confidence=round(best_score, 2),
+                        status="covered",
+                    )
+                )
 
         return entries
 
@@ -218,10 +216,12 @@ class SemanticMatcher:
             for sec in doc.sections:
                 src = f"{doc.source_file} {sec.title}"
                 if src not in matched and sec.title:
-                    items.append({
-                        "text": sec.content or sec.title,
-                        "source": src,
-                    })
+                    items.append(
+                        {
+                            "text": sec.content or sec.title,
+                            "source": src,
+                        }
+                    )
         return items
 
     def _get_unmatched_code(
@@ -231,22 +231,25 @@ class SemanticMatcher:
         for module in code_result.modules:
             for func in module.get_all_functions():
                 if (module.file_path, func.name) not in matched:
-                    items.append({
-                        "file": module.file_path,
-                        "name": func.name,
-                        "docstring": func.docstring or "",
-                        "lines": f"L{func.start_line}-{func.end_line}",
-                    })
+                    items.append(
+                        {
+                            "file": module.file_path,
+                            "name": func.name,
+                            "docstring": func.docstring or "",
+                            "lines": f"L{func.start_line}-{func.end_line}",
+                        }
+                    )
         return items
 
 
 def _split_words(text: str) -> List[str]:
     import re
-    cn_blocks = re.findall(r'[\u4e00-\u9fff]{2,}', text)
-    en_words = re.findall(r'[a-zA-Z]{2,}', text)
+
+    cn_blocks = re.findall(r"[\u4e00-\u9fff]{2,}", text)
+    en_words = re.findall(r"[a-zA-Z]{2,}", text)
     cn_parts: List[str] = []
     for block in cn_blocks:
         cn_parts.append(block)
         for i in range(len(block) - 1):
-            cn_parts.append(block[i:i + 2])
+            cn_parts.append(block[i : i + 2])
     return cn_parts + en_words

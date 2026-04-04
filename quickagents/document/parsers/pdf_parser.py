@@ -36,6 +36,7 @@ class PDFParser(BaseParser):
         if self._deps_available:
             import fitz
             import pdfplumber
+
             self._fitz = fitz
             self._pdfplumber = pdfplumber
 
@@ -144,36 +145,32 @@ class PDFParser(BaseParser):
                     if not line_text:
                         continue
 
-                    level = self._infer_heading_level(
-                        line_text, line_size, doc
-                    )
+                    level = self._infer_heading_level(line_text, line_size, doc)
                     if level is not None:
                         section_counter += 1
                         sid = f"S{section_counter:03d}"
                         parent_id = find_parent_id(sections, level)
-                        sections.append(DocumentSection(
-                            section_id=sid,
-                            title=line_text,
-                            level=level,
-                            page_number=page_num + 1,
-                            parent_id=parent_id,
-                        ))
+                        sections.append(
+                            DocumentSection(
+                                section_id=sid,
+                                title=line_text,
+                                level=level,
+                                page_number=page_num + 1,
+                                parent_id=parent_id,
+                            )
+                        )
 
         self._populate_section_content(sections, doc)
         return sections
 
-    def _infer_heading_level(
-        self, text: str, font_size: float, doc
-    ) -> Optional[int]:
+    def _infer_heading_level(self, text: str, font_size: float, doc) -> Optional[int]:
         """
         Infer heading level from font size and numbering pattern.
         Returns None if not a heading.
         """
         import re
 
-        numbered = re.match(
-            r"^(\d+(?:\.\d+)*)\s+(.+)$", text
-        )
+        numbered = re.match(r"^(\d+(?:\.\d+)*)\s+(.+)$", text)
         if numbered:
             depth = len(numbered.group(1).split("."))
             if depth <= 6:
@@ -208,16 +205,12 @@ class PDFParser(BaseParser):
                         if text:
                             size = round(span.get("size", 0.0), 1)
                             if size > 0:
-                                size_counts[size] = (
-                                    size_counts.get(size, 0) + len(text)
-                                )
+                                size_counts[size] = size_counts.get(size, 0) + len(text)
         if not size_counts:
             return None
         return max(size_counts, key=size_counts.get)
 
-    def _populate_section_content(
-        self, sections: List[DocumentSection], doc
-    ) -> None:
+    def _populate_section_content(self, sections: List[DocumentSection], doc) -> None:
         """Fill section content from page text"""
         if not sections:
             return
@@ -228,7 +221,7 @@ class PDFParser(BaseParser):
                 if sec.page_number == page_num + 1:
                     idx = text.find(sec.title)
                     if idx >= 0:
-                        after = text[idx + len(sec.title):].strip()
+                        after = text[idx + len(sec.title) :].strip()
                         next_heading_pos = self._find_next_heading(
                             after, sections, page_num + 1
                         )
@@ -249,9 +242,7 @@ class PDFParser(BaseParser):
                     return pos
         return -1
 
-    def _extract_tables(
-        self, file_path: Path, doc
-    ) -> List[DocumentTable]:
+    def _extract_tables(self, file_path: Path, doc) -> List[DocumentTable]:
         """
         Extract tables using PyMuPDF first, fallback to pdfplumber.
         """
@@ -278,20 +269,18 @@ class PDFParser(BaseParser):
                 headers = [str(c).strip() if c else "" for c in rows[0]]
                 data_rows = []
                 for row in rows[1:]:
-                    data_rows.append(
-                        [str(c).strip() if c else "" for c in row]
+                    data_rows.append([str(c).strip() if c else "" for c in row])
+                tables.append(
+                    DocumentTable(
+                        table_id=f"T{table_counter:03d}",
+                        page_number=page_num + 1,
+                        headers=headers,
+                        rows=data_rows,
                     )
-                tables.append(DocumentTable(
-                    table_id=f"T{table_counter:03d}",
-                    page_number=page_num + 1,
-                    headers=headers,
-                    rows=data_rows,
-                ))
+                )
         return tables
 
-    def _extract_tables_pdfplumber(
-        self, file_path: Path
-    ) -> List[DocumentTable]:
+    def _extract_tables_pdfplumber(self, file_path: Path) -> List[DocumentTable]:
         """Extract tables using pdfplumber as fallback"""
         if self._pdfplumber is None:
             return []
@@ -304,20 +293,18 @@ class PDFParser(BaseParser):
                         table_counter += 1
                         if not tab or len(tab) < 2:
                             continue
-                        headers = [
-                            str(c).strip() if c else "" for c in tab[0]
-                        ]
+                        headers = [str(c).strip() if c else "" for c in tab[0]]
                         data_rows = []
                         for row in tab[1:]:
-                            data_rows.append(
-                                [str(c).strip() if c else "" for c in row]
+                            data_rows.append([str(c).strip() if c else "" for c in row])
+                        tables.append(
+                            DocumentTable(
+                                table_id=f"T{table_counter:03d}",
+                                page_number=page_num + 1,
+                                headers=headers,
+                                rows=data_rows,
                             )
-                        tables.append(DocumentTable(
-                            table_id=f"T{table_counter:03d}",
-                            page_number=page_num + 1,
-                            headers=headers,
-                            rows=data_rows,
-                        ))
+                        )
         except Exception as e:
             logger.warning(f"pdfplumber table extraction failed: {e}")
         return tables
@@ -350,10 +337,12 @@ class PDFParser(BaseParser):
                 width = img_info[2] if len(img_info) > 2 else 0
                 height = img_info[3] if len(img_info) > 3 else 0
 
-                images.append(DocumentImage(
-                    image_id=f"IMG{img_counter:03d}",
-                    image_type=img_type,
-                    page_number=page_num + 1,
-                    description=f"Image {img_counter} ({width}x{height})",
-                ))
+                images.append(
+                    DocumentImage(
+                        image_id=f"IMG{img_counter:03d}",
+                        image_type=img_type,
+                        page_number=page_num + 1,
+                        description=f"Image {img_counter} ({width}x{height})",
+                    )
+                )
         return images

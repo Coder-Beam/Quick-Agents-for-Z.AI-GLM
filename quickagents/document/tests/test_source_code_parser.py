@@ -34,6 +34,7 @@ def sample_result(parser):
 # T028: Data Models (via parsing)
 # ============================================================
 
+
 class TestSourceCodeResultType:
     def test_is_source_code_result(self, sample_result):
         assert isinstance(sample_result, SourceCodeResult)
@@ -55,6 +56,7 @@ class TestSourceCodeResultType:
 # ============================================================
 # T029: Python AST Parser
 # ============================================================
+
 
 class TestPythonASTParser:
     def test_python_modules_found(self, sample_result):
@@ -168,6 +170,7 @@ class TestPythonASTParser:
 # T030: Tree-sitter / Generic Parser (JS)
 # ============================================================
 
+
 class TestJavaScriptParser:
     def test_js_module_found(self, sample_result):
         js_mods = [m for m in sample_result.modules if m.language == "javascript"]
@@ -194,6 +197,7 @@ class TestJavaScriptParser:
 # ============================================================
 # T031: Directory Scanning + Language Detection
 # ============================================================
+
 
 class TestDirectoryScanning:
     def test_languages_detected(self, sample_result):
@@ -241,6 +245,7 @@ class TestDirectoryScanning:
 # T032: Config File Parsing
 # ============================================================
 
+
 class TestConfigParsing:
     def test_json_config_found(self, sample_result):
         json_mods = [m for m in sample_result.modules if m.language == "json"]
@@ -255,6 +260,7 @@ class TestConfigParsing:
 # ============================================================
 # T033: Edge Cases + Roundtrip
 # ============================================================
+
 
 class TestEdgeCases:
     def test_dir_not_found(self, parser):
@@ -306,9 +312,7 @@ class TestEdgeCases:
 
 class TestDependencies:
     def test_inheritance_dependency(self, parser, tmp_path):
-        (tmp_path / "base.py").write_text(
-            "class Base:\n    pass\n"
-        )
+        (tmp_path / "base.py").write_text("class Base:\n    pass\n")
         (tmp_path / "child.py").write_text(
             "from base import Base\n\nclass Child(Base):\n    pass\n"
         )
@@ -318,8 +322,6 @@ class TestDependencies:
         assert any("child.py" in d.source_module for d in inh_deps)
 
     def test_import_dependency(self, parser, tmp_path):
-        (tmp_path / "a.py").write_text(
-            "import json\n\nx = 1\n"
-        )
+        (tmp_path / "a.py").write_text("import json\n\nx = 1\n")
         result = parser.parse_directory(tmp_path)
         assert isinstance(result, SourceCodeResult)

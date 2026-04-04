@@ -26,13 +26,13 @@ Installation:
 
 Usage:
     from quickagents import UnifiedDB, SkillEvolution, MarkdownSync, MemoryType
-    
+
     # 统一数据库（主存储）
     db = UnifiedDB('.quickagents/unified.db')
-    
+
     # 自我进化系统
     evolution = SkillEvolution(db)
-    
+
     # 任务完成时触发
     evolution.on_task_complete({
         'task_id': 'T001',
@@ -40,10 +40,10 @@ Usage:
         'skills_used': ['tdd-workflow-skill'],
         'success': True
     })
-    
+
     # Git提交时触发（自动或手动）
     evolution.on_git_commit()
-    
+
     # 检查定期优化
     if evolution.check_periodic_trigger():
         evolution.run_periodic_optimization()
@@ -59,10 +59,16 @@ CLI Usage:
     qa progress              # 当前进度
 """
 
-__version__ = '2.8.1'
-__author__ = 'Coder-Beam'
+__version__ = "2.8.1"
+__author__ = "Coder-Beam"
 
-from .core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType, get_unified_db
+from .core.unified_db import (
+    UnifiedDB,
+    MemoryType,
+    TaskStatus,
+    FeedbackType,
+    get_unified_db,
+)
 from .core.markdown_sync import MarkdownSync, get_markdown_sync
 from .core.evolution import SkillEvolution, EvolutionTrigger, get_evolution
 from .core.git_hooks import GitHooks
@@ -73,9 +79,13 @@ from .core.reminder import Reminder
 from .core.cache_db import CacheDB
 from .utils.hash_cache import HashCache
 from .skills import (
-    FeedbackCollector, get_feedback_collector,
-    TDDWorkflow, TDDPhase, get_tdd_workflow,
-    GitCommit, get_git_commit
+    FeedbackCollector,
+    get_feedback_collector,
+    TDDWorkflow,
+    TDDPhase,
+    get_tdd_workflow,
+    GitCommit,
+    get_git_commit,
 )
 
 from .knowledge_graph import (
@@ -107,81 +117,81 @@ from .utils.memory_helper import (
     update_memories,
     add_experiential_memory,
     update_working_memory,
-    sync_all_memory
+    sync_all_memory,
 )
 
 # 智能编辑工具（v2.6.9+）
-from .utils.smart_editor import (
-    smart_edit,
-    diagnose_edit
-)
+from .utils.smart_editor import smart_edit, diagnose_edit
 
 # 浏览器自动化（可选依赖）
 from .browser import Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest
 
 __all__ = [
     # Unified database (v2.2.0+)
-    'UnifiedDB',
-    'MemoryType',
-    'TaskStatus', 
-    'FeedbackType',
-    'get_unified_db',
+    "UnifiedDB",
+    "MemoryType",
+    "TaskStatus",
+    "FeedbackType",
+    "get_unified_db",
     # Skill Evolution (v2.3.0+)
-    'SkillEvolution',
-    'EvolutionTrigger',
-    'get_evolution',
+    "SkillEvolution",
+    "EvolutionTrigger",
+    "get_evolution",
     # Git Hooks (v2.3.0+)
-    'GitHooks',
+    "GitHooks",
     # Markdown sync
-    'MarkdownSync',
-    'get_markdown_sync',
+    "MarkdownSync",
+    "get_markdown_sync",
     # Core modules (legacy)
-    'FileManager',
-    'MemoryManager', 
-    'LoopDetector',
-    'Reminder',
-    'CacheDB',
-    'HashCache',
+    "FileManager",
+    "MemoryManager",
+    "LoopDetector",
+    "Reminder",
+    "CacheDB",
+    "HashCache",
     # Skills modules (100% localized)
-    'FeedbackCollector',
-    'get_feedback_collector',
-    'TDDWorkflow',
-    'TDDPhase',
-    'get_tdd_workflow',
-    'GitCommit',
-    'get_git_commit',
+    "FeedbackCollector",
+    "get_feedback_collector",
+    "TDDWorkflow",
+    "TDDPhase",
+    "get_tdd_workflow",
+    "GitCommit",
+    "get_git_commit",
     # Windows script helper (optional)
-    'ScriptHelper',
+    "ScriptHelper",
     # Memory helper (v2.6.8+)
-    'update_memory',
-    'update_memories',
-    'add_experiential_memory',
-    'update_working_memory',
-    'sync_all_memory',
+    "update_memory",
+    "update_memories",
+    "add_experiential_memory",
+    "update_working_memory",
+    "sync_all_memory",
+    # Smart editor (v2.6.9+)
+    "smart_edit",
+    "diagnose_edit",
     # Browser automation
-    'Browser',
-    'BrowserBackend',
-    'Page',
-    'ConsoleLog',
-    'NetworkRequest',
+    "Browser",
+    "BrowserBackend",
+    "Page",
+    "ConsoleLog",
+    "NetworkRequest",
     # Knowledge Graph (v2.4.0+)
-    'KnowledgeGraph',
-    'NodeType',
-    'EdgeType',
-    'KnowledgeNode',
-    'KnowledgeEdge',
-    'SearchResult',
-    'KnowledgeGraphError',
-    'NodeNotFoundError',
-    'EdgeNotFoundError',
-    'DuplicateNodeError',
-    'DuplicateEdgeError',
-    'InvalidNodeTypeError',
-    'InvalidEdgeTypeError',
-    'CircularDependencyError',
-    'DatabaseIntegrityError',
-    'ExtractionError',
-    'SyncError',
+    "KnowledgeGraph",
+    "NodeType",
+    "EdgeType",
+    "KnowledgeNode",
+    "KnowledgeEdge",
+    "SearchResult",
+    "KnowledgeGraphError",
+    "NodeNotFoundError",
+    "EdgeNotFoundError",
+    "DuplicateNodeError",
+    "DuplicateEdgeError",
+    "InvalidNodeTypeError",
+    "InvalidEdgeTypeError",
+    "CircularDependencyError",
+    "DatabaseIntegrityError",
+    "ExtractionError",
+    "SyncError",
     # Version
-    '__version__',
+    "__version__",
 ]

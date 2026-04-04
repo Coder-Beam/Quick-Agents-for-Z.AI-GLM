@@ -10,7 +10,6 @@ Covers:
 - T049: ResultCache
 """
 
-import pytest
 import tempfile
 import os
 
@@ -97,8 +96,8 @@ def _cleanup_kg(kg):
 
 # ===== T042: Extended NodeType/EdgeType =====
 
-class TestExtendedTypes:
 
+class TestExtendedTypes:
     def test_node_type_document(self):
         assert NodeType.DOCUMENT.value == "document"
 
@@ -140,8 +139,8 @@ class TestExtendedTypes:
 
 # ===== T044: KnowledgeSaver - Documents =====
 
-class TestKnowledgeSaverDocument:
 
+class TestKnowledgeSaverDocument:
     def test_save_document_creates_nodes(self):
         kg = _make_kg()
         try:
@@ -162,7 +161,9 @@ class TestKnowledgeSaverDocument:
             saver = KnowledgeSaver(kg)
             sections = [
                 _make_section(section_id="S001", title="Auth", level=1),
-                _make_section(section_id="S002", title="Login", level=2, parent_id="S001"),
+                _make_section(
+                    section_id="S002", title="Login", level=2, parent_id="S001"
+                ),
             ]
             doc = _make_doc(sections=sections)
             ids = saver.save_document(doc)
@@ -177,7 +178,9 @@ class TestKnowledgeSaverDocument:
             saver = KnowledgeSaver(kg)
             sections = [
                 _make_section(section_id="S001", title="Auth", level=1),
-                _make_section(section_id="S002", title="Login", level=2, parent_id="S001"),
+                _make_section(
+                    section_id="S002", title="Login", level=2, parent_id="S001"
+                ),
             ]
             doc = _make_doc(sections=sections)
             ids = saver.save_document(doc)
@@ -192,7 +195,8 @@ class TestKnowledgeSaverDocument:
         try:
             saver = KnowledgeSaver(kg)
             table = DocumentTable(
-                table_id="T001", page_number=1,
+                table_id="T001",
+                page_number=1,
                 headers=["ID", "Desc"],
                 rows=[["REQ-001", "Auth"]],
             )
@@ -205,19 +209,24 @@ class TestKnowledgeSaverDocument:
 
 # ===== T045: KnowledgeSaver - Source Code =====
 
-class TestKnowledgeSaverSource:
 
+class TestKnowledgeSaverSource:
     def test_save_source_creates_module_nodes(self):
         kg = _make_kg()
         try:
             saver = KnowledgeSaver(kg)
             func = CodeFunction(
-                func_id="F001", name="login",
-                signature="def login():", start_line=1, end_line=10,
+                func_id="F001",
+                name="login",
+                signature="def login():",
+                start_line=1,
+                end_line=10,
             )
             module = CodeModule(
-                module_id="M001", file_path="auth.py",
-                language="python", loc=50,
+                module_id="M001",
+                file_path="auth.py",
+                language="python",
+                loc=50,
                 functions=[func],
             )
             code = _make_code(modules=[module])
@@ -231,13 +240,19 @@ class TestKnowledgeSaverSource:
         try:
             saver = KnowledgeSaver(kg)
             func = CodeFunction(
-                func_id="F001", name="login",
-                signature="def login():", start_line=1, end_line=10,
+                func_id="F001",
+                name="login",
+                signature="def login():",
+                start_line=1,
+                end_line=10,
                 docstring="Login handler",
             )
             module = CodeModule(
-                module_id="M001", file_path="auth.py",
-                language="python", loc=50, functions=[func],
+                module_id="M001",
+                file_path="auth.py",
+                language="python",
+                loc=50,
+                functions=[func],
             )
             code = _make_code(modules=[module])
             ids = saver.save_source(code)
@@ -252,16 +267,24 @@ class TestKnowledgeSaverSource:
         try:
             saver = KnowledgeSaver(kg)
             method = CodeFunction(
-                func_id="F002", name="check",
-                signature="def check(self):", start_line=5, end_line=8,
+                func_id="F002",
+                name="check",
+                signature="def check(self):",
+                start_line=5,
+                end_line=8,
             )
             cls = CodeClass(
-                class_id="C001", name="Auth",
-                methods=[method], docstring="Auth class",
+                class_id="C001",
+                name="Auth",
+                methods=[method],
+                docstring="Auth class",
             )
             module = CodeModule(
-                module_id="M001", file_path="auth.py",
-                language="python", loc=50, classes=[cls],
+                module_id="M001",
+                file_path="auth.py",
+                language="python",
+                loc=50,
+                classes=[cls],
             )
             code = _make_code(modules=[module])
             ids = saver.save_source(code)
@@ -277,12 +300,18 @@ class TestKnowledgeSaverSource:
         try:
             saver = KnowledgeSaver(kg)
             func = CodeFunction(
-                func_id="F001", name="login",
-                signature="def login():", start_line=1, end_line=5,
+                func_id="F001",
+                name="login",
+                signature="def login():",
+                start_line=1,
+                end_line=5,
             )
             module = CodeModule(
-                module_id="M001", file_path="auth.py",
-                language="python", loc=10, functions=[func],
+                module_id="M001",
+                file_path="auth.py",
+                language="python",
+                loc=10,
+                functions=[func],
             )
             code = _make_code(modules=[module])
             ids = saver.save_source(code)
@@ -295,8 +324,8 @@ class TestKnowledgeSaverSource:
 
 # ===== T046: TraceSaver =====
 
-class TestTraceSaver:
 
+class TestTraceSaver:
     def test_save_traces_creates_edges(self):
         kg = _make_kg()
         try:
@@ -307,28 +336,36 @@ class TestTraceSaver:
             doc_ids = saver.save_document(doc)
 
             func = CodeFunction(
-                func_id="F001", name="authenticate",
-                signature="def authenticate():", start_line=1, end_line=5,
+                func_id="F001",
+                name="authenticate",
+                signature="def authenticate():",
+                start_line=1,
+                end_line=5,
             )
             module = CodeModule(
-                module_id="M001", file_path="auth.py",
-                language="python", loc=10, functions=[func],
+                module_id="M001",
+                file_path="auth.py",
+                language="python",
+                loc=10,
+                functions=[func],
             )
             code = _make_code(modules=[module])
             code_ids = saver.save_source(code)
 
             cross_ref = CrossReferenceResult(
-                trace_matrix=[TraceEntry(
-                    trace_id="T001",
-                    requirement="Auth",
-                    req_source="test.pdf Auth",
-                    implementation="auth.py:authenticate()",
-                    impl_file="auth.py",
-                    impl_function="authenticate",
-                    trace_type="keyword",
-                    confidence=0.9,
-                    status="covered",
-                )],
+                trace_matrix=[
+                    TraceEntry(
+                        trace_id="T001",
+                        requirement="Auth",
+                        req_source="test.pdf Auth",
+                        implementation="auth.py:authenticate()",
+                        impl_file="auth.py",
+                        impl_function="authenticate",
+                        trace_type="keyword",
+                        confidence=0.9,
+                        status="covered",
+                    )
+                ],
             )
             edge_count = saver.save_traces(cross_ref, doc_ids, code_ids)
             assert edge_count >= 2
@@ -338,22 +375,24 @@ class TestTraceSaver:
 
 # ===== T047: MarkdownExporter =====
 
-class TestMarkdownExporter:
 
+class TestMarkdownExporter:
     def test_export_trace_matrix(self):
         exporter = MarkdownExporter()
         result = CrossReferenceResult(
-            trace_matrix=[TraceEntry(
-                trace_id="T001",
-                requirement="User auth",
-                req_source="spec.pdf 2.1",
-                impl_file="auth.py",
-                impl_function="login",
-                impl_lines="L10-25",
-                trace_type="keyword",
-                confidence=0.85,
-                status="covered",
-            )],
+            trace_matrix=[
+                TraceEntry(
+                    trace_id="T001",
+                    requirement="User auth",
+                    req_source="spec.pdf 2.1",
+                    impl_file="auth.py",
+                    impl_function="login",
+                    impl_lines="L10-25",
+                    trace_type="keyword",
+                    confidence=0.85,
+                    status="covered",
+                )
+            ],
             coverage_report={"by_match_type": {"keyword": 1}},
         )
         md = exporter.export_trace_matrix(result, doc_sources=["spec.pdf"])
@@ -382,13 +421,15 @@ class TestMarkdownExporter:
     def test_export_diff_report_gaps(self):
         exporter = MarkdownExporter()
         result = CrossReferenceResult(
-            diff_report=[DiffEntry(
-                diff_id="DIFF-G001",
-                diff_type="gap",
-                description="Uncovered requirement",
-                req_side="spec.pdf: Password validation",
-                suggestion_by_doc="[以文档为准] Add implementation",
-            )],
+            diff_report=[
+                DiffEntry(
+                    diff_id="DIFF-G001",
+                    diff_type="gap",
+                    description="Uncovered requirement",
+                    req_side="spec.pdf: Password validation",
+                    suggestion_by_doc="[以文档为准] Add implementation",
+                )
+            ],
         )
         md = exporter.export_diff_report(result, base="doc")
         assert "差异报告" in md
@@ -398,13 +439,15 @@ class TestMarkdownExporter:
     def test_export_diff_report_extras(self):
         exporter = MarkdownExporter()
         result = CrossReferenceResult(
-            diff_report=[DiffEntry(
-                diff_id="DIFF-E001",
-                diff_type="extra",
-                description="Undocumented implementation",
-                code_side="auth.py:send_email()",
-                suggestion_by_code="[以代码为准] Remove or document",
-            )],
+            diff_report=[
+                DiffEntry(
+                    diff_id="DIFF-E001",
+                    diff_type="extra",
+                    description="Undocumented implementation",
+                    code_side="auth.py:send_email()",
+                    suggestion_by_code="[以代码为准] Remove or document",
+                )
+            ],
         )
         md = exporter.export_diff_report(result, base="code")
         assert "无文档对应的实现" in md
@@ -432,8 +475,8 @@ class TestMarkdownExporter:
 
 # ===== T048: FTS5 Search =====
 
-class TestFTS5Search:
 
+class TestFTS5Search:
     def test_fts5_index_exists(self):
         kg = _make_kg()
         try:
@@ -483,8 +526,8 @@ class TestFTS5Search:
 
 # ===== T049: ResultCache =====
 
-class TestResultCache:
 
+class TestResultCache:
     def test_put_and_get(self):
         cache = ResultCache()
         cache.put("key1", {"data": "test"})
@@ -530,6 +573,7 @@ class TestResultCache:
         cache = ResultCache(ttl_seconds=0)
         cache.put("key1", "data")
         import time
+
         time.sleep(0.01)
         assert cache.get("key1") is None
 

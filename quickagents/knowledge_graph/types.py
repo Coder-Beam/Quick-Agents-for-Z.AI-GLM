@@ -12,6 +12,7 @@ from datetime import datetime
 
 class NodeType(Enum):
     """Knowledge node types."""
+
     REQUIREMENT = "requirement"
     DECISION = "decision"
     INSIGHT = "insight"
@@ -26,6 +27,7 @@ class NodeType(Enum):
 
 class EdgeType(Enum):
     """Knowledge edge types."""
+
     DEPENDS_ON = "depends_on"
     IS_SUBCLASS_OF = "is_subclass_of"
     CITES = "cites"
@@ -46,6 +48,7 @@ class EdgeType(Enum):
 @dataclass
 class KnowledgeNode:
     """Knowledge node data class."""
+
     id: str
     node_type: NodeType
     title: str
@@ -67,6 +70,7 @@ class KnowledgeNode:
 @dataclass
 class KnowledgeEdge:
     """Knowledge edge data class."""
+
     id: str
     source_node_id: str
     target_node_id: str
@@ -82,6 +86,7 @@ class KnowledgeEdge:
 @dataclass
 class SearchResult:
     """Search result data class."""
+
     nodes: List[KnowledgeNode]
     total: int
     has_more: bool

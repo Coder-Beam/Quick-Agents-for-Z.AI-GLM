@@ -32,35 +32,41 @@ class DiffAnalyzer:
         gaps = self._find_gaps(doc_results, traces)
         for req_text, source in gaps:
             counter += 1
-            entries.append(DiffEntry(
-                diff_id=f"DIFF-G{counter:03d}",
-                diff_type="gap",
-                description=f"未覆盖的需求: {req_text[:100]}",
-                req_side=f"{source}: {req_text[:200]}",
-                code_side=None,
-            ))
+            entries.append(
+                DiffEntry(
+                    diff_id=f"DIFF-G{counter:03d}",
+                    diff_type="gap",
+                    description=f"未覆盖的需求: {req_text[:100]}",
+                    req_side=f"{source}: {req_text[:200]}",
+                    code_side=None,
+                )
+            )
 
         extras = self._find_extras(code_result, traces)
         for impl_file, impl_func, lines in extras:
             counter += 1
-            entries.append(DiffEntry(
-                diff_id=f"DIFF-E{counter:03d}",
-                diff_type="extra",
-                description=f"无文档对应的实现: {impl_file}:{impl_func}",
-                req_side=None,
-                code_side=f"{impl_file}:{impl_func} {lines}",
-            ))
+            entries.append(
+                DiffEntry(
+                    diff_id=f"DIFF-E{counter:03d}",
+                    diff_type="extra",
+                    description=f"无文档对应的实现: {impl_file}:{impl_func}",
+                    req_side=None,
+                    code_side=f"{impl_file}:{impl_func} {lines}",
+                )
+            )
 
         inconsistencies = self._find_inconsistencies(traces)
         for trace, reason in inconsistencies:
             counter += 1
-            entries.append(DiffEntry(
-                diff_id=f"DIFF-I{counter:03d}",
-                diff_type="inconsistency",
-                description=reason,
-                req_side=trace.requirement,
-                code_side=f"{trace.impl_file}:{trace.impl_function} {trace.impl_lines}",
-            ))
+            entries.append(
+                DiffEntry(
+                    diff_id=f"DIFF-I{counter:03d}",
+                    diff_type="inconsistency",
+                    description=reason,
+                    req_side=trace.requirement,
+                    code_side=f"{trace.impl_file}:{trace.impl_function} {trace.impl_lines}",
+                )
+            )
 
         return entries
 
@@ -117,16 +123,16 @@ class DiffAnalyzer:
 
         return extras
 
-    def _find_inconsistencies(
-        self, traces: List[TraceEntry]
-    ) -> List[tuple]:
+    def _find_inconsistencies(self, traces: List[TraceEntry]) -> List[tuple]:
         results: List[tuple] = []
         for t in traces:
             if t.confidence < 0.7 and t.confidence > 0.0:
-                results.append((
-                    t,
-                    f"低置信度匹配 ({t.confidence:.2f}): "
-                    f"'{t.requirement[:50]}' <-> '{t.impl_function}' "
-                    f"可能存在不一致",
-                ))
+                results.append(
+                    (
+                        t,
+                        f"低置信度匹配 ({t.confidence:.2f}): "
+                        f"'{t.requirement[:50]}' <-> '{t.impl_function}' "
+                        f"可能存在不一致",
+                    )
+                )
         return results

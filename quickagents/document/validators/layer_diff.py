@@ -122,20 +122,24 @@ class LayerDiff:
                 continue
 
             if l2.corrections:
-                changes.append({
-                    "file": l1.source_file,
-                    "type": "corrections",
-                    "count": len(l2.corrections),
-                    "items": l2.corrections,
-                })
+                changes.append(
+                    {
+                        "file": l1.source_file,
+                        "type": "corrections",
+                        "count": len(l2.corrections),
+                        "items": l2.corrections,
+                    }
+                )
 
             if l2.supplements:
-                changes.append({
-                    "file": l1.source_file,
-                    "type": "supplements",
-                    "count": len(l2.supplements),
-                    "items": l2.supplements,
-                })
+                changes.append(
+                    {
+                        "file": l1.source_file,
+                        "type": "supplements",
+                        "count": len(l2.supplements),
+                        "items": l2.supplements,
+                    }
+                )
 
             if l1.sections != l2.sections:
                 l1_ids = {s.section_id for s in l1.sections}
@@ -143,12 +147,14 @@ class LayerDiff:
                 added = l2_ids - l1_ids
                 removed = l1_ids - l2_ids
                 if added or removed:
-                    changes.append({
-                        "file": l1.source_file,
-                        "type": "section_changes",
-                        "added": len(added),
-                        "removed": len(removed),
-                    })
+                    changes.append(
+                        {
+                            "file": l1.source_file,
+                            "type": "section_changes",
+                            "added": len(added),
+                            "removed": len(removed),
+                        }
+                    )
 
         return changes
 
@@ -160,18 +166,22 @@ class LayerDiff:
         changes: List[Dict] = []
 
         if l2_code.corrections:
-            changes.append({
-                "type": "code_corrections",
-                "count": len(l2_code.corrections),
-                "items": l2_code.corrections,
-            })
+            changes.append(
+                {
+                    "type": "code_corrections",
+                    "count": len(l2_code.corrections),
+                    "items": l2_code.corrections,
+                }
+            )
 
         if l2_code.supplements:
-            changes.append({
-                "type": "code_supplements",
-                "count": len(l2_code.supplements),
-                "items": l2_code.supplements,
-            })
+            changes.append(
+                {
+                    "type": "code_supplements",
+                    "count": len(l2_code.supplements),
+                    "items": l2_code.supplements,
+                }
+            )
 
         return changes
 
@@ -207,20 +217,24 @@ class LayerDiff:
         if cross_ref:
             for diff_entry in cross_ref.diff_report:
                 if diff_entry.diff_type == "inconsistency":
-                    conflicts.append({
-                        "type": "doc_code_mismatch",
-                        "description": diff_entry.description,
-                        "req_side": diff_entry.req_side,
-                        "code_side": diff_entry.code_side,
-                    })
+                    conflicts.append(
+                        {
+                            "type": "doc_code_mismatch",
+                            "description": diff_entry.description,
+                            "req_side": diff_entry.req_side,
+                            "code_side": diff_entry.code_side,
+                        }
+                    )
 
         if docs:
             total_corrections = sum(len(d.corrections) for d in docs)
             if total_corrections > 10:
-                conflicts.append({
-                    "type": "high_correction_rate",
-                    "description": f"{total_corrections} corrections across {len(docs)} docs",
-                    "suggestion": "Consider re-parsing with adjusted settings",
-                })
+                conflicts.append(
+                    {
+                        "type": "high_correction_rate",
+                        "description": f"{total_corrections} corrections across {len(docs)} docs",
+                        "suggestion": "Consider re-parsing with adjusted settings",
+                    }
+                )
 
         return conflicts

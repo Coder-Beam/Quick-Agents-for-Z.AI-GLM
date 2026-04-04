@@ -21,36 +21,77 @@ logger = logging.getLogger(__name__)
 
 REQ_KEYWORDS = {
     "functional": [
-        "必须", "需要", "要求", "实现", "功能", "支持", "提供",
-        "must", "shall", "should", "required", "implement", "support",
-        "enable", "provide", "allow",
+        "必须",
+        "需要",
+        "要求",
+        "实现",
+        "功能",
+        "支持",
+        "提供",
+        "must",
+        "shall",
+        "should",
+        "required",
+        "implement",
+        "support",
+        "enable",
+        "provide",
+        "allow",
     ],
     "non-functional": [
-        "性能", "安全", "可靠", "可用", "可扩展", "响应时间",
-        "performance", "security", "reliability", "availability",
-        "scalability", "latency", "throughput",
+        "性能",
+        "安全",
+        "可靠",
+        "可用",
+        "可扩展",
+        "响应时间",
+        "performance",
+        "security",
+        "reliability",
+        "availability",
+        "scalability",
+        "latency",
+        "throughput",
     ],
     "constraint": [
-        "约束", "限制", "不超过", "至少", "最多", "兼容",
-        "constraint", "limit", "maximum", "minimum", "compatible",
-        "不大于", "不小于", "不得超过",
+        "约束",
+        "限制",
+        "不超过",
+        "至少",
+        "最多",
+        "兼容",
+        "constraint",
+        "limit",
+        "maximum",
+        "minimum",
+        "compatible",
+        "不大于",
+        "不小于",
+        "不得超过",
     ],
 }
 
 DECISION_PATTERNS = [
-    re.compile(r'选择\s*(\S+)\s*(?:方案|技术|框架)', re.IGNORECASE),
-    re.compile(r'(?:使用|采用|基于)\s*(\S+)(?:\s*(?:作为|进行|实现))', re.IGNORECASE),
-    re.compile(r'(?:使用|采用|基于)\s*(\S+)\s*(?:作为|进行|实现)', re.IGNORECASE),
-    re.compile(r'(?:decided|choose|selected|adopted)\s+(?:to\s+)?(\S+)', re.IGNORECASE),
+    re.compile(r"选择\s*(\S+)\s*(?:方案|技术|框架)", re.IGNORECASE),
+    re.compile(r"(?:使用|采用|基于)\s*(\S+)(?:\s*(?:作为|进行|实现))", re.IGNORECASE),
+    re.compile(r"(?:使用|采用|基于)\s*(\S+)\s*(?:作为|进行|实现)", re.IGNORECASE),
+    re.compile(r"(?:decided|choose|selected|adopted)\s+(?:to\s+)?(\S+)", re.IGNORECASE),
 ]
 
 PRIORITY_MAP = {
-    "高": "high", "紧急": "high", "critical": "high", "p0": "high",
-    "中": "medium", "normal": "medium", "p1": "medium",
-    "低": "low", "minor": "low", "p2": "low",
+    "高": "high",
+    "紧急": "high",
+    "critical": "high",
+    "p0": "high",
+    "中": "medium",
+    "normal": "medium",
+    "p1": "medium",
+    "低": "low",
+    "minor": "low",
+    "p2": "low",
 }
 
-REQ_ID_RE = re.compile(r'(?:REQ|FR|NFR)[-_]?(\d+(?:\.\d+)*)', re.IGNORECASE)
+REQ_ID_RE = re.compile(r"(?:REQ|FR|NFR)[-_]?(\d+(?:\.\d+)*)", re.IGNORECASE)
 
 
 class KnowledgeExtractor:
@@ -109,7 +150,8 @@ class KnowledgeExtractor:
             facts=unique_facts,
             concepts=concepts,
             summary=summary,
-            layer3_notes="Extracted via pattern matching" + (" + LLM" if self._llm_func else ""),
+            layer3_notes="Extracted via pattern matching"
+            + (" + LLM" if self._llm_func else ""),
         )
 
     def _extract_requirements(
@@ -129,17 +171,23 @@ class KnowledgeExtractor:
                 req_id_match = REQ_ID_RE.search(text)
 
                 counter += 1
-                req_id = req_id_match.group(0).upper() if req_id_match else f"EXT-REQ-{counter:03d}"
+                req_id = (
+                    req_id_match.group(0).upper()
+                    if req_id_match
+                    else f"EXT-REQ-{counter:03d}"
+                )
 
-                requirements.append(ExtractedRequirement(
-                    req_id=req_id,
-                    title=section.title,
-                    description=text[:500],
-                    req_type=req_type,
-                    priority=priority,
-                    source_section=f"{doc.source_file} {section.title}",
-                    confidence=self._compute_req_confidence(text, req_type),
-                ))
+                requirements.append(
+                    ExtractedRequirement(
+                        req_id=req_id,
+                        title=section.title,
+                        description=text[:500],
+                        req_type=req_type,
+                        priority=priority,
+                        source_section=f"{doc.source_file} {section.title}",
+                        confidence=self._compute_req_confidence(text, req_type),
+                    )
+                )
 
             for table in doc.tables:
                 for row in table.rows:
@@ -149,15 +197,17 @@ class KnowledgeExtractor:
                     req_id_match = REQ_ID_RE.search(row_text)
                     if req_id_match:
                         counter += 1
-                        requirements.append(ExtractedRequirement(
-                            req_id=req_id_match.group(0).upper(),
-                            title=row_text[:60],
-                            description=row_text,
-                            req_type=self._classify_requirement(row_text),
-                            priority=self._detect_priority(row_text),
-                            source_section=f"{doc.source_file} T:{table.table_id}",
-                            confidence=0.85,
-                        ))
+                        requirements.append(
+                            ExtractedRequirement(
+                                req_id=req_id_match.group(0).upper(),
+                                title=row_text[:60],
+                                description=row_text,
+                                req_type=self._classify_requirement(row_text),
+                                priority=self._detect_priority(row_text),
+                                source_section=f"{doc.source_file} T:{table.table_id}",
+                                confidence=0.85,
+                            )
+                        )
 
         return requirements
 
@@ -166,7 +216,16 @@ class KnowledgeExtractor:
     ) -> List[ExtractedDecision]:
         decisions: List[ExtractedDecision] = []
         counter = 0
-        decision_kw = ["选择", "决定", "方案", "采用", "决策", "decide", "choose", "select"]
+        decision_kw = [
+            "选择",
+            "决定",
+            "方案",
+            "采用",
+            "决策",
+            "decide",
+            "choose",
+            "select",
+        ]
 
         for doc in doc_results:
             for section in doc.sections:
@@ -183,28 +242,28 @@ class KnowledgeExtractor:
                         break
 
                 counter += 1
-                decisions.append(ExtractedDecision(
-                    decision_id=f"DEC-{counter:03d}",
-                    title=section.title,
-                    description=text[:300],
-                    rationale=matched_tech,
-                    alternatives=[],
-                    source_section=f"{doc.source_file} {section.title}",
-                    confidence=0.8 if matched_tech else 0.6,
-                ))
+                decisions.append(
+                    ExtractedDecision(
+                        decision_id=f"DEC-{counter:03d}",
+                        title=section.title,
+                        description=text[:300],
+                        rationale=matched_tech,
+                        alternatives=[],
+                        source_section=f"{doc.source_file} {section.title}",
+                        confidence=0.8 if matched_tech else 0.6,
+                    )
+                )
 
         return decisions
 
-    def _extract_facts(
-        self, doc_results: List[DocumentResult]
-    ) -> List[ExtractedFact]:
+    def _extract_facts(self, doc_results: List[DocumentResult]) -> List[ExtractedFact]:
         facts: List[ExtractedFact] = []
         counter = 0
         fact_patterns = [
-            re.compile(r'(?:版本|环境|系统|平台)\s*[:：]\s*(\S+)', re.IGNORECASE),
-            re.compile(r'(?:接口|API|协议)\s*[:：]\s*(\S+)', re.IGNORECASE),
-            re.compile(r'(?:数据库|存储)\s*[:：]\s*(\S+)', re.IGNORECASE),
-            re.compile(r'(?:端口|地址|URL)\s*[:：]\s*(\S+)', re.IGNORECASE),
+            re.compile(r"(?:版本|环境|系统|平台)\s*[:：]\s*(\S+)", re.IGNORECASE),
+            re.compile(r"(?:接口|API|协议)\s*[:：]\s*(\S+)", re.IGNORECASE),
+            re.compile(r"(?:数据库|存储)\s*[:：]\s*(\S+)", re.IGNORECASE),
+            re.compile(r"(?:端口|地址|URL)\s*[:：]\s*(\S+)", re.IGNORECASE),
         ]
 
         for doc in doc_results:
@@ -213,40 +272,49 @@ class KnowledgeExtractor:
                 for pattern in fact_patterns:
                     for m in pattern.finditer(text):
                         counter += 1
-                        facts.append(ExtractedFact(
-                            fact_id=f"FACT-{counter:03d}",
-                            content=m.group(0),
-                            category=self._classify_fact(m.group(0)),
-                            source_section=f"{doc.source_file} {section.title}",
-                            confidence=0.9,
-                        ))
+                        facts.append(
+                            ExtractedFact(
+                                fact_id=f"FACT-{counter:03d}",
+                                content=m.group(0),
+                                category=self._classify_fact(m.group(0)),
+                                source_section=f"{doc.source_file} {section.title}",
+                                confidence=0.9,
+                            )
+                        )
 
                 technical_terms = re.findall(
-                    r'(?:JWT|OAuth|RBAC|REST|gRPC|GraphQL|MySQL|PostgreSQL|'
-                    r'MongoDB|Redis|Docker|Kubernetes|AWS|Azure|GCP|'
-                    r'React|Vue|Angular|Spring|Django|Flask|FastAPI)',
-                    text, re.IGNORECASE,
+                    r"(?:JWT|OAuth|RBAC|REST|gRPC|GraphQL|MySQL|PostgreSQL|"
+                    r"MongoDB|Redis|Docker|Kubernetes|AWS|Azure|GCP|"
+                    r"React|Vue|Angular|Spring|Django|Flask|FastAPI)",
+                    text,
+                    re.IGNORECASE,
                 )
                 for term in technical_terms:
                     counter += 1
-                    facts.append(ExtractedFact(
-                        fact_id=f"FACT-{counter:03d}",
-                        content=f"技术栈: {term}",
-                        category="tech_stack",
-                        source_section=f"{doc.source_file} {section.title}",
-                        confidence=0.95,
-                    ))
+                    facts.append(
+                        ExtractedFact(
+                            fact_id=f"FACT-{counter:03d}",
+                            content=f"技术栈: {term}",
+                            category="tech_stack",
+                            source_section=f"{doc.source_file} {section.title}",
+                            confidence=0.95,
+                        )
+                    )
 
         return facts
 
-    def _extract_concepts(
-        self, doc_results: List[DocumentResult]
-    ) -> List[Dict]:
+    def _extract_concepts(self, doc_results: List[DocumentResult]) -> List[Dict]:
         concepts: List[Dict] = []
         seen: set = set()
         concept_patterns = [
-            re.compile(r'((?:用户|系统|管理|业务|数据|服务)\w*(?:模块|功能|流程|系统|服务))', re.IGNORECASE),
-            re.compile(r'((?:User|System|Admin|Service|Data|Business)\w*(?:Module|Function|Flow|System|Service))', re.IGNORECASE),
+            re.compile(
+                r"((?:用户|系统|管理|业务|数据|服务)\w*(?:模块|功能|流程|系统|服务))",
+                re.IGNORECASE,
+            ),
+            re.compile(
+                r"((?:User|System|Admin|Service|Data|Business)\w*(?:Module|Function|Flow|System|Service))",
+                re.IGNORECASE,
+            ),
         ]
 
         for doc in doc_results:
@@ -257,10 +325,12 @@ class KnowledgeExtractor:
                         concept = m.group(1)
                         if concept not in seen:
                             seen.add(concept)
-                            concepts.append({
-                                "name": concept,
-                                "source": f"{doc.source_file} {section.title}",
-                            })
+                            concepts.append(
+                                {
+                                    "name": concept,
+                                    "source": f"{doc.source_file} {section.title}",
+                                }
+                            )
 
         return concepts
 
@@ -271,13 +341,15 @@ class KnowledgeExtractor:
         code: SourceCodeResult,
     ) -> None:
         for module in code.modules:
-            facts.append(ExtractedFact(
-                fact_id=f"FACT-SRC-{module.file_path}",
-                content=f"源码模块: {module.file_path} ({module.language}, {module.loc} LOC)",
-                category="source_module",
-                source_section=module.file_path,
-                confidence=1.0,
-            ))
+            facts.append(
+                ExtractedFact(
+                    fact_id=f"FACT-SRC-{module.file_path}",
+                    content=f"源码模块: {module.file_path} ({module.language}, {module.loc} LOC)",
+                    category="source_module",
+                    source_section=module.file_path,
+                    confidence=1.0,
+                )
+            )
 
     def _extract_with_llm(
         self,
@@ -285,8 +357,7 @@ class KnowledgeExtractor:
         code_result: Optional[SourceCodeResult],
     ) -> Optional[KnowledgeExtractionResult]:
         doc_text = "\n".join(
-            f"[{doc.source_file}]\n" + doc.raw_text[:2000]
-            for doc in doc_results
+            f"[{doc.source_file}]\n" + doc.raw_text[:2000] for doc in doc_results
         )
         prompt = (
             "从以下文档中提取需求、决策和事实。\n"
@@ -305,6 +376,7 @@ class KnowledgeExtractor:
 
     def _parse_llm_json(self, response: str) -> Optional[KnowledgeExtractionResult]:
         import json
+
         try:
             start = response.find("{")
             end = response.rfind("}") + 1
@@ -405,7 +477,10 @@ class KnowledgeExtractor:
     @staticmethod
     def _classify_fact(text: str) -> str:
         text_lower = text.lower()
-        if any(kw in text_lower for kw in ["版本", "环境", "系统", "version", "environment"]):
+        if any(
+            kw in text_lower
+            for kw in ["版本", "环境", "系统", "version", "environment"]
+        ):
             return "environment"
         if any(kw in text_lower for kw in ["接口", "api", "协议", "protocol"]):
             return "api"

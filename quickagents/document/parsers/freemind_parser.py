@@ -55,8 +55,7 @@ class FreeMindParser(BaseParser):
             sections.append(root_section)
             all_text.append(root_text)
             self._walk_nodes(
-                root_node, sections, all_text,
-                root_section.section_id, 2, counter
+                root_node, sections, all_text, root_section.section_id, 2, counter
             )
 
         structure_tree = build_tree_by_parent_id(sections)
@@ -109,8 +108,7 @@ class FreeMindParser(BaseParser):
                     sec.content = content
 
             self._walk_nodes(
-                node, sections, text_parts,
-                sec.section_id, level + 1, counter
+                node, sections, text_parts, sec.section_id, level + 1, counter
             )
 
     def _extract_richcontent(self, elem: ET.Element) -> str:

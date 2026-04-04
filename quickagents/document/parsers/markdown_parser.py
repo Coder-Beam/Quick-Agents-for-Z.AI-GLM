@@ -85,9 +85,7 @@ class MarkdownParser(BaseParser):
         structure_tree = build_structure_tree_stack(sections)
         raw_text = content
 
-        paragraphs = [
-            p.strip() for p in content.split("\n\n") if p.strip()
-        ]
+        paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
 
         return DocumentResult(
             source_file=str(file_path),

@@ -265,9 +265,7 @@ class TestMarkdownParser(unittest.TestCase):
     def test_deep_nesting(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             f = Path(tmpdir) / "deep.md"
-            f.write_text(
-                "# L1\n## L2\n### L3\n#### L4\n##### L5\n###### L6\n"
-            )
+            f.write_text("# L1\n## L2\n### L3\n#### L4\n##### L5\n###### L6\n")
             result = self.parser.parse(f)
             self.assertEqual(len(result.sections), 6)
             levels = [s.level for s in result.sections]

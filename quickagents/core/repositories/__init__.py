@@ -27,27 +27,26 @@ from .models import (
     TaskPriority,
     FeedbackType,
     SearchResult,
-    RetrievalConfig
+    RetrievalConfig,
 )
 
 __all__ = [
     # Repository
-    'BaseRepository',
-    'QueryBuilder',
-    'MemoryRepository',
-    'TaskRepository',
-    'ProgressRepository',
-    'FeedbackRepository',
-    
+    "BaseRepository",
+    "QueryBuilder",
+    "MemoryRepository",
+    "TaskRepository",
+    "ProgressRepository",
+    "FeedbackRepository",
     # Models
-    'Memory',
-    'Task',
-    'Progress',
-    'Feedback',
-    'MemoryType',
-    'TaskStatus',
-    'TaskPriority',
-    'FeedbackType',
-    'SearchResult',
-    'RetrievalConfig'
+    "Memory",
+    "Task",
+    "Progress",
+    "Feedback",
+    "MemoryType",
+    "TaskStatus",
+    "TaskPriority",
+    "FeedbackType",
+    "SearchResult",
+    "RetrievalConfig",
 ]

@@ -19,55 +19,71 @@ __version__ = "0.1.0"
 __author__ = "QuickAgents Team"
 
 # 公开 API
-from .pipeline import DocumentPipeline
+from .pipeline import DocumentPipeline as DocumentPipeline
 from .models import (
-    DocumentResult,
-    DocumentSection,
-    DocumentTable,
-    DocumentImage,
-    DocumentFormula,
-    SourceCodeResult,
-    CodeModule,
-    CodeClass,
-    CodeFunction,
-    CodeDependency,
-    CrossReferenceResult,
-    TraceEntry,
-    DiffEntry,
-    RefinedDocumentResult,
-    RefinedCodeResult,
-    KnowledgeExtractionResult,
-    ExtractedRequirement,
-    ExtractedDecision,
-    ExtractedFact,
+    DocumentResult as DocumentResult,
+    DocumentSection as DocumentSection,
+    DocumentTable as DocumentTable,
+    DocumentImage as DocumentImage,
+    DocumentFormula as DocumentFormula,
+    SourceCodeResult as SourceCodeResult,
+    CodeModule as CodeModule,
+    CodeClass as CodeClass,
+    CodeFunction as CodeFunction,
+    CodeDependency as CodeDependency,
+    CrossReferenceResult as CrossReferenceResult,
+    TraceEntry as TraceEntry,
+    DiffEntry as DiffEntry,
+    RefinedDocumentResult as RefinedDocumentResult,
+    RefinedCodeResult as RefinedCodeResult,
+    KnowledgeExtractionResult as KnowledgeExtractionResult,
+    ExtractedRequirement as ExtractedRequirement,
+    ExtractedDecision as ExtractedDecision,
+    ExtractedFact as ExtractedFact,
 )
+
 
 # 解析器相关（延迟导入，避免强制依赖)
 def get_parser_registry():
     """获取解析器注册表（延迟加载）"""
     from .parsers import ParserRegistry
+
     return ParserRegistry()
 
 
 def get_supported_formats():
     """获取支持的文档格式"""
     return [
-        "pdf", "docx", "xlsx", "xmind", "mm", "opml", "md",
+        "pdf",
+        "docx",
+        "xlsx",
+        "xmind",
+        "mm",
+        "opml",
+        "md",
         # 源码格式
-        "py", "js", "ts", "java", "go", "rs", "c", "cpp"
+        "py",
+        "js",
+        "ts",
+        "java",
+        "go",
+        "rs",
+        "c",
+        "cpp",
     ]
 
 
 def check_dependencies(format: str) -> bool:
     """
     检查处理指定格式所需的依赖是否已安装
-    
+
     Args:
         format: 文档格式 (pdf/docx/xlsx/xmind等) 或源码格式 (py/js/ts等)
-        
+
     Returns:
         True: 依赖已安装
         False: 依赖未安装
     """
     from .parsers import check_dependencies as _check_dependencies
+
     return _check_dependencies(format)

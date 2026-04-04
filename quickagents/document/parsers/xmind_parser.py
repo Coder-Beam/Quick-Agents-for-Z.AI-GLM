@@ -28,6 +28,7 @@ class XMindParser(BaseParser):
         self._xmind = None
         if self._deps_available:
             import xmind
+
             self._xmind = xmind
 
     def parse(self, file_path: Path) -> DocumentResult:
@@ -77,8 +78,7 @@ class XMindParser(BaseParser):
                 sections.append(root_section)
                 all_text_parts.append(root_title)
                 self._walk_topics(
-                    root, sections, all_text_parts,
-                    root_section.section_id, 3, counter
+                    root, sections, all_text_parts, root_section.section_id, 3, counter
                 )
 
         structure_tree = build_tree_by_parent_id(sections)
@@ -133,8 +133,7 @@ class XMindParser(BaseParser):
                     text_parts.append(note_text)
 
             self._walk_topics(
-                child, sections, text_parts,
-                sec.section_id, level + 1, counter
+                child, sections, text_parts, sec.section_id, level + 1, counter
             )
 
     def _extract_notes(self, notes) -> str:

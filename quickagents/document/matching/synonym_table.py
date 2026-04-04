@@ -73,7 +73,6 @@ class SynonymTable:
 
         abbreviations = {
             "RBAC": "role_based_access_control",
-            "RBAC": "rbac",
             "API": "api",
             "REST": "rest",
             "CRUD": "crud",
@@ -138,7 +137,7 @@ class SynonymTable:
 
     @staticmethod
     def _partial_match(pattern: str, text: str) -> bool:
-        parts = re.split(r'[_\s]+', pattern)
+        parts = re.split(r"[_\s]+", pattern)
         return any(p in text for p in parts if len(p) >= 3)
 
     def add_synonym(self, chinese: str, english: str) -> None:

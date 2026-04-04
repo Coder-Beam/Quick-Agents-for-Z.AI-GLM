@@ -50,7 +50,6 @@ class ResultCache:
         return len(self._cache)
 
     def compute_hash(self, file_path: str) -> str:
-        import hashlib
         h = sha256()
         try:
             with open(file_path, "rb") as f:

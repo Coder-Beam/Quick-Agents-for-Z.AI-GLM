@@ -15,7 +15,7 @@ QuickAgents CLI - 命令行工具
     qka loop reset            # 重置循环检测
     qka stats                 # 查看整体统计
     qka sync [table]          # 同步SQLite到Markdown
-    
+
     # 版本与升级命令
     qka version               # 查看当前版本
     qka version --check       # 检查所有模块完整性
@@ -27,49 +27,49 @@ QuickAgents CLI - 命令行工具
     qka uninstall --dry-run   # 预览卸载内容
     qka uninstall --keep-data # 卸载但保留项目数据
     qka uninstall --force     # 跳过确认直接卸载
-    
+
     # 导出命令
     qka export                # 导出到 Output/<版本号>/（自动检测版本+git commit）
     qka export --version 1.0  # 指定版本号
     qka export --dry-run      # 预览导出内容
     qka export --inject-gitignore  # 将QA排除规则注入 .gitignore
     qka export --list-excludes     # 列出所有排除规则
-    
+
     # 模型配置命令
     qka models status         # 查看当前模型配置
     qka models check          # 检查GLM版本更新
     qka models upgrade [version] # 升级GLM模型
     qka models rollback       # 回滚到上一版本
-    
+
     # 自我进化系统命令
     qka evolution status      # 进化系统状态
     qka evolution stats [skill] # Skills使用统计
     qka evolution optimize    # 执行定期优化
     qka evolution history <skill> # 查看Skill进化历史
     qka evolution sync        # 同步到Markdown
-    
+
     # Git钩子命令
     qka hooks install         # 安装Git钩子
     qka hooks uninstall       # 卸载Git钩子
     qka hooks status          # 钩子状态
-    
+
     # Skills本地化命令
     qka feedback bug <desc>   # 记录Bug
     qka feedback improve <desc> # 记录改进建议
     qka feedback best <desc>  # 记录最佳实践
     qka feedback view [type]  # 查看收集的经验
-    
+
     qka tdd red [test_file]   # RED阶段：运行测试（应失败）
     qka tdd green [test_file] # GREEN阶段：运行测试（应通过）
     qka tdd refactor [test_file] # REFACTOR阶段
     qka tdd stats             # TDD统计
     qka tdd coverage          # 检查覆盖率
-    
+
     qka git status            # Git状态
     qka git check             # Pre-commit检查
     qka git commit <type> <scope> <subject> # 执行提交
     qka git push              # 推送到远程
-    
+
     # 文档导入命令
     qka import PALs/           # 导入PALs目录下的文档
     qka import PALs/ --with-source  # 同时导入源码
@@ -83,15 +83,14 @@ from pathlib import Path
 
 from ..core.file_manager import FileManager
 from ..core.memory import MemoryManager
-from ..core.loop_detector import LoopDetector
 from ..core.reminder import Reminder
 from ..core.cache_db import CacheDB
-from ..core.unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType
+from ..core.unified_db import UnifiedDB
 from ..core.markdown_sync import MarkdownSync
-from ..core.evolution import SkillEvolution, EvolutionTrigger, get_evolution
+from ..core.evolution import SkillEvolution
 from ..core.git_hooks import GitHooks
 from ..skills.feedback_collector import FeedbackCollector
-from ..skills.tdd_workflow import TDDWorkflow, TDDPhase
+from ..skills.tdd_workflow import TDDWorkflow
 from ..skills.git_commit import GitCommit
 from ..utils.encoding import read_file_utf8, write_file_utf8
 
@@ -100,7 +99,7 @@ def cmd_read(args):
     """读取文件命令"""
     fm = FileManager()
     content, changed = fm.read_if_changed(args.file)
-    
+
     print(f"文件: {args.file}")
     print(f"状态: {'已变化/新读取' if changed else '使用缓存（节省Token）'}")
     print("-" * 50)
@@ -118,10 +117,10 @@ def cmd_edit(args):
     """编辑文件命令"""
     fm = FileManager()
     result = fm.edit(args.file, args.old, args.new)
-    
-    if result['success']:
+
+    if result["success"]:
         print(f"[OK] 编辑成功: {args.file}")
-        if result['token_saved'] > 0:
+        if result["token_saved"] > 0:
             print(f"[Token] 节省: ~{result['token_saved']}")
     else:
         print(f"[FAIL] 编辑失败: {result['message']}")
@@ -138,35 +137,39 @@ def cmd_hash(args):
 def cmd_cache(args):
     """缓存管理命令"""
     db = CacheDB()
-    
-    if args.action == 'stats':
-        stats = db.get_stats()['file_cache']
+
+    if args.action == "stats":
+        stats = db.get_stats()["file_cache"]
         print("[Cache] 缓存统计")
         print(f"  缓存文件数: {stats['count']}")
         print(f"  总大小: {stats['total_kb']} KB")
-    
-    elif args.action == 'clear':
+
+    elif args.action == "clear":
         count = db.clear_file_cache()
         print(f"[OK] 已清空 {count} 个文件缓存")
-    
-    elif args.action == 'list':
+
+    elif args.action == "list":
         with db._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT path, content_hash, size, access_count FROM file_cache')
+            cursor.execute(
+                "SELECT path, content_hash, size, access_count FROM file_cache"
+            )
             rows = cursor.fetchall()
-            
+
             print("[Cache] 缓存文件列表")
             print("-" * 80)
             for row in rows:
                 print(f"  {row['path']}")
-                print(f"    哈希: {row['content_hash']}, 大小: {row['size']}B, 访问: {row['access_count']}次")
+                print(
+                    f"    哈希: {row['content_hash']}, 大小: {row['size']}B, 访问: {row['access_count']}次"
+                )
 
 
 def cmd_memory(args):
     """记忆管理命令"""
     memory = MemoryManager()
-    
-    if args.action == 'get':
+
+    if args.action == "get":
         if not args.key:
             print("[FAIL] 请提供键名")
             return
@@ -175,13 +178,13 @@ def cmd_memory(args):
             print(f"{args.key}: {value}")
         else:
             print(f"[FAIL] 未找到: {args.key}")
-    
-    elif args.action == 'set':
+
+    elif args.action == "set":
         memory.set_factual(args.key, args.value)
         memory.save()
         print(f"[OK] 已设置: {args.key} = {args.value}")
-    
-    elif args.action == 'search':
+
+    elif args.action == "search":
         keyword = args.keyword or args.key  # 支持位置参数或选项
         if not keyword:
             print("[FAIL] 请提供搜索关键词")
@@ -190,37 +193,39 @@ def cmd_memory(args):
         print(f"[Search] 搜索结果 ({len(results)} 条)")
         print("-" * 50)
         for r in results:
-            print(f"  [{r['type']}] {r.get('key', r.get('category', ''))}: {r.get('value', r.get('content', ''))}")
+            print(
+                f"  [{r['type']}] {r.get('key', r.get('category', ''))}: {r.get('value', r.get('content', ''))}"
+            )
 
 
 def cmd_loop(args):
     """循环检测命令"""
     from ..core.loop_detector import get_loop_detector
-    
+
     detector = get_loop_detector()
-    
-    if args.action == 'check':
+
+    if args.action == "check":
         # V3: 使用 analyze_patterns() 获取模式分析
         patterns = detector.analyze_patterns()
-        if patterns.get('failure_distribution'):
+        if patterns.get("failure_distribution"):
             print("[WARN] 检测到失败模式")
             print("-" * 50)
-            for tool, count in patterns['failure_distribution'].items():
+            for tool, count in patterns["failure_distribution"].items():
                 print(f"  {tool}: {count}次失败")
         else:
             print("[OK] 未检测到失败模式")
-        
+
         # 显示状态
         status = detector.get_status()
         print(f"\n[状态] {status['state']}")
         print(f"  总调用: {status['total_calls']}")
         print(f"  连续失败: {status['consecutive_failures']}")
-    
-    elif args.action == 'reset':
+
+    elif args.action == "reset":
         detector.reset()
         print("[OK] 已重置循环检测")
-    
-    elif args.action == 'stats':
+
+    elif args.action == "stats":
         # V3: 使用 get_status() 获取统计信息
         stats = detector.get_status()
         print("[Loop] 循环检测统计 (V3)")
@@ -229,7 +234,7 @@ def cmd_loop(args):
         print(f"  总调用数: {stats['total_calls']}")
         print(f"  连续失败: {stats['consecutive_failures']}")
         print(f"  失败记录: {stats['failure_count']}")
-        print(f"\n[阈值配置]")
+        print("\n[阈值配置]")
         print(f"  相同失败阈值: {stats['thresholds']['same_failure']}")
         print(f"  连续失败阈值: {stats['thresholds']['consecutive_failure']}")
         print(f"  策略: {stats['config']['strategy']}")
@@ -241,17 +246,17 @@ def cmd_stats(args):
     """查看整体统计"""
     db = CacheDB()
     stats = db.get_stats()
-    
+
     print("[Stats] QuickAgents 统计")
     print("=" * 50)
-    
+
     print("\n[File] 文件缓存")
     print(f"  缓存文件: {stats['file_cache']['count']}")
     print(f"  总大小: {stats['file_cache']['total_kb']} KB")
-    
+
     print("\n[Memory] 记忆系统")
     print(f"  记忆条目: {stats['memory']['count']}")
-    
+
     print("\n[Token] 节省")
     print(f"  估算节省: {stats['tokens']['total_saved']} tokens")
 
@@ -259,64 +264,64 @@ def cmd_stats(args):
 def cmd_sync(args):
     """同步SQLite到Markdown"""
     from ..utils.sync_conflict import get_sync_conflict_detector
-    
-    db_path = '.quickagents/unified.db'
-    
+
+    db_path = ".quickagents/unified.db"
+
     if not os.path.exists(db_path):
         print(f"[FAIL] 数据库不存在: {db_path}")
         print("  请先使用UnifiedDB创建数据库")
         return
-    
+
     db = UnifiedDB(db_path)
     sync = MarkdownSync(db)
-    
+
     # 检查冲突（除非强制同步）
-    force = hasattr(args, 'force') and args.force
-    table = args.table if hasattr(args, 'table') and args.table else None
-    
+    force = hasattr(args, "force") and args.force
+    table = args.table if hasattr(args, "table") and args.table else None
+
     if not force:
         detector = get_sync_conflict_detector()
-        
+
         # 确定要检查的文件
         file_keys = None
         if table:
             file_keys = [table]
-        
+
         conflicts = detector.check_conflicts(file_keys)
-        
+
         if conflicts:
             print("[WARN] 检测到同步冲突！")
             print("-" * 50)
             print(detector.get_conflict_report(file_keys))
             print("\n使用 --force 强制同步，忽略冲突")
             return
-    
+
     # 执行同步
-    if table == 'memory' or table is None:
+    if table == "memory" or table is None:
         result = sync.sync_memory()
         if result:
             print("[OK] 已同步 memory -> Docs/MEMORY.md")
-    
-    if table == 'tasks' or table is None:
+
+    if table == "tasks" or table is None:
         result = sync.sync_tasks()
         if result:
             print("[OK] 已同步 tasks -> Docs/TASKS.md")
-    
-    if table == 'decisions' or table is None:
+
+    if table == "decisions" or table is None:
         result = sync.sync_decisions()
         if result:
             print("[OK] 已同步 decisions -> Docs/DECISIONS.md")
-    
-    if table == 'progress' or table is None:
+
+    if table == "progress" or table is None:
         result = sync.sync_progress()
         if result:
             print("[OK] 已同步 progress -> .quickagents/boulder.json")
-    
-    if table == 'feedback' or table is None:
+
+    if table == "feedback" or table is None:
         result = sync.sync_feedback()
         if result:
             print("[OK] 已同步 feedback -> ~/.quickagents/feedback/")
-    
+
     if table is None:
         print("\n[Done] 所有表同步完成")
 
@@ -324,8 +329,8 @@ def cmd_sync(args):
 def cmd_reminder(args):
     """提醒系统命令"""
     reminder = Reminder()
-    
-    if args.action == 'check':
+
+    if args.action == "check":
         alerts = reminder.check_alerts()
         if alerts:
             print("[WARN] 活跃提醒")
@@ -334,8 +339,8 @@ def cmd_reminder(args):
                 print(f"  [{a['level']}] {a['message']}")
         else:
             print("[OK] 无活跃提醒")
-    
-    elif args.action == 'stats':
+
+    elif args.action == "stats":
         stats = reminder.get_stats()
         print("[Reminder] 提醒系统统计")
         print(f"  工具调用: {stats['tool_calls']}")
@@ -346,96 +351,113 @@ def cmd_reminder(args):
 
 # ==================== Skills本地化命令 ====================
 
+
 def cmd_feedback(args):
     """经验收集命令"""
     collector = FeedbackCollector()
-    
-    if args.action == 'bug':
-        success = collector.record('bug', args.description, scenario=args.scenario)
+
+    if args.action == "bug":
+        success = collector.record("bug", args.description, scenario=args.scenario)
         if success:
             print(f"[OK] 已记录Bug: {args.description}")
         else:
             print("[INFO] 重复记录已忽略")
-    
-    elif args.action == 'improve':
-        success = collector.record('improvement', args.description, scenario=args.scenario)
+
+    elif args.action == "improve":
+        success = collector.record(
+            "improvement", args.description, scenario=args.scenario
+        )
         if success:
             print(f"[OK] 已记录改进建议: {args.description}")
         else:
             print("[INFO] 重复记录已忽略")
-    
-    elif args.action == 'best':
-        success = collector.record('best_practice', args.description, scenario=args.scenario)
+
+    elif args.action == "best":
+        success = collector.record(
+            "best_practice", args.description, scenario=args.scenario
+        )
         if success:
             print(f"[OK] 已记录最佳实践: {args.description}")
         else:
             print("[INFO] 重复记录已忽略")
-    
-    elif args.action == 'view':
-        feedback_type = args.type if hasattr(args, 'type') and args.type else None
+
+    elif args.action == "view":
+        feedback_type = args.type if hasattr(args, "type") and args.type else None
         feedbacks = collector.get_feedback(feedback_type, limit=20)
-        
+
         print(f"[Feedback] 经验收集 ({len(feedbacks)} 条)")
         print("-" * 50)
         for fb in feedbacks:
             print(f"  [{fb['type']}] {fb['timestamp']}")
             print(f"    {fb['description'][:50]}...")
-    
-    elif args.action == 'stats':
+
+    elif args.action == "stats":
         stats = collector.get_stats()
         print("[Feedback] 经验收集统计")
         print(f"  总计: {stats['total']} 条")
-        for ftype, count in stats['by_type'].items():
+        for ftype, count in stats["by_type"].items():
             print(f"  {ftype}: {count} 条")
 
 
 def cmd_tdd(args):
     """TDD工作流命令"""
     tdd = TDDWorkflow()
-    
-    if args.action == 'red':
+
+    if args.action == "red":
         result = tdd.run_red(args.test_file)
         # 检查文件不存在等错误
-        if result.get('error') == 'file_not_found':
-            print(f"[RED] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
+        if result.get("error") == "file_not_found":
+            print(
+                f"[RED] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}"
+            )
             print("  请确认文件路径是否正确")
             return
-        print(f"[RED] RED阶段: {'测试失败 [OK]' if not result['passed'] else '测试通过 [WARN]'}")
+        print(
+            f"[RED] RED阶段: {'测试失败 [OK]' if not result['passed'] else '测试通过 [WARN]'}"
+        )
         print(f"  耗时: {result['duration_ms']}ms")
-        if result['passed']:
+        if result["passed"]:
             print("  [WARN] 测试已通过，需要先写失败的测试！")
-    
-    elif args.action == 'green':
+
+    elif args.action == "green":
         result = tdd.run_green(args.test_file)
         # 检查文件不存在等错误
-        if result.get('error') == 'file_not_found':
-            print(f"[GREEN] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
+        if result.get("error") == "file_not_found":
+            print(
+                f"[GREEN] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}"
+            )
             print("  请确认文件路径是否正确")
             return
-        print(f"[GREEN] GREEN阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
+        print(
+            f"[GREEN] GREEN阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}"
+        )
         print(f"  耗时: {result['duration_ms']}ms")
-        if result['passed']:
+        if result["passed"]:
             print("  [OK] 可以进入Refactor阶段")
-    
-    elif args.action == 'refactor':
+
+    elif args.action == "refactor":
         result = tdd.run_refactor(args.test_file)
         # 检查文件不存在等错误
-        if result.get('error') == 'file_not_found':
-            print(f"[REFACTOR] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
+        if result.get("error") == "file_not_found":
+            print(
+                f"[REFACTOR] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}"
+            )
             print("  请确认文件路径是否正确")
             return
-        print(f"[REFACTOR] REFACTOR阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
+        print(
+            f"[REFACTOR] REFACTOR阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}"
+        )
         print(f"  耗时: {result['duration_ms']}ms")
-    
-    elif args.action == 'stats':
+
+    elif args.action == "stats":
         stats = tdd.get_stats()
         print("[TDD] TDD统计")
         print(f"  RED次数: {stats['red_count']}")
         print(f"  GREEN次数: {stats['green_count']}")
         print(f"  REFACTOR次数: {stats['refactor_count']}")
         print(f"  测试命令: {stats['test_command']}")
-    
-    elif args.action == 'coverage':
+
+    elif args.action == "coverage":
         result = tdd.check_coverage(threshold=80)
         print(f"[Coverage] 测试覆盖率: {result['coverage']}%")
         print(f"  达标: {'[OK]' if result['meets_threshold'] else '[FAIL]'}")
@@ -444,60 +466,61 @@ def cmd_tdd(args):
 def cmd_git(args):
     """Git提交命令"""
     git = GitCommit()
-    
-    if args.action == 'status':
+
+    if args.action == "status":
         status = git.get_status()
         print(f"[Git] 分支: {status['branch']}")
         print(f"  领先: {status['ahead']}, 落后: {status['behind']}")
-        
-        if status['staged']:
+
+        if status["staged"]:
             print(f"\n[Staged] 已暂存 ({len(status['staged'])})")
-            for f in status['staged'][:5]:
+            for f in status["staged"][:5]:
                 print(f"  {f}")
-        
-        if status['unstaged']:
+
+        if status["unstaged"]:
             print(f"\n[Unstaged] 未暂存 ({len(status['unstaged'])})")
-            for f in status['unstaged'][:5]:
+            for f in status["unstaged"][:5]:
                 print(f"  {f}")
-        
-        if status['untracked']:
+
+        if status["untracked"]:
             print(f"\n[Untracked] 未跟踪 ({len(status['untracked'])})")
-            for f in status['untracked'][:5]:
+            for f in status["untracked"][:5]:
                 print(f"  {f}")
-    
-    elif args.action == 'check':
+
+    elif args.action == "check":
         print("[Git] 执行Pre-commit检查...")
         checks = git.run_pre_commit_checks()
-        
+
         print(f"\n{'[OK]' if checks['all_passed'] else '[FAIL]'} 检查结果")
-        for check_name, result in checks['checks'].items():
-            status = '[OK]' if result['passed'] else ('[SKIP]' if result.get('skipped') else '[FAIL]')
+        for check_name, result in checks["checks"].items():
+            status = (
+                "[OK]"
+                if result["passed"]
+                else ("[SKIP]" if result.get("skipped") else "[FAIL]")
+            )
             print(f"  {status} {check_name}")
-    
-    elif args.action == 'commit':
-        commit_type = getattr(args, 'commit_type', None) or 'chore'
-        scope = getattr(args, 'scope', None) or ''
-        subject = getattr(args, 'subject', None) or ''
+
+    elif args.action == "commit":
+        commit_type = getattr(args, "commit_type", None) or "chore"
+        scope = getattr(args, "scope", None) or ""
+        subject = getattr(args, "subject", None) or ""
         if not subject:
             print("[FAIL] 请提供提交信息")
             print("  用法: qka git commit <type> <scope> <subject>")
-            print("  示例: qka git commit feat auth \"添加JWT认证\"")
+            print('  示例: qka git commit feat auth "添加JWT认证"')
             return
         print("[Git] 执行Pre-commit检查...")
-        result = git.commit(
-            commit_type, scope, subject,
-            run_checks=True
-        )
-        
-        if result['success']:
+        result = git.commit(commit_type, scope, subject, run_checks=True)
+
+        if result["success"]:
             print(f"[OK] 提交成功: {result['commit_hash']}")
             print(f"   {result['message'].split(chr(10))[0]}")
         else:
             print(f"[FAIL] 提交失败: {result['message']}")
-    
-    elif args.action == 'push':
+
+    elif args.action == "push":
         result = git.push()
-        if result['success']:
+        if result["success"]:
             print("[OK] 推送成功")
         else:
             print(f"[FAIL] 推送失败: {result['message']}")
@@ -505,44 +528,45 @@ def cmd_git(args):
 
 # ==================== 自我进化系统命令 ====================
 
+
 def cmd_evolution(args):
     """自我进化系统命令"""
-    db_path = '.quickagents/unified.db'
-    
+    db_path = ".quickagents/unified.db"
+
     if not os.path.exists(db_path):
         print(f"[FAIL] 数据库不存在: {db_path}")
         print("  请先使用UnifiedDB创建数据库")
         return
-    
+
     db = UnifiedDB(db_path)
     evolution = SkillEvolution(db)
-    
-    if args.action == 'status':
+
+    if args.action == "status":
         print("[Evolution] 自我进化系统状态")
         print("=" * 50)
-        
+
         # 检查定期优化
         should_optimize = evolution.check_periodic_trigger()
         print(f"  需要优化: {'是' if should_optimize else '否'}")
-        
+
         # 获取所有Skills统计
         stats = evolution.get_all_skills_stats()
         print(f"  已跟踪Skills: {len(stats)}")
-        
+
         # 获取任务计数
         task_count = evolution._get_task_count()
         print(f"  任务计数: {task_count}/{evolution.PERIODIC_TASK_THRESHOLD}")
-        
+
         # 获取上次优化时间
         last_opt = evolution._get_last_optimization_time()
         if last_opt:
             print(f"  上次优化: {last_opt.strftime('%Y-%m-%d %H:%M')}")
         else:
             print("  上次优化: 从未执行")
-    
-    elif args.action == 'stats':
-        skill_name = args.skill if hasattr(args, 'skill') and args.skill else None
-        
+
+    elif args.action == "stats":
+        skill_name = args.skill if hasattr(args, "skill") and args.skill else None
+
         if skill_name:
             # 单个Skill统计
             stats = evolution.get_skill_stats(skill_name)
@@ -552,298 +576,316 @@ def cmd_evolution(args):
             print(f"  成功次数: {stats['success_count']}")
             print(f"  失败次数: {stats['failure_count']}")
             print(f"  成功率: {stats['success_rate']:.1%}")
-            if stats['avg_duration_ms']:
+            if stats["avg_duration_ms"]:
                 print(f"  平均耗时: {stats['avg_duration_ms']:.0f}ms")
-            
-            if stats['recent_errors']:
+
+            if stats["recent_errors"]:
                 print("\n[Recent Errors]")
-                for err in stats['recent_errors'][:3]:
+                for err in stats["recent_errors"][:3]:
                     print(f"  - {err['error_message'][:50]}...")
         else:
             # 所有Skills统计
             all_stats = evolution.get_all_skills_stats()
             print(f"[Evolution] 所有Skills统计 ({len(all_stats)} 个)")
             print("=" * 50)
-            
-            for skill, stats in sorted(all_stats.items(), key=lambda x: x[1]['count'], reverse=True):
-                rate = stats['success_rate']
-                status = '[OK]' if rate >= 0.8 else ('[WARN]' if rate >= 0.6 else '[FAIL]')
+
+            for skill, stats in sorted(
+                all_stats.items(), key=lambda x: x[1]["count"], reverse=True
+            ):
+                rate = stats["success_rate"]
+                status = (
+                    "[OK]" if rate >= 0.8 else ("[WARN]" if rate >= 0.6 else "[FAIL]")
+                )
                 print(f"  {status} {skill}: {stats['count']}次, 成功率 {rate:.0%}")
-    
-    elif args.action == 'optimize':
+
+    elif args.action == "optimize":
         print("[Evolution] 执行定期优化...")
         result = evolution.run_periodic_optimization()
-        
-        print(f"\n[OK] 优化完成")
+
+        print("\n[OK] 优化完成")
         print(f"  审查Skills: {len(result['skills_reviewed'])}")
-        
-        if result['skills_to_update']:
-            print(f"\n[WARN] 需要改进的Skills:")
-            for skill in result['skills_to_update']:
+
+        if result["skills_to_update"]:
+            print("\n[WARN] 需要改进的Skills:")
+            for skill in result["skills_to_update"]:
                 print(f"  - {skill}")
-    
-    elif args.action == 'history':
+
+    elif args.action == "history":
         skill_name = args.skill
         if not skill_name:
             print("[FAIL] 请指定Skill名称")
             return
-        
+
         history = evolution.get_skill_history(skill_name)
         print(f"[Evolution] {skill_name} 进化历史 ({len(history)} 条)")
         print("=" * 50)
-        
+
         for entry in history[:10]:
             print(f"\n  [{entry['created_at'][:10]}] {entry['change_type']}")
             print(f"    触发: {entry['trigger_type']}")
             print(f"    描述: {entry['description']}")
-    
-    elif args.action == 'sync':
+
+    elif args.action == "sync":
         print("[Evolution] 同步到Markdown...")
         result = evolution.sync_to_markdown()
-        
+
         print(f"[OK] 已同步 {result['skills_synced']} 个Skills")
-        for f in result['files_created'][:5]:
+        for f in result["files_created"][:5]:
             print(f"  - {f}")
 
 
 def cmd_hooks(args):
     """Git钩子命令"""
     hooks = GitHooks()
-    
-    if args.action == 'install':
+
+    if args.action == "install":
         print("[Hooks] 安装Git钩子...")
         result = hooks.install()
-        
-        if 'error' in result:
+
+        if "error" in result:
             print(f"[FAIL] {result['error']}")
         else:
             print("[OK] Git钩子已安装")
             for hook, success in result.items():
                 print(f"  - {hook}: {'成功' if success else '失败'}")
-    
-    elif args.action == 'uninstall':
+
+    elif args.action == "uninstall":
         print("[Hooks] 卸载Git钩子...")
         result = hooks.uninstall()
-        
+
         print("[OK] Git钩子已卸载")
         for hook, success in result.items():
             print(f"  - {hook}: {'成功' if success else '失败'}")
-    
-    elif args.action == 'status':
+
+    elif args.action == "status":
         status = hooks.get_status()
         print("[Hooks] Git钩子状态")
         print("=" * 50)
         print(f"  是Git仓库: {'是' if status['is_git_repo'] else '否'}")
-        print(f"  post-commit: {'已安装' if status['post_commit_installed'] else '未安装'}")
-        if status['post_commit_has_backup']:
+        print(
+            f"  post-commit: {'已安装' if status['post_commit_installed'] else '未安装'}"
+        )
+        if status["post_commit_has_backup"]:
             print("  存在备份: 是")
 
 
 # ==================== 模型管理命令 ====================
 
+
 def cmd_models(args):
     """模型管理命令"""
     import json
     from pathlib import Path
-    
-    models_json_path = Path('.opencode/config/models.json')
-    
+
+    models_json_path = Path(".opencode/config/models.json")
+
     if not models_json_path.exists():
         print(f"[FAIL] 配置文件不存在: {models_json_path}")
         return
-    
-    from ..utils.encoding import read_file_utf8
+
     config = json.loads(read_file_utf8(str(models_json_path)))
-    
-    if args.action == 'show' or args.action == 'status':
+
+    if args.action == "show" or args.action == "status":
         print("[Models] 当前模型配置")
         print("=" * 50)
         print(f"  版本: {config.get('version', 'unknown')}")
         print(f"  策略: {config.get('strategy', 'unknown')}")
         print(f"  主模型: {config.get('default', {}).get('primary', 'unknown')}")
         print(f"  备用模型: {config.get('default', {}).get('fallback', 'unknown')}")
-        
+
         # 显示 Coding Plan 信息
-        if 'codingPlanConfig' in config:
+        if "codingPlanConfig" in config:
             print("\n[Coding Plan]")
-            mapping = config['codingPlanConfig'].get('claudeCodeMapping', {})
+            mapping = config["codingPlanConfig"].get("claudeCodeMapping", {})
             print(f"  Claude Opus -> {mapping.get('opus', 'N/A')}")
             print(f"  Claude Sonnet -> {mapping.get('sonnet', 'N/A')}")
             print(f"  Claude Haiku -> {mapping.get('haiku', 'N/A')}")
-        
+
         # 显示 Agent 映射
         if args.agent:
-            agent_map = config.get('agentMapping', {})
-            categories = config.get('categories', {})
-            
+            agent_map = config.get("agentMapping", {})
+            categories = config.get("categories", {})
+
             if args.agent in agent_map:
                 category = agent_map[args.agent]
-                model = categories.get(category, 'unknown')
+                model = categories.get(category, "unknown")
                 print(f"\n[Agent] {args.agent}")
                 print(f"  类别: {category}")
                 print(f"  模型: {model}")
             else:
                 print(f"\n[FAIL] Agent '{args.agent}' 未找到")
-    
-    elif args.action == 'list':
+
+    elif args.action == "list":
         print("[Models] 可用模型列表")
         print("=" * 50)
-        
-        providers = config.get('providers', {})
+
+        providers = config.get("providers", {})
         for provider_name, provider in providers.items():
             print(f"\n[{provider.get('displayName', provider_name)}]")
-            models = provider.get('models', {})
+            models = provider.get("models", {})
             for model_id, model_info in models.items():
-                recommended = ' (推荐)' if model_info.get('recommended') else ''
-                reasoning = ' [推理]' if model_info.get('reasoning') else ''
+                recommended = " (推荐)" if model_info.get("recommended") else ""
+                reasoning = " [推理]" if model_info.get("reasoning") else ""
                 print(f"  - {model_id}{recommended}{reasoning}")
-                if model_info.get('description'):
+                if model_info.get("description"):
                     print(f"    {model_info['description']}")
-    
-    elif args.action == 'check-updates':
+
+    elif args.action == "check-updates":
         print("[Models] 检查 GLM 模型更新...")
         print("=" * 50)
-        
-        version_config = config.get('versionUpgrade', {})
-        check_url = version_config.get('checkUrl', 'https://docs.bigmodel.cn/llms.txt')
-        upgrade_path = version_config.get('upgradePath', {})
-        
+
+        version_config = config.get("versionUpgrade", {})
+        check_url = version_config.get("checkUrl", "https://docs.bigmodel.cn/llms.txt")
+        upgrade_path = version_config.get("upgradePath", {})
+
         print(f"  检查地址: {check_url}")
         print(f"  自动检测: {'开启' if version_config.get('autoDetect') else '关闭'}")
-        
+
         # 显示升级路径
         if upgrade_path:
             print("\n[升级路径]")
             for old_ver, new_ver in upgrade_path.items():
                 print(f"  {old_ver} -> {new_ver}")
-        
+
         # 尝试获取远程信息
         try:
             import urllib.request
+
             with urllib.request.urlopen(check_url, timeout=10) as response:
-                content = response.read().decode('utf-8')
+                content = response.read().decode("utf-8")
                 print(f"\n[OK] 成功获取远程模型信息 ({len(content)} bytes)")
         except Exception as e:
             print(f"\n[WARN] 无法获取远程信息: {e}")
             print("  请手动访问 https://docs.bigmodel.cn/llms.txt 查看")
-    
-    elif args.action == 'upgrade':
+
+    elif args.action == "upgrade":
         print("[Models] 模型升级")
         print("=" * 50)
-        
-        version_config = config.get('versionUpgrade', {})
-        upgrade_path = version_config.get('upgradePath', {})
-        
-        current_primary = config.get('default', {}).get('primary', '')
-        
+
+        version_config = config.get("versionUpgrade", {})
+        upgrade_path = version_config.get("upgradePath", {})
+
+        current_primary = config.get("default", {}).get("primary", "")
+
         if args.target:
             target = args.target
         else:
-            target = upgrade_path.get(current_primary, '')
-        
+            target = upgrade_path.get(current_primary, "")
+
         if not target:
             print(f"[FAIL] 未找到 {current_primary} 的升级路径")
             print("  使用: qka models upgrade --to GLM-5.1")
             return
-        
+
         print(f"  当前: {current_primary}")
         print(f"  目标: {target}")
-        
+
         if args.dry_run:
             print("\n[DRY-RUN] 预览变更:")
             print(f"  - default.primary: {current_primary} -> {target}")
-            
-            categories = config.get('categories', {})
+
+            categories = config.get("categories", {})
             for cat, model in categories.items():
                 if model == current_primary:
                     print(f"  - categories.{cat}: {model} -> {target}")
-            
+
             print("\n  使用 --force 执行实际升级")
         else:
             if not args.force:
                 print("\n[WARN] 需要确认")
                 print("  使用 --force 执行升级")
                 return
-            
+
             # 创建备份
             import shutil
             from datetime import datetime
-            backup_path = Path(f'.quickagents/backups/models_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
+
+            backup_path = Path(
+                f".quickagents/backups/models_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
             backup_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(models_json_path, backup_path)
             print(f"\n[OK] 备份已创建: {backup_path}")
-            
+
             # 执行升级
-            if config['default']['primary'] == current_primary:
-                config['default']['primary'] = target
-            
-            for cat, model in config.get('categories', {}).items():
+            if config["default"]["primary"] == current_primary:
+                config["default"]["primary"] = target
+
+            for cat, model in config.get("categories", {}).items():
                 if model == current_primary:
-                    config['categories'][cat] = target
-            
-            write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
-            
+                    config["categories"][cat] = target
+
+            write_file_utf8(
+                str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
+            )
+
             print(f"[OK] 升级完成: {current_primary} -> {target}")
-    
-    elif args.action == 'strategy':
+
+    elif args.action == "strategy":
         print("[Models] 切换模型策略")
         print("=" * 50)
-        
+
         # 支持从位置参数或选项获取策略名称
         strategy = args.strategy_name or args.model_name
         print(f"  目标策略: {strategy}")
-        
-        if strategy not in ['coding-plan', 'single-model', 'hybrid']:
+
+        if strategy not in ["coding-plan", "single-model", "hybrid"]:
             print(f"[FAIL] 无效策略: {strategy}")
             print("  可用: coding-plan, single-model, hybrid")
             return
-        
+
         if args.dry_run:
             print(f"\n[DRY-RUN] 将切换到: {strategy}")
             return
-        
+
         if not args.force:
             print("\n[WARN] 需要确认")
             print("  使用 --force 执行切换")
             return
-        
-        config['strategy'] = strategy
-        
-        if strategy == 'single-model' and args.model:
-            config['lockModel'] = args.model
-            config['default']['primary'] = args.model
-        
-        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
-        
+
+        config["strategy"] = strategy
+
+        if strategy == "single-model" and args.model:
+            config["lockModel"] = args.model
+            config["default"]["primary"] = args.model
+
+        write_file_utf8(
+            str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
+        )
+
         print(f"[OK] 策略已切换: {strategy}")
-    
-    elif args.action == 'lock':
+
+    elif args.action == "lock":
         model = args.model_name
         print(f"[Models] 锁定模型: {model}")
-        
+
         if args.dry_run:
             print(f"\n[DRY-RUN] 将锁定所有 Agent 使用: {model}")
             return
-        
+
         if not args.force:
             print("\n[WARN] 需要确认")
             print("  使用 --force 执行锁定")
             return
-        
-        config['lockModel'] = model
-        config['default']['primary'] = model
-        
-        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
-        
+
+        config["lockModel"] = model
+        config["default"]["primary"] = model
+
+        write_file_utf8(
+            str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
+        )
+
         print(f"[OK] 已锁定模型: {model}")
-    
-    elif args.action == 'unlock':
+
+    elif args.action == "unlock":
         print("[Models] 解除模型锁定")
-        
-        config['lockModel'] = None
-        
-        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
-        
+
+        config["lockModel"] = None
+
+        write_file_utf8(
+            str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
+        )
+
         print("[OK] 已解除锁定")
 
 
@@ -869,10 +911,10 @@ def cmd_uninstall(args):
 
     from .. import __version__
 
-    dry_run = getattr(args, 'dry_run', False)
-    keep_data = getattr(args, 'keep_data', False)
-    keep_opencode = getattr(args, 'keep_opencode', False)
-    force = getattr(args, 'force', False)
+    dry_run = getattr(args, "dry_run", False)
+    keep_data = getattr(args, "keep_data", False)
+    keep_opencode = getattr(args, "keep_opencode", False)
+    force = getattr(args, "force", False)
 
     print(f"[Uninstall] QuickAgents v{__version__} — 项目级卸载")
     print("=" * 60)
@@ -883,43 +925,64 @@ def cmd_uninstall(args):
     items_to_clean = []
 
     # 1a. Git Hooks (qa相关)
-    git_hooks_dir = Path('.git/hooks')
+    git_hooks_dir = Path(".git/hooks")
     qa_hooks = []
     if git_hooks_dir.exists():
         for hook_file in git_hooks_dir.iterdir():
-            if hook_file.is_file() and not hook_file.name.endswith('.sample'):
+            if hook_file.is_file() and not hook_file.name.endswith(".sample"):
                 try:
-                    content = hook_file.read_text(encoding='utf-8', errors='ignore')
-                    if 'quickagents' in content.lower() or 'qka ' in content:
+                    content = hook_file.read_text(encoding="utf-8", errors="ignore")
+                    if "quickagents" in content.lower() or "qka " in content:
                         qa_hooks.append(hook_file)
                 except Exception:
                     pass
     if qa_hooks:
-        items_to_clean.append(('git_hooks', qa_hooks, f'Git Hooks (qa相关, {len(qa_hooks)}个)'))
+        items_to_clean.append(
+            ("git_hooks", qa_hooks, f"Git Hooks (qa相关, {len(qa_hooks)}个)")
+        )
 
     # 1b. 项目数据 .quickagents/
-    project_data = Path('.quickagents')
+    project_data = Path(".quickagents")
     if project_data.exists():
-        total_size = sum(f.stat().st_size for f in project_data.rglob('*') if f.is_file())
-        items_to_clean.append(('project_data', [project_data],
-                               f'项目数据 (.quickagents/) [{_format_size(total_size)}]'))
+        total_size = sum(
+            f.stat().st_size for f in project_data.rglob("*") if f.is_file()
+        )
+        items_to_clean.append(
+            (
+                "project_data",
+                [project_data],
+                f"项目数据 (.quickagents/) [{_format_size(total_size)}]",
+            )
+        )
 
     # 1c. .opencode/ 目录
-    opencode_dir = Path('.opencode')
+    opencode_dir = Path(".opencode")
     if opencode_dir.exists():
-        total_size = sum(f.stat().st_size for f in opencode_dir.rglob('*') if f.is_file())
-        items_to_clean.append(('opencode_dir', [opencode_dir],
-                               f'IDE配置 (.opencode/) [{_format_size(total_size)}]'))
+        total_size = sum(
+            f.stat().st_size for f in opencode_dir.rglob("*") if f.is_file()
+        )
+        items_to_clean.append(
+            (
+                "opencode_dir",
+                [opencode_dir],
+                f"IDE配置 (.opencode/) [{_format_size(total_size)}]",
+            )
+        )
 
     # 1d. 项目根目录的QA配置文件
     qa_config_files = []
-    for fname in ['quickagents.json', 'AGENTS.md', 'VERSION.md']:
+    for fname in ["quickagents.json", "AGENTS.md", "VERSION.md"]:
         fpath = Path(fname)
         if fpath.exists():
             qa_config_files.append(fpath)
     if qa_config_files:
-        items_to_clean.append(('config_files', qa_config_files,
-                               f'配置文件 ({", ".join(str(f) for f in qa_config_files)})'))
+        items_to_clean.append(
+            (
+                "config_files",
+                qa_config_files,
+                f"配置文件 ({', '.join(str(f) for f in qa_config_files)})",
+            )
+        )
 
     if not items_to_clean:
         print("\n[INFO] 当前项目中没有 QuickAgents 相关文件")
@@ -930,10 +993,10 @@ def cmd_uninstall(args):
 
     action_plan = []
     for item_type, paths, description in items_to_clean:
-        if item_type == 'project_data' and keep_data:
+        if item_type == "project_data" and keep_data:
             print(f"  [SKIP] {description} (--keep-data)")
             continue
-        if item_type == 'opencode_dir' and keep_opencode:
+        if item_type == "opencode_dir" and keep_opencode:
             print(f"  [SKIP] {description} (--keep-opencode)")
             continue
         print(f"  [REMOVE] {description}")
@@ -945,19 +1008,21 @@ def cmd_uninstall(args):
 
     # --- 3. dry-run 模式 ---
     if dry_run:
-        print(f"\n[DRY-RUN] 以上是预览，未执行任何操作")
-        print(f"  移除 --dry-run 参数以执行实际卸载")
+        print("\n[DRY-RUN] 以上是预览，未执行任何操作")
+        print("  移除 --dry-run 参数以执行实际卸载")
         return
 
     # --- 4. 确认 ---
     if not force:
         print()
         try:
-            answer = input("确认卸载当前项目中的 QuickAgents 文件? [y/N]: ").strip().lower()
+            answer = (
+                input("确认卸载当前项目中的 QuickAgents 文件? [y/N]: ").strip().lower()
+            )
         except (EOFError, KeyboardInterrupt):
             print("\n[INFO] 已取消卸载")
             return
-        if answer not in ('y', 'yes'):
+        if answer not in ("y", "yes"):
             print("[INFO] 已取消卸载")
             return
 
@@ -965,7 +1030,7 @@ def cmd_uninstall(args):
     print(f"\n[执行] 开始清理项目: {Path.cwd().name}...")
 
     # 5a. 移除 Git Hooks
-    if 'git_hooks' in action_plan:
+    if "git_hooks" in action_plan:
         for hook_file in qa_hooks:
             try:
                 hook_file.unlink()
@@ -974,25 +1039,25 @@ def cmd_uninstall(args):
                 print(f"  [WARN] 无法删除 {hook_file}: {e}")
 
     # 5b. 移除项目数据
-    if 'project_data' in action_plan and project_data.exists():
+    if "project_data" in action_plan and project_data.exists():
         try:
             shutil.rmtree(str(project_data))
-            print(f"  [OK] 已删除: .quickagents/")
+            print("  [OK] 已删除: .quickagents/")
         except Exception as e:
             print(f"  [WARN] 无法删除 .quickagents/: {e}")
-            print(f"         请手动删除: rmdir /s /q .quickagents  (Windows)")
-            print(f"                   rm -rf .quickagents          (Linux/Mac)")
+            print("         请手动删除: rmdir /s /q .quickagents  (Windows)")
+            print("                   rm -rf .quickagents          (Linux/Mac)")
 
     # 5c. 移除 .opencode/
-    if 'opencode_dir' in action_plan and opencode_dir.exists():
+    if "opencode_dir" in action_plan and opencode_dir.exists():
         try:
             shutil.rmtree(str(opencode_dir))
-            print(f"  [OK] 已删除: .opencode/")
+            print("  [OK] 已删除: .opencode/")
         except Exception as e:
             print(f"  [WARN] 无法删除 .opencode/: {e}")
 
     # 5d. 移除配置文件
-    if 'config_files' in action_plan:
+    if "config_files" in action_plan:
         for fpath in qa_config_files:
             try:
                 fpath.unlink()
@@ -1017,42 +1082,42 @@ def cmd_uninstall(args):
 # 这些文件不应出现在用户的发布包中
 QA_PROJECT_PATTERNS = {
     # 运行时数据目录
-    'dirs': [
-        '.quickagents',
-        '.opencode',
-        '.pytest_cache',
-        '__pycache__',
+    "dirs": [
+        ".quickagents",
+        ".opencode",
+        ".pytest_cache",
+        "__pycache__",
     ],
     # 配置和文档文件（项目根目录）
-    'root_files': [
-        'AGENTS.md',
-        'VERSION.md',
-        'quickagents.json',
-        'opencode.json',
+    "root_files": [
+        "AGENTS.md",
+        "VERSION.md",
+        "quickagents.json",
+        "opencode.json",
     ],
     # Docs/ 下的 QA 生成文件
-    'docs_files': [
-        'Docs/MEMORY.md',
-        'Docs/TASKS.md',
-        'Docs/DECISIONS.md',
-        'Docs/INDEX.md',
+    "docs_files": [
+        "Docs/MEMORY.md",
+        "Docs/TASKS.md",
+        "Docs/DECISIONS.md",
+        "Docs/INDEX.md",
     ],
     # Docs/ 下的 QA 生成子目录
-    'docs_dirs': [
-        'Docs/features',
-        'Docs/modules',
+    "docs_dirs": [
+        "Docs/features",
+        "Docs/modules",
     ],
     # 通用排除（非QA但也不应发布）
-    'generic_exclude': [
-        'node_modules',
-        '.git',
-        'dist',
-        'build',
-        '*.egg-info',
-        '*.pyc',
-        '*.pyo',
-        '.env',
-        '.env.local',
+    "generic_exclude": [
+        "node_modules",
+        ".git",
+        "dist",
+        "build",
+        "*.egg-info",
+        "*.pyc",
+        "*.pyo",
+        ".env",
+        ".env.local",
     ],
 }
 
@@ -1081,19 +1146,25 @@ QA_GITIGNORE_MARKER_END = "# === End QuickAgents ==="
 def _should_exclude(rel_path: str, project_root: Path) -> bool:
     """判断文件是否应被排除（不出现在导出包中）"""
     # 统一用正斜杠比较
-    rel_path_posix = rel_path.replace('\\', '/')
-    parts = rel_path_posix.split('/')
+    rel_path_posix = rel_path.replace("\\", "/")
+    parts = rel_path_posix.split("/")
 
     # 加载自定义配置
     custom_config = _load_custom_export_config(project_root)
 
     # 合并规则
-    all_dirs = QA_PROJECT_PATTERNS['dirs'] + custom_config.get('dirs', [])
-    all_root_files = QA_PROJECT_PATTERNS['root_files'] + custom_config.get('root_files', [])
-    all_docs_files = QA_PROJECT_PATTERNS['docs_files'] + custom_config.get('docs_files', [])
-    all_docs_dirs = QA_PROJECT_PATTERNS['docs_dirs'] + custom_config.get('docs_dirs', [])
-    all_generic = QA_PROJECT_PATTERNS['generic_exclude']
-    custom_patterns = custom_config.get('patterns', [])
+    all_dirs = QA_PROJECT_PATTERNS["dirs"] + custom_config.get("dirs", [])
+    all_root_files = QA_PROJECT_PATTERNS["root_files"] + custom_config.get(
+        "root_files", []
+    )
+    all_docs_files = QA_PROJECT_PATTERNS["docs_files"] + custom_config.get(
+        "docs_files", []
+    )
+    all_docs_dirs = QA_PROJECT_PATTERNS["docs_dirs"] + custom_config.get(
+        "docs_dirs", []
+    )
+    all_generic = QA_PROJECT_PATTERNS["generic_exclude"]
+    custom_patterns = custom_config.get("patterns", [])
 
     # 排除目录
     for d in all_dirs:
@@ -1102,18 +1173,19 @@ def _should_exclude(rel_path: str, project_root: Path) -> bool:
 
     # 排除通用目录
     for d in all_generic:
-        clean = d.replace('*', '')
+        clean = d.replace("*", "")
         if clean in parts:
             return True
         # glob 匹配 (如 *.egg-info)
-        if '*' in d:
+        if "*" in d:
             import fnmatch
+
             for p in parts:
                 if fnmatch.fnmatch(p, d):
                     return True
 
     # 文件名匹配
-    filename = parts[-1] if parts else ''
+    filename = parts[-1] if parts else ""
 
     # 根目录文件（只在根目录时排除）
     if len(parts) == 1:
@@ -1121,36 +1193,38 @@ def _should_exclude(rel_path: str, project_root: Path) -> bool:
             if filename == f:
                 return True
         for f in all_generic:
-            if '*' in f:
+            if "*" in f:
                 import fnmatch
+
                 if fnmatch.fnmatch(filename, f):
                     return True
 
     # Docs/ 下的 QA 文件
-    if len(parts) >= 2 and parts[0] == 'Docs':
-        docs_rel = '/'.join(parts[:2]) if len(parts) >= 2 else parts[0]
+    if len(parts) >= 2 and parts[0] == "Docs":
+        docs_rel = "/".join(parts[:2]) if len(parts) >= 2 else parts[0]
         for f in all_docs_files:
             if docs_rel == f:
                 return True
         for d in all_docs_dirs:
-            if rel_path_posix.startswith(d + '/'):
+            if rel_path_posix.startswith(d + "/"):
                 return True
 
     # 自定义模式匹配
     if custom_patterns:
         import fnmatch
+
         for pattern in custom_patterns:
             # 支持 **/test_*.py 这样的模式
-            if pattern.startswith('**/'):
+            if pattern.startswith("**/"):
                 sub_pattern = pattern[3:]
                 if fnmatch.fnmatch(filename, sub_pattern):
                     return True
-            elif '*' in pattern:
+            elif "*" in pattern:
                 if fnmatch.fnmatch(rel_path_posix, pattern):
                     return True
 
     # __pycache__ 在任意层级
-    if '__pycache__' in parts:
+    if "__pycache__" in parts:
         return True
 
     return False
@@ -1158,18 +1232,19 @@ def _should_exclude(rel_path: str, project_root: Path) -> bool:
 
 def _load_custom_export_config(project_root: Path) -> dict:
     """加载用户自定义的导出配置文件"""
-    config_path = project_root / '.qkaexport'
+    config_path = project_root / ".qkaexport"
     if not config_path.exists():
         return {}
 
     try:
         import json as _json
-        content = config_path.read_text(encoding='utf-8')
+
+        content = config_path.read_text(encoding="utf-8")
         config = _json.loads(content)
 
         # 返回 exclude 部分
-        if 'exclude' in config:
-            return config['exclude']
+        if "exclude" in config:
+            return config["exclude"]
         return {}
     except Exception as e:
         print(f"[WARN] 加载 .qkaexport 配置文件失败: {e}")
@@ -1209,11 +1284,11 @@ def cmd_export(args):
 
     from .. import __version__
 
-    dry_run = getattr(args, 'dry_run', False)
-    list_excludes = getattr(args, 'list_excludes', False)
-    inject_gitignore = getattr(args, 'inject_gitignore', False)
-    output_root = getattr(args, 'output', 'Output') or 'Output'
-    version = getattr(args, 'version', None)
+    dry_run = getattr(args, "dry_run", False)
+    list_excludes = getattr(args, "list_excludes", False)
+    inject_gitignore = getattr(args, "inject_gitignore", False)
+    output_root = getattr(args, "output", "Output") or "Output"
+    version = getattr(args, "version", None)
 
     # 获取项目根目录
     project_root = Path.cwd()
@@ -1227,32 +1302,38 @@ def cmd_export(args):
         custom_config = _load_custom_export_config(project_root)
 
         print("\n排除目录:")
-        all_dirs = QA_PROJECT_PATTERNS['dirs'] + custom_config.get('dirs', [])
+        all_dirs = QA_PROJECT_PATTERNS["dirs"] + custom_config.get("dirs", [])
         for d in sorted(set(all_dirs)):
             print(f"  - {d}/")
 
         print("\n排除根目录文件:")
-        all_root_files = QA_PROJECT_PATTERNS['root_files'] + custom_config.get('root_files', [])
+        all_root_files = QA_PROJECT_PATTERNS["root_files"] + custom_config.get(
+            "root_files", []
+        )
         for f in sorted(set(all_root_files)):
             print(f"  - {f}")
 
         print("\n排除 Docs/ 文件:")
-        all_docs_files = QA_PROJECT_PATTERNS['docs_files'] + custom_config.get('docs_files', [])
+        all_docs_files = QA_PROJECT_PATTERNS["docs_files"] + custom_config.get(
+            "docs_files", []
+        )
         for f in sorted(set(all_docs_files)):
             print(f"  - {f}")
 
         print("\n排除 Docs/ 子目录:")
-        all_docs_dirs = QA_PROJECT_PATTERNS['docs_dirs'] + custom_config.get('docs_dirs', [])
+        all_docs_dirs = QA_PROJECT_PATTERNS["docs_dirs"] + custom_config.get(
+            "docs_dirs", []
+        )
         for d in sorted(set(all_docs_dirs)):
             print(f"  - {d}/")
 
         print("\n通用排除:")
-        all_generic = QA_PROJECT_PATTERNS['generic_exclude']
+        all_generic = QA_PROJECT_PATTERNS["generic_exclude"]
         for f in sorted(set(all_generic)):
             print(f"  - {f}")
 
         # 显示自定义模式
-        custom_patterns = custom_config.get('patterns', [])
+        custom_patterns = custom_config.get("patterns", [])
         if custom_patterns:
             print("\n自定义模式:")
             for p in custom_patterns:
@@ -1262,18 +1343,18 @@ def cmd_export(args):
 
     # --- 注入 .gitignore ---
     if inject_gitignore:
-        gitignore_path = Path('.gitignore')
+        gitignore_path = Path(".gitignore")
 
         if gitignore_path.exists():
-            content = gitignore_path.read_text(encoding='utf-8')
+            content = gitignore_path.read_text(encoding="utf-8")
             if QA_GITIGNORE_MARKER_START in content:
                 print("[Export] .gitignore 已包含 QuickAgents 排除规则，跳过注入")
                 return
-            content = content.rstrip() + '\n' + QA_GITIGNORE_BLOCK + '\n'
-            gitignore_path.write_text(content, encoding='utf-8')
+            content = content.rstrip() + "\n" + QA_GITIGNORE_BLOCK + "\n"
+            gitignore_path.write_text(content, encoding="utf-8")
             print("[OK] 已将 QuickAgents 排除规则追加到 .gitignore")
         else:
-            gitignore_path.write_text(QA_GITIGNORE_BLOCK + '\n', encoding='utf-8')
+            gitignore_path.write_text(QA_GITIGNORE_BLOCK + "\n", encoding="utf-8")
             print("[OK] 已创建 .gitignore 并添加 QuickAgents 排除规则")
 
         return
@@ -1281,7 +1362,7 @@ def cmd_export(args):
     # --- Git 前置检查 ---
     project_name = project_root.name
 
-    git_dir = project_root / '.git'
+    git_dir = project_root / ".git"
     if not git_dir.exists():
         print("[FAIL] 当前目录不是 git 仓库")
         print("  qka export 要求在 git 仓库中执行，确保导出与 commit 对应")
@@ -1293,8 +1374,11 @@ def cmd_export(args):
     commit_short = None
     try:
         result = subprocess.run(
-            ['git', 'rev-parse', 'HEAD'],
-            capture_output=True, text=True, timeout=5, cwd=str(project_root)
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(project_root),
         )
         if result.returncode == 0:
             commit_hash = result.stdout.strip()
@@ -1311,15 +1395,19 @@ def cmd_export(args):
     is_dirty = False
     try:
         result = subprocess.run(
-            ['git', 'status', '--porcelain'],
-            capture_output=True, text=True, timeout=10, cwd=str(project_root)
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            cwd=str(project_root),
         )
         if result.returncode == 0 and result.stdout.strip():
             # 排除 Output/ 目录的变更（Output 本身可能已被 gitignore）
             dirty_lines = [
-                line for line in result.stdout.strip().splitlines()
-                if not line.strip().startswith('?? Output')
-                and not line.strip().startswith('?? Output/')
+                line
+                for line in result.stdout.strip().splitlines()
+                if not line.strip().startswith("?? Output")
+                and not line.strip().startswith("?? Output/")
             ]
             if dirty_lines:
                 is_dirty = True
@@ -1333,7 +1421,7 @@ def cmd_export(args):
         print()
         print("  请先提交:")
         print("    git add .")
-        print("    git commit -m \"feat: xxx\"")
+        print('    git commit -m "feat: xxx"')
         return
 
     # --- 确定版本号 ---
@@ -1341,9 +1429,9 @@ def cmd_export(args):
         version = _detect_project_version()
     if not version:
         # 最终 fallback: 用 commit short hash
-        version = f'commit-{commit_short}'
+        version = f"commit-{commit_short}"
         print(f"[INFO] 未检测到项目版本号，使用: {version}")
-        print(f"       可通过 --version 参数指定")
+        print("       可通过 --version 参数指定")
 
     # --- 扫描项目文件 ---
     versioned_output = Path(output_root) / version
@@ -1359,17 +1447,17 @@ def cmd_export(args):
     excluded_files = []
     included_files = []
 
-    output_root_path = Path(output_root)
+    Path(output_root)
 
-    for path in project_root.rglob('*'):
+    for path in project_root.rglob("*"):
         if not path.is_file():
             continue
         rel_path = path.relative_to(project_root)
         rel_str = str(rel_path)
 
         # 排除 Output 目录自身
-        rel_posix = rel_str.replace('\\', '/')
-        if rel_posix.startswith(output_root + '/') or rel_posix == output_root:
+        rel_posix = rel_str.replace("\\", "/")
+        if rel_posix.startswith(output_root + "/") or rel_posix == output_root:
             continue
 
         all_files.append(rel_str)
@@ -1380,24 +1468,31 @@ def cmd_export(args):
             included_files.append(rel_str)
 
     # 读取 .gitignore 中的规则进一步排除
-    gitignore_path = project_root / '.gitignore'
+    gitignore_path = project_root / ".gitignore"
     if gitignore_path.exists():
         try:
             import fnmatch as _fnmatch
+
             gitignore_lines = [
-                line.strip() for line in gitignore_path.read_text(encoding='utf-8').splitlines()
-                if line.strip() and not line.strip().startswith('#')
+                line.strip()
+                for line in gitignore_path.read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.strip().startswith("#")
             ]
             final_included = []
             for f in included_files:
                 excluded_by_gitignore = False
                 for pattern in gitignore_lines:
-                    if pattern.endswith('/'):
-                        if f.replace('\\', '/').startswith(pattern) or ('/' + pattern) in f:
+                    if pattern.endswith("/"):
+                        if (
+                            f.replace("\\", "/").startswith(pattern)
+                            or ("/" + pattern) in f
+                        ):
                             excluded_by_gitignore = True
                             break
-                    elif '*' in pattern:
-                        if _fnmatch.fnmatch(f, pattern) or _fnmatch.fnmatch(Path(f).name, pattern):
+                    elif "*" in pattern:
+                        if _fnmatch.fnmatch(f, pattern) or _fnmatch.fnmatch(
+                            Path(f).name, pattern
+                        ):
                             excluded_by_gitignore = True
                             break
                     else:
@@ -1414,27 +1509,27 @@ def cmd_export(args):
 
     # --- dry-run 模式 ---
     if dry_run:
-        print(f"\n[DRY-RUN] 导出预览")
+        print("\n[DRY-RUN] 导出预览")
         print(f"  版本号: {version}")
         print(f"  Commit: {commit_short}")
         print(f"  总文件: {len(all_files)}")
         print(f"  将导出: {len(included_files)}")
         print(f"  将排除: {len(excluded_files)}")
 
-        print(f"\n排除文件 (前30个):")
+        print("\n排除文件 (前30个):")
         for f in sorted(excluded_files)[:30]:
             print(f"  [SKIP] {f}")
         if len(excluded_files) > 30:
             print(f"  ... 还有 {len(excluded_files) - 30} 个")
 
-        print(f"\n导出文件 (前20个):")
+        print("\n导出文件 (前20个):")
         for f in sorted(included_files)[:20]:
             print(f"  [COPY] {f}")
         if len(included_files) > 20:
             print(f"  ... 还有 {len(included_files) - 20} 个")
 
-        print(f"\n[DRY-RUN] 未执行任何操作")
-        print(f"  移除 --dry-run 参数以执行实际导出")
+        print("\n[DRY-RUN] 未执行任何操作")
+        print("  移除 --dry-run 参数以执行实际导出")
         return
 
     # --- 执行导出 ---
@@ -1448,24 +1543,29 @@ def cmd_export(args):
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(str(src), str(dst))
 
-    total_size = sum(f.stat().st_size for f in versioned_output.rglob('*') if f.is_file())
+    total_size = sum(
+        f.stat().st_size for f in versioned_output.rglob("*") if f.is_file()
+    )
 
     # 生成 manifest（含 git commit 溯源）
     from datetime import datetime
-    manifest = {
-        'export_time': datetime.now().isoformat(),
-        'project': project_name,
-        'version': version,
-        'git_commit': commit_hash,
-        'git_commit_short': commit_short,
-        'quickagents_version': __version__,
-        'total_files': len(included_files),
-        'excluded_files': len(excluded_files),
-    }
-    manifest_path = versioned_output / 'export-manifest.json'
-    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding='utf-8')
 
-    print(f"\n[OK] 导出完成!")
+    manifest = {
+        "export_time": datetime.now().isoformat(),
+        "project": project_name,
+        "version": version,
+        "git_commit": commit_hash,
+        "git_commit_short": commit_short,
+        "quickagents_version": __version__,
+        "total_files": len(included_files),
+        "excluded_files": len(excluded_files),
+    }
+    manifest_path = versioned_output / "export-manifest.json"
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+    print("\n[OK] 导出完成!")
     print(f"  输出目录: {versioned_output}/")
     print(f"  项目版本: {version}")
     print(f"  Git Commit: {commit_short}")
@@ -1485,39 +1585,40 @@ def _detect_project_version():
         4. git tag (vx.y.z)
     """
     # 1. pyproject.toml
-    pyproject = Path('pyproject.toml')
+    pyproject = Path("pyproject.toml")
     if pyproject.exists():
         try:
-            content = pyproject.read_text(encoding='utf-8')
+            content = pyproject.read_text(encoding="utf-8")
             for line in content.splitlines():
                 stripped = line.strip()
-                if stripped.startswith('version =') or stripped.startswith('version='):
-                    v = stripped.split('=', 1)[1].strip().strip('"').strip("'")
+                if stripped.startswith("version =") or stripped.startswith("version="):
+                    v = stripped.split("=", 1)[1].strip().strip('"').strip("'")
                     if v and v[0].isdigit():
                         return v
         except Exception:
             pass
 
     # 2. package.json
-    package_json = Path('package.json')
+    package_json = Path("package.json")
     if package_json.exists():
         try:
             import json as _json
-            data = _json.loads(package_json.read_text(encoding='utf-8'))
-            v = data.get('version', '')
+
+            data = _json.loads(package_json.read_text(encoding="utf-8"))
+            v = data.get("version", "")
             if v and v[0].isdigit():
                 return v
         except Exception:
             pass
 
     # 3. VERSION.md
-    version_md = Path('VERSION.md')
+    version_md = Path("VERSION.md")
     if version_md.exists():
         try:
-            content = version_md.read_text(encoding='utf-8')
+            content = version_md.read_text(encoding="utf-8")
             for line in content.splitlines():
-                if '| Version |' in line or '| version |' in line:
-                    parts = [p.strip() for p in line.split('|')]
+                if "| Version |" in line or "| version |" in line:
+                    parts = [p.strip() for p in line.split("|")]
                     for p in parts:
                         if p and p[0].isdigit():
                             return p
@@ -1527,13 +1628,16 @@ def _detect_project_version():
     # 4. git tag
     try:
         import subprocess
+
         result = subprocess.run(
-            ['git', 'describe', '--tags', '--abbrev=0'],
-            capture_output=True, text=True, timeout=5
+            ["git", "describe", "--tags", "--abbrev=0"],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode == 0:
             tag = result.stdout.strip()
-            if tag.startswith('v'):
+            if tag.startswith("v"):
                 tag = tag[1:]
             if tag and tag[0].isdigit():
                 return tag
@@ -1556,30 +1660,30 @@ def _format_size(size_bytes):
 def cmd_version(args):
     """版本信息命令"""
     from .. import __version__
-    
+
     print(f"QuickAgents v{__version__}")
     print(f"Python: {sys.version.split()[0]}")
-    
+
     if args.check:
         # 检查所有核心模块
         modules = [
-            ('quickagents', 'QuickAgents Core'),
-            ('quickagents.core', 'Core Module'),
-            ('quickagents.core.session', 'Session'),
-            ('quickagents.core.connection_manager', 'ConnectionManager'),
-            ('quickagents.core.transaction_manager', 'TransactionManager'),
-            ('quickagents.core.migration_manager', 'MigrationManager'),
-            ('quickagents.core.repositories.query_builder', 'QueryBuilder'),
-            ('quickagents.core.unified_db', 'UnifiedDB'),
-            ('quickagents.core.evolution', 'SkillEvolution'),
-            ('quickagents.core.markdown_sync', 'MarkdownSync'),
-            ('quickagents.core.file_manager', 'FileManager'),
-            ('quickagents.core.loop_detector', 'LoopDetector'),
-            ('quickagents.core.reminder', 'Reminder'),
-            ('quickagents.knowledge_graph', 'KnowledgeGraph'),
-            ('quickagents.skills', 'Skills'),
+            ("quickagents", "QuickAgents Core"),
+            ("quickagents.core", "Core Module"),
+            ("quickagents.core.session", "Session"),
+            ("quickagents.core.connection_manager", "ConnectionManager"),
+            ("quickagents.core.transaction_manager", "TransactionManager"),
+            ("quickagents.core.migration_manager", "MigrationManager"),
+            ("quickagents.core.repositories.query_builder", "QueryBuilder"),
+            ("quickagents.core.unified_db", "UnifiedDB"),
+            ("quickagents.core.evolution", "SkillEvolution"),
+            ("quickagents.core.markdown_sync", "MarkdownSync"),
+            ("quickagents.core.file_manager", "FileManager"),
+            ("quickagents.core.loop_detector", "LoopDetector"),
+            ("quickagents.core.reminder", "Reminder"),
+            ("quickagents.knowledge_graph", "KnowledgeGraph"),
+            ("quickagents.skills", "Skills"),
         ]
-        
+
         print("\nModule Check:")
         all_ok = True
         for module_path, display_name in modules:
@@ -1589,16 +1693,16 @@ def cmd_version(args):
             except ImportError as e:
                 print(f"  [FAIL] {display_name}: {e}")
                 all_ok = False
-        
+
         # 检查关键类
         classes = [
-            ('quickagents.core', 'Session'),
-            ('quickagents.core', 'QueryBuilder'),
-            ('quickagents.core', 'PoolConfig'),
-            ('quickagents.core', 'RetryConfig'),
-            ('quickagents.core', 'MigrationResult'),
+            ("quickagents.core", "Session"),
+            ("quickagents.core", "QueryBuilder"),
+            ("quickagents.core", "PoolConfig"),
+            ("quickagents.core", "RetryConfig"),
+            ("quickagents.core", "MigrationResult"),
         ]
-        
+
         print("\nClass Check:")
         for module_path, class_name in classes:
             try:
@@ -1608,11 +1712,11 @@ def cmd_version(args):
             except (ImportError, AttributeError) as e:
                 print(f"  [FAIL] {class_name}: {e}")
                 all_ok = False
-        
+
         if all_ok:
             print(f"\nAll checks passed! QuickAgents v{__version__}")
         else:
-            print(f"\nSome checks failed! Consider: pip install --upgrade quickagents")
+            print("\nSome checks failed! Consider: pip install --upgrade quickagents")
             sys.exit(1)
 
 
@@ -1620,26 +1724,36 @@ def cmd_update(args):
     """升级命令"""
     import subprocess
     from .. import __version__
-    
+
     print(f"Current version: v{__version__}")
-    
+
     # 确定安装源
-    source = getattr(args, 'source', 'pypi') or 'pypi'
-    target_version = getattr(args, 'target', None)
-    
-    if source == 'github':
-        package_spec = "git+https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git@main"
-        print(f"Source: GitHub (main branch)")
+    source = getattr(args, "source", "pypi") or "pypi"
+    target_version = getattr(args, "target", None)
+
+    if source == "github":
+        package_spec = (
+            "git+https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git@main"
+        )
+        print("Source: GitHub (main branch)")
     elif target_version:
         package_spec = f"quickagents=={target_version}"
         print(f"Source: PyPI (version {target_version})")
     else:
         package_spec = "quickagents"
-        print(f"Source: PyPI (latest)")
-    
+        print("Source: PyPI (latest)")
+
     # dry-run 模式
-    if getattr(args, 'dry_run', False):
-        cmd = [sys.executable, '-m', 'pip', 'install', '--dry-run', '--upgrade', package_spec]
+    if getattr(args, "dry_run", False):
+        cmd = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--dry-run",
+            "--upgrade",
+            package_spec,
+        ]
         print(f"\nDry run: {' '.join(cmd)}")
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
@@ -1649,28 +1763,29 @@ def cmd_update(args):
         except Exception as e:
             print(f"Error: {e}")
         return
-    
+
     # 执行升级
-    cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade', package_spec]
+    cmd = [sys.executable, "-m", "pip", "install", "--upgrade", package_spec]
     print(f"\nUpgrading: {' '.join(cmd)}")
     print("-" * 50)
-    
+
     try:
         result = subprocess.run(cmd, capture_output=False, text=True, timeout=120)
-        
+
         if result.returncode == 0:
             # 重新检查版本
             try:
                 # 重新导入获取新版本
                 import importlib
                 import quickagents
+
                 importlib.reload(quickagents)
                 new_version = quickagents.__version__
                 print("-" * 50)
                 print(f"[OK] Upgraded: v{__version__} -> v{new_version}")
             except Exception:
                 print("-" * 50)
-                print(f"[OK] Upgrade completed. Please restart to see new version.")
+                print("[OK] Upgrade completed. Please restart to see new version.")
         else:
             print(f"\n[FAIL] Upgrade failed with exit code {result.returncode}")
             sys.exit(1)
@@ -1694,7 +1809,7 @@ def cmd_import(args):
         print(f"[ERROR] PALs directory not found: {pals_dir}")
         print("Create it and place your documents there:")
         print(f"  mkdir {pals_dir}")
-        print(f"  # Then copy your .pdf/.docx/.xlsx/.xmind/.mm/.opml/.md files into it")
+        print("  # Then copy your .pdf/.docx/.xlsx/.xmind/.mm/.opml/.md files into it")
         sys.exit(1)
 
     with_source = getattr(args, "with_source", False)
@@ -1756,9 +1871,9 @@ def cmd_import(args):
             print(f"  .{fmt}: requires {', '.join(deps)}")
             install_pkgs.extend(deps)
         install_pkgs = list(set(install_pkgs))
-        print(f"\nInstall with:")
+        print("\nInstall with:")
         print(f"  pip install {' '.join(install_pkgs)}")
-        print(f"  # or: pip install quickagents[document]")
+        print("  # or: pip install quickagents[document]")
         sys.exit(1)
 
     if dry_run:
@@ -1771,7 +1886,7 @@ def cmd_import(args):
 
     # --- Layer 1: Parse documents ---
     start_time = time.time()
-    print(f"\n[L1] Parsing documents ...")
+    print("\n[L1] Parsing documents ...")
 
     doc_results = []
     errors = []
@@ -1782,7 +1897,9 @@ def cmd_import(args):
             title = result.title or file_path.name
             sections = len(result.sections)
             tables = len(result.tables)
-            print(f"  [OK] {file_path.name} - \"{title}\" ({sections} sections, {tables} tables)")
+            print(
+                f'  [OK] {file_path.name} - "{title}" ({sections} sections, {tables} tables)'
+            )
         except Exception as e:
             errors.append((str(file_path), str(e)))
             print(f"  [FAIL] {file_path.name}: {e}")
@@ -1814,7 +1931,9 @@ def cmd_import(args):
             traces = len(cross_ref.trace_matrix)
             gaps = len(cross_ref.diff_report)
             coverage = cross_ref.coverage_report.get("overall_coverage", 0)
-            print(f"  [OK] {traces} trace entries, {gaps} diffs, coverage: {coverage:.0%}")
+            print(
+                f"  [OK] {traces} trace entries, {gaps} diffs, coverage: {coverage:.0%}"
+            )
         except Exception as e:
             errors.append(("cross_reference", str(e)))
             print(f"  [FAIL] Cross-reference: {e}")
@@ -1826,7 +1945,9 @@ def cmd_import(args):
             try:
                 validated = pipeline.cross_validate(doc_result, code_result)
                 issues = len(validated.corrections) + len(validated.supplements)
-                print(f"  [OK] {Path(doc_result.source_file).name} - {issues} issues found")
+                print(
+                    f"  [OK] {Path(doc_result.source_file).name} - {issues} issues found"
+                )
             except Exception as e:
                 errors.append((f"validate:{doc_result.source_file}", str(e)))
                 print(f"  [FAIL] Validation: {e}")
@@ -1917,7 +2038,9 @@ def cmd_import(args):
             code_ids_map = {}
             if code_result:
                 code_ids_map = saver.save_source(code_result)
-                print(f"  [OK] KG saved: source code ({len(code_result.modules)} modules)")
+                print(
+                    f"  [OK] KG saved: source code ({len(code_result.modules)} modules)"
+                )
 
             if cross_ref and doc_ids_map and code_ids_map:
                 edge_count = saver.save_traces(cross_ref, doc_ids_map, code_ids_map)
@@ -1957,186 +2080,253 @@ def cmd_import(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='QuickAgents CLI')
-    subparsers = parser.add_subparsers(dest='command', help='命令')
-    
+    parser = argparse.ArgumentParser(description="QuickAgents CLI")
+    subparsers = parser.add_subparsers(dest="command", help="命令")
+
     # read 命令
-    p_read = subparsers.add_parser('read', help='读取文件')
-    p_read.add_argument('file', help='文件路径')
+    p_read = subparsers.add_parser("read", help="读取文件")
+    p_read.add_argument("file", help="文件路径")
     p_read.set_defaults(func=cmd_read)
-    
+
     # write 命令
-    p_write = subparsers.add_parser('write', help='写入文件')
-    p_write.add_argument('file', help='文件路径')
-    p_write.add_argument('content', help='写入内容')
+    p_write = subparsers.add_parser("write", help="写入文件")
+    p_write.add_argument("file", help="文件路径")
+    p_write.add_argument("content", help="写入内容")
     p_write.set_defaults(func=cmd_write)
-    
+
     # edit 命令
-    p_edit = subparsers.add_parser('edit', help='编辑文件')
-    p_edit.add_argument('file', help='文件路径')
-    p_edit.add_argument('old', help='要替换的内容')
-    p_edit.add_argument('new', help='替换后的内容')
+    p_edit = subparsers.add_parser("edit", help="编辑文件")
+    p_edit.add_argument("file", help="文件路径")
+    p_edit.add_argument("old", help="要替换的内容")
+    p_edit.add_argument("new", help="替换后的内容")
     p_edit.set_defaults(func=cmd_edit)
-    
+
     # hash 命令
-    p_hash = subparsers.add_parser('hash', help='获取文件哈希')
-    p_hash.add_argument('file', help='文件路径')
+    p_hash = subparsers.add_parser("hash", help="获取文件哈希")
+    p_hash.add_argument("file", help="文件路径")
     p_hash.set_defaults(func=cmd_hash)
-    
+
     # cache 命令
-    p_cache = subparsers.add_parser('cache', help='缓存管理')
-    p_cache.add_argument('action', choices=['stats', 'clear', 'list'], help='操作')
+    p_cache = subparsers.add_parser("cache", help="缓存管理")
+    p_cache.add_argument("action", choices=["stats", "clear", "list"], help="操作")
     p_cache.set_defaults(func=cmd_cache)
-    
+
     # memory 命令
-    p_memory = subparsers.add_parser('memory', help='记忆管理')
-    p_memory.add_argument('action', choices=['get', 'set', 'search'], help='操作')
-    p_memory.add_argument('key', nargs='?', help='键名')
-    p_memory.add_argument('value', nargs='?', help='值')
-    p_memory.add_argument('--keyword', '-k', help='搜索关键词')
+    p_memory = subparsers.add_parser("memory", help="记忆管理")
+    p_memory.add_argument("action", choices=["get", "set", "search"], help="操作")
+    p_memory.add_argument("key", nargs="?", help="键名")
+    p_memory.add_argument("value", nargs="?", help="值")
+    p_memory.add_argument("--keyword", "-k", help="搜索关键词")
     p_memory.set_defaults(func=cmd_memory)
-    
+
     # loop 命令
-    p_loop = subparsers.add_parser('loop', help='循环检测')
-    p_loop.add_argument('action', choices=['check', 'reset', 'stats'], help='操作')
+    p_loop = subparsers.add_parser("loop", help="循环检测")
+    p_loop.add_argument("action", choices=["check", "reset", "stats"], help="操作")
     p_loop.set_defaults(func=cmd_loop)
-    
+
     # stats 命令
-    p_stats = subparsers.add_parser('stats', help='查看统计')
+    p_stats = subparsers.add_parser("stats", help="查看统计")
     p_stats.set_defaults(func=cmd_stats)
-    
+
     # sync 命令
-    p_sync = subparsers.add_parser('sync', help='同步SQLite到Markdown')
-    p_sync.add_argument('table', nargs='?', choices=['memory', 'tasks', 'decisions', 'progress', 'feedback'], 
-                        help='要同步的表（默认全部）')
-    p_sync.add_argument('--force', '-f', action='store_true', 
-                        help='强制同步，忽略冲突')
+    p_sync = subparsers.add_parser("sync", help="同步SQLite到Markdown")
+    p_sync.add_argument(
+        "table",
+        nargs="?",
+        choices=["memory", "tasks", "decisions", "progress", "feedback"],
+        help="要同步的表（默认全部）",
+    )
+    p_sync.add_argument("--force", "-f", action="store_true", help="强制同步，忽略冲突")
     p_sync.set_defaults(func=cmd_sync)
-    
+
     # reminder 命令
-    p_reminder = subparsers.add_parser('reminder', help='提醒系统')
-    p_reminder.add_argument('action', choices=['check', 'stats'], help='操作')
+    p_reminder = subparsers.add_parser("reminder", help="提醒系统")
+    p_reminder.add_argument("action", choices=["check", "stats"], help="操作")
     p_reminder.set_defaults(func=cmd_reminder)
-    
+
     # ==================== 新增命令 ====================
-    
+
     # feedback 命令
-    p_feedback = subparsers.add_parser('feedback', help='经验收集')
-    p_feedback.add_argument('action', choices=['bug', 'improve', 'best', 'view', 'stats'], help='操作')
-    p_feedback.add_argument('description', nargs='?', help='描述')
-    p_feedback.add_argument('--scenario', '-s', help='场景上下文')
-    p_feedback.add_argument('--type', '-t', help='反馈类型（view时使用）')
+    p_feedback = subparsers.add_parser("feedback", help="经验收集")
+    p_feedback.add_argument(
+        "action", choices=["bug", "improve", "best", "view", "stats"], help="操作"
+    )
+    p_feedback.add_argument("description", nargs="?", help="描述")
+    p_feedback.add_argument("--scenario", "-s", help="场景上下文")
+    p_feedback.add_argument("--type", "-t", help="反馈类型（view时使用）")
     p_feedback.set_defaults(func=cmd_feedback)
-    
+
     # tdd 命令
-    p_tdd = subparsers.add_parser('tdd', help='TDD工作流')
-    p_tdd.add_argument('action', choices=['red', 'green', 'refactor', 'stats', 'coverage'], help='操作')
-    p_tdd.add_argument('test_file', nargs='?', help='测试文件')
+    p_tdd = subparsers.add_parser("tdd", help="TDD工作流")
+    p_tdd.add_argument(
+        "action", choices=["red", "green", "refactor", "stats", "coverage"], help="操作"
+    )
+    p_tdd.add_argument("test_file", nargs="?", help="测试文件")
     p_tdd.set_defaults(func=cmd_tdd)
-    
+
     # git 命令
-    p_git = subparsers.add_parser('git', help='Git提交管理')
-    p_git.add_argument('action', choices=['status', 'check', 'commit', 'push'], help='操作')
-    p_git.add_argument('commit_type', nargs='?', help='提交类型')
-    p_git.add_argument('scope', nargs='?', help='范围')
-    p_git.add_argument('subject', nargs='?', help='主题')
+    p_git = subparsers.add_parser("git", help="Git提交管理")
+    p_git.add_argument(
+        "action", choices=["status", "check", "commit", "push"], help="操作"
+    )
+    p_git.add_argument("commit_type", nargs="?", help="提交类型")
+    p_git.add_argument("scope", nargs="?", help="范围")
+    p_git.add_argument("subject", nargs="?", help="主题")
     p_git.set_defaults(func=cmd_git)
-    
+
     # ==================== 自我进化系统命令 ====================
-    
+
     # evolution 命令
-    p_evolution = subparsers.add_parser('evolution', help='自我进化系统')
-    p_evolution.add_argument('action', choices=['status', 'stats', 'optimize', 'history', 'sync'], help='操作')
-    p_evolution.add_argument('skill', nargs='?', help='Skill名称')
+    p_evolution = subparsers.add_parser("evolution", help="自我进化系统")
+    p_evolution.add_argument(
+        "action",
+        choices=["status", "stats", "optimize", "history", "sync"],
+        help="操作",
+    )
+    p_evolution.add_argument("skill", nargs="?", help="Skill名称")
     p_evolution.set_defaults(func=cmd_evolution)
-    
+
     # hooks 命令
-    p_hooks = subparsers.add_parser('hooks', help='Git钩子管理')
-    p_hooks.add_argument('action', choices=['install', 'uninstall', 'status'], help='操作')
+    p_hooks = subparsers.add_parser("hooks", help="Git钩子管理")
+    p_hooks.add_argument(
+        "action", choices=["install", "uninstall", "status"], help="操作"
+    )
     p_hooks.set_defaults(func=cmd_hooks)
-    
+
     # ==================== 文档导入命令 ====================
 
     # import 命令
-    p_import = subparsers.add_parser('import', help='Import documents from PALs/ directory',
-                                     usage='qka import [pals_dir] [options]')
-    p_import.add_argument('pals_dir', nargs='?', default='PALs',
-                          help='PALs directory path (default: PALs)')
-    p_import.add_argument('--with-source', '-s', action='store_true',
-                          help='Include source code from SourceReference/')
-    p_import.add_argument('--output', '-o', help='Output directory (default: Docs/PALs)')
-    p_import.add_argument('--dry-run', '-d', action='store_true',
-                          help='Preview files without processing')
-    p_import.add_argument('--verbose', '-v', action='store_true',
-                          help='Verbose output')
-    p_import.add_argument('--no-validate', action='store_true',
-                          help='Skip Layer 2 cross-validation')
-    p_import.add_argument('--no-knowledge', action='store_true',
-                          help='Skip Layer 3 knowledge extraction')
+    p_import = subparsers.add_parser(
+        "import",
+        help="Import documents from PALs/ directory",
+        usage="qka import [pals_dir] [options]",
+    )
+    p_import.add_argument(
+        "pals_dir",
+        nargs="?",
+        default="PALs",
+        help="PALs directory path (default: PALs)",
+    )
+    p_import.add_argument(
+        "--with-source",
+        "-s",
+        action="store_true",
+        help="Include source code from SourceReference/",
+    )
+    p_import.add_argument(
+        "--output", "-o", help="Output directory (default: Docs/PALs)"
+    )
+    p_import.add_argument(
+        "--dry-run", "-d", action="store_true", help="Preview files without processing"
+    )
+    p_import.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    p_import.add_argument(
+        "--no-validate", action="store_true", help="Skip Layer 2 cross-validation"
+    )
+    p_import.add_argument(
+        "--no-knowledge", action="store_true", help="Skip Layer 3 knowledge extraction"
+    )
     p_import.set_defaults(func=cmd_import)
 
- # ==================== 模型管理命令 ====================
-    
+    # ==================== 模型管理命令 ====================
+
     # models 命令
-    p_models = subparsers.add_parser('models', help='模型配置管理')
-    p_models.add_argument('action', choices=['show', 'list', 'check-updates', 'upgrade', 'strategy', 'lock', 'unlock'], help='操作')
-    p_models.add_argument('--agent', '-a', help='查看特定Agent的模型')
-    p_models.add_argument('--target', help='升级目标版本')
-    p_models.add_argument('--dry-run', '-d', action='store_true', help='预览变更')
-    p_models.add_argument('--force', '-f', action='store_true', help='强制执行')
-    p_models.add_argument('--strategy-name', dest='strategy_name', help='策略名称')
-    p_models.add_argument('--model', dest='model_name', help='模型名称')
-    p_models.add_argument('model_name', nargs='?', help='模型名称')
+    p_models = subparsers.add_parser("models", help="模型配置管理")
+    p_models.add_argument(
+        "action",
+        choices=[
+            "show",
+            "list",
+            "check-updates",
+            "upgrade",
+            "strategy",
+            "lock",
+            "unlock",
+        ],
+        help="操作",
+    )
+    p_models.add_argument("--agent", "-a", help="查看特定Agent的模型")
+    p_models.add_argument("--target", help="升级目标版本")
+    p_models.add_argument("--dry-run", "-d", action="store_true", help="预览变更")
+    p_models.add_argument("--force", "-f", action="store_true", help="强制执行")
+    p_models.add_argument("--strategy-name", dest="strategy_name", help="策略名称")
+    p_models.add_argument("--model", dest="model_name", help="模型名称")
+    p_models.add_argument("model_name", nargs="?", help="模型名称")
     p_models.set_defaults(func=cmd_models)
-    
+
     # ==================== 版本与升级命令 ====================
-    
+
     # version 命令
-    p_version = subparsers.add_parser('version', help='查看版本信息')
-    p_version.add_argument('--check', '-c', action='store_true', help='检查所有模块完整性')
+    p_version = subparsers.add_parser("version", help="查看版本信息")
+    p_version.add_argument(
+        "--check", "-c", action="store_true", help="检查所有模块完整性"
+    )
     p_version.set_defaults(func=cmd_version)
-    
+
     # update 命令
-    p_update = subparsers.add_parser('update', help='升级QuickAgents')
-    p_update.add_argument('--source', '-s', choices=['pypi', 'github'], default='pypi',
-                          help='安装源 (pypi/github, 默认pypi)')
-    p_update.add_argument('--target', '-t', help='指定目标版本 (如 2.7.5)')
-    p_update.add_argument('--dry-run', '-d', action='store_true', help='仅预览，不执行升级')
+    p_update = subparsers.add_parser("update", help="升级QuickAgents")
+    p_update.add_argument(
+        "--source",
+        "-s",
+        choices=["pypi", "github"],
+        default="pypi",
+        help="安装源 (pypi/github, 默认pypi)",
+    )
+    p_update.add_argument("--target", "-t", help="指定目标版本 (如 2.7.5)")
+    p_update.add_argument(
+        "--dry-run", "-d", action="store_true", help="仅预览，不执行升级"
+    )
     p_update.set_defaults(func=cmd_update)
-    
+
     # uninstall 命令
-    p_uninstall = subparsers.add_parser('uninstall', help='卸载当前项目的QuickAgents文件（项目级）')
-    p_uninstall.add_argument('--dry-run', '-d', action='store_true',
-                             help='仅预览，不执行卸载')
-    p_uninstall.add_argument('--keep-data', action='store_true',
-                             help='保留 .quickagents/ 目录')
-    p_uninstall.add_argument('--keep-opencode', action='store_true',
-                             help='保留 .opencode/ 目录')
-    p_uninstall.add_argument('--force', '-f', action='store_true',
-                             help='跳过确认提示')
+    p_uninstall = subparsers.add_parser(
+        "uninstall", help="卸载当前项目的QuickAgents文件（项目级）"
+    )
+    p_uninstall.add_argument(
+        "--dry-run", "-d", action="store_true", help="仅预览，不执行卸载"
+    )
+    p_uninstall.add_argument(
+        "--keep-data", action="store_true", help="保留 .quickagents/ 目录"
+    )
+    p_uninstall.add_argument(
+        "--keep-opencode", action="store_true", help="保留 .opencode/ 目录"
+    )
+    p_uninstall.add_argument("--force", "-f", action="store_true", help="跳过确认提示")
     p_uninstall.set_defaults(func=cmd_uninstall)
-    
+
     # export 命令
-    p_export = subparsers.add_parser('export', help='导出干净的项目文件（排除QA运行时）')
-    p_export.add_argument('--output', '-o', default='Output',
-                          help='输出根目录（默认: Output，实际输出到 Output/<版本号>/）')
-    p_export.add_argument('--version', '-v',
-                          help='指定版本号（默认自动检测 pyproject.toml/package.json/git tag）')
-    p_export.add_argument('--dry-run', '-d', action='store_true',
-                          help='仅预览，不执行导出')
-    p_export.add_argument('--list-excludes', action='store_true',
-                          help='列出所有排除规则')
-    p_export.add_argument('--inject-gitignore', action='store_true',
-                          help='将排除规则注入 .gitignore')
+    p_export = subparsers.add_parser(
+        "export", help="导出干净的项目文件（排除QA运行时）"
+    )
+    p_export.add_argument(
+        "--output",
+        "-o",
+        default="Output",
+        help="输出根目录（默认: Output，实际输出到 Output/<版本号>/）",
+    )
+    p_export.add_argument(
+        "--version",
+        "-v",
+        help="指定版本号（默认自动检测 pyproject.toml/package.json/git tag）",
+    )
+    p_export.add_argument(
+        "--dry-run", "-d", action="store_true", help="仅预览，不执行导出"
+    )
+    p_export.add_argument(
+        "--list-excludes", action="store_true", help="列出所有排除规则"
+    )
+    p_export.add_argument(
+        "--inject-gitignore", action="store_true", help="将排除规则注入 .gitignore"
+    )
     p_export.set_defaults(func=cmd_export)
-    
+
     args = parser.parse_args()
-    
-    if hasattr(args, 'func'):
+
+    if hasattr(args, "func"):
         args.func(args)
     else:
         parser.print_help()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

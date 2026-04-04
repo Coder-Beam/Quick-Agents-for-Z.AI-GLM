@@ -33,6 +33,7 @@ def sample_result(parser):
 # T023: Excel Parser Init + Cell Data Reading
 # ============================================================
 
+
 class TestExcelParserInit:
     def test_availability(self, parser):
         assert parser.is_available()
@@ -117,6 +118,7 @@ class TestExcelCellData:
 # T024: Formula Parsing
 # ============================================================
 
+
 class TestExcelFormulas:
     def test_formulas_found(self, sample_result):
         assert len(sample_result.formulas) >= 6
@@ -137,7 +139,8 @@ class TestExcelFormulas:
 
     def test_sum_formula(self, sample_result):
         sums = [
-            f for f in sample_result.formulas
+            f
+            for f in sample_result.formulas
             if f.formula_text.upper().startswith("=SUM")
         ]
         assert len(sums) >= 1
@@ -145,14 +148,16 @@ class TestExcelFormulas:
 
     def test_average_formula(self, sample_result):
         avgs = [
-            f for f in sample_result.formulas
+            f
+            for f in sample_result.formulas
             if f.formula_text.upper().startswith("=AVERAGE")
         ]
         assert len(avgs) >= 1
 
     def test_count_formula(self, sample_result):
         counts = [
-            f for f in sample_result.formulas
+            f
+            for f in sample_result.formulas
             if f.formula_text.upper().startswith("=COUNT")
         ]
         assert len(counts) >= 1
@@ -174,6 +179,7 @@ class TestExcelFormulas:
 # T026: Requirement Matrix Recognition
 # ============================================================
 
+
 class TestRequirementMatrix:
     def test_tables_found(self, sample_result):
         assert len(sample_result.tables) >= 1
@@ -181,7 +187,9 @@ class TestRequirementMatrix:
     def test_req_matrix_table_has_caption(self, sample_result):
         req_table = sample_result.tables[0]
         assert req_table.caption is not None
-        assert "Requirement" in req_table.caption or "matrix" in req_table.caption.lower()
+        assert (
+            "Requirement" in req_table.caption or "matrix" in req_table.caption.lower()
+        )
 
     def test_req_matrix_headers(self, sample_result):
         req_table = sample_result.tables[0]
@@ -198,10 +206,7 @@ class TestRequirementMatrix:
         assert any("REQ" in v for v in first_col)
 
     def test_calculation_table_found(self, sample_result):
-        calc_tables = [
-            t for t in sample_result.tables
-            if t.table_id == "T002"
-        ]
+        calc_tables = [t for t in sample_result.tables if t.table_id == "T002"]
         assert len(calc_tables) == 1
         headers_lower = [h.lower() for h in calc_tables[0].headers]
         assert any("item" in h for h in headers_lower)
@@ -210,6 +215,7 @@ class TestRequirementMatrix:
 # ============================================================
 # T025: Chart Data (basic openpyxl chart support)
 # ============================================================
+
 
 class TestExcelCharts:
     def test_no_images_for_xlsx(self, sample_result):
@@ -222,6 +228,7 @@ class TestExcelCharts:
 # ============================================================
 # T027: Edge Cases + Roundtrip
 # ============================================================
+
 
 class TestExcelEdgeCases:
     def test_file_not_found(self, parser):
@@ -256,6 +263,7 @@ class TestExcelEmptyFile:
     @pytest.fixture
     def empty_result(self, parser, tmp_path):
         import openpyxl
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Empty"
@@ -277,6 +285,7 @@ class TestExcelSingleSheet:
     @pytest.fixture
     def single_result(self, parser, tmp_path):
         import openpyxl
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Data"
@@ -306,6 +315,7 @@ class TestExcelFormulaOnly:
     @pytest.fixture
     def formula_result(self, parser, tmp_path):
         import openpyxl
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Formulas"

@@ -7,7 +7,6 @@ Tests pipeline initialization, parser registry, PALs directory handling.
 import unittest
 from pathlib import Path
 import tempfile
-import shutil
 
 from quickagents.document.pipeline import DocumentPipeline
 from quickagents.document.models import DocumentResult
@@ -16,6 +15,7 @@ from quickagents.document.parsers import ParserRegistry, BaseParser
 
 class MockParser(BaseParser):
     """Mock parser for testing"""
+
     SUPPORTED_FORMATS = ["md"]
     PARSER_NAME = "mock_md"
 

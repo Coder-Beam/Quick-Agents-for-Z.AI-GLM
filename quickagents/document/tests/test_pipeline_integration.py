@@ -9,8 +9,6 @@ Covers:
 - T056: Pipeline integration
 """
 
-import pytest
-
 from quickagents.document.models import (
     DocumentResult,
     DocumentSection,
@@ -53,8 +51,11 @@ def _doc(**kwargs):
 
 def _sec(**kwargs):
     defaults = dict(
-        section_id="S001", title="Section", level=1,
-        page_number=1, content="content",
+        section_id="S001",
+        title="Section",
+        level=1,
+        page_number=1,
+        content="content",
     )
     defaults.update(kwargs)
     return DocumentSection(**defaults)
@@ -62,9 +63,14 @@ def _sec(**kwargs):
 
 def _code(**kwargs):
     defaults = dict(
-        source_dir="src/", languages=["python"],
-        modules=[], dependencies=[], structure_tree={},
-        stats={}, raw_text={}, errors=[],
+        source_dir="src/",
+        languages=["python"],
+        modules=[],
+        dependencies=[],
+        structure_tree={},
+        stats={},
+        raw_text={},
+        errors=[],
     )
     defaults.update(kwargs)
     return SourceCodeResult(**defaults)
@@ -72,8 +78,11 @@ def _code(**kwargs):
 
 def _func(**kwargs):
     defaults = dict(
-        func_id="F001", name="authenticate",
-        signature="def authenticate():", start_line=1, end_line=10,
+        func_id="F001",
+        name="authenticate",
+        signature="def authenticate():",
+        start_line=1,
+        end_line=10,
         docstring="Authenticate user",
     )
     defaults.update(kwargs)
@@ -82,8 +91,10 @@ def _func(**kwargs):
 
 def _module(**kwargs):
     defaults = dict(
-        module_id="M001", file_path="auth.py",
-        language="python", loc=50,
+        module_id="M001",
+        file_path="auth.py",
+        language="python",
+        loc=50,
     )
     defaults.update(kwargs)
     return CodeModule(**defaults)
@@ -91,8 +102,8 @@ def _module(**kwargs):
 
 # ===== T051: CrossValidator =====
 
-class TestCrossValidator:
 
+class TestCrossValidator:
     def test_validate_document_basic(self):
         doc = _doc(sections=[_sec(title="Auth")])
         code = _code(modules=[_module(functions=[_func()])])
@@ -110,11 +121,16 @@ class TestCrossValidator:
         assert result.layer2_notes != ""
 
     def test_validate_detects_duplicate_sections(self):
-        sections = [_sec(section_id="S1", title="Auth"), _sec(section_id="S2", title="Auth")]
+        sections = [
+            _sec(section_id="S1", title="Auth"),
+            _sec(section_id="S2", title="Auth"),
+        ]
         doc = _doc(sections=sections)
         validator = CrossValidator()
         result = validator.validate_document(doc)
-        dup_corrections = [c for c in result.corrections if c["type"] == "duplicate_section"]
+        dup_corrections = [
+            c for c in result.corrections if c["type"] == "duplicate_section"
+        ]
         assert len(dup_corrections) >= 1
 
     def test_validate_detects_broken_parent(self):
@@ -154,8 +170,8 @@ class TestCrossValidator:
 
 # ===== T052-T053: KnowledgeExtractor =====
 
-class TestKnowledgeExtractor:
 
+class TestKnowledgeExtractor:
     def test_extract_requirements(self):
         sections = [
             _sec(title="用户认证", content="系统必须实现JWT认证功能"),
@@ -170,7 +186,8 @@ class TestKnowledgeExtractor:
 
     def test_extract_from_req_id_table(self):
         table = DocumentTable(
-            table_id="T001", page_number=1,
+            table_id="T001",
+            page_number=1,
             headers=["ID", "描述"],
             rows=[["REQ-001", "用户认证功能"], ["REQ-002", "权限管理"]],
         )
@@ -192,7 +209,10 @@ class TestKnowledgeExtractor:
 
     def test_extract_facts(self):
         sections = [
-            _sec(title="环境", content="版本: Python 3.12, 数据库: PostgreSQL, 端口: 5432"),
+            _sec(
+                title="环境",
+                content="版本: Python 3.12, 数据库: PostgreSQL, 端口: 5432",
+            ),
         ]
         doc = _doc(sections=sections)
         extractor = KnowledgeExtractor()
@@ -201,7 +221,9 @@ class TestKnowledgeExtractor:
 
     def test_extract_tech_stack_facts(self):
         sections = [
-            _sec(title="架构", content="使用React前端和Django后端，Redis缓存，Docker部署"),
+            _sec(
+                title="架构", content="使用React前端和Django后端，Redis缓存，Docker部署"
+            ),
         ]
         doc = _doc(sections=sections)
         extractor = KnowledgeExtractor()
@@ -254,7 +276,10 @@ class TestKnowledgeExtractor:
         assert result.summary != ""
 
     def test_deduplication(self):
-        sections = [_sec(title="认证", content="REQ-001 必须认证"), _sec(section_id="S2", title="认证2", content="REQ-001 认证功能")]
+        sections = [
+            _sec(title="认证", content="REQ-001 必须认证"),
+            _sec(section_id="S2", title="认证2", content="REQ-001 认证功能"),
+        ]
         doc = _doc(sections=sections)
         extractor = KnowledgeExtractor()
         result = extractor.extract([doc])
@@ -264,16 +289,27 @@ class TestKnowledgeExtractor:
 
 # ===== T054: LayerDiff =====
 
-class TestLayerDiff:
 
+class TestLayerDiff:
     def test_diff_docs(self):
         l1_docs = [_doc()]
-        l2_docs = [RefinedDocumentResult(
-            source_file="test.pdf", source_format="pdf", title="Test",
-            sections=[], paragraphs=[], tables=[], images=[], formulas=[],
-            structure_tree={}, metadata={}, raw_text="", errors=[],
-            corrections=[{"type": "test", "msg": "fix"}],
-        )]
+        l2_docs = [
+            RefinedDocumentResult(
+                source_file="test.pdf",
+                source_format="pdf",
+                title="Test",
+                sections=[],
+                paragraphs=[],
+                tables=[],
+                images=[],
+                formulas=[],
+                structure_tree={},
+                metadata={},
+                raw_text="",
+                errors=[],
+                corrections=[{"type": "test", "msg": "fix"}],
+            )
+        ]
         differ = LayerDiff()
         result = differ.diff(l1_docs, None, l2_docs, None, None, None)
         assert len(result["doc_changes"]) >= 1
@@ -281,8 +317,14 @@ class TestLayerDiff:
     def test_diff_code(self):
         l1 = _code()
         l2 = RefinedCodeResult(
-            source_dir="src/", languages=["python"], modules=[],
-            dependencies=[], structure_tree={}, stats={}, raw_text={}, errors=[],
+            source_dir="src/",
+            languages=["python"],
+            modules=[],
+            dependencies=[],
+            structure_tree={},
+            stats={},
+            raw_text={},
+            errors=[],
             corrections=[{"type": "test"}],
         )
         differ = LayerDiff()
@@ -291,9 +333,18 @@ class TestLayerDiff:
 
     def test_merge(self):
         l2_doc = RefinedDocumentResult(
-            source_file="test.pdf", source_format="pdf", title="Test",
-            sections=[], paragraphs=[], tables=[], images=[], formulas=[],
-            structure_tree={}, metadata={}, raw_text="", errors=[],
+            source_file="test.pdf",
+            source_format="pdf",
+            title="Test",
+            sections=[],
+            paragraphs=[],
+            tables=[],
+            images=[],
+            formulas=[],
+            structure_tree={},
+            metadata={},
+            raw_text="",
+            errors=[],
         )
         differ = LayerDiff()
         merged = differ.merge([l2_doc], None, None, None)
@@ -302,9 +353,18 @@ class TestLayerDiff:
 
     def test_merge_with_conflicts(self):
         l2_doc = RefinedDocumentResult(
-            source_file="test.pdf", source_format="pdf", title="Test",
-            sections=[], paragraphs=[], tables=[], images=[], formulas=[],
-            structure_tree={}, metadata={}, raw_text="", errors=[],
+            source_file="test.pdf",
+            source_format="pdf",
+            title="Test",
+            sections=[],
+            paragraphs=[],
+            tables=[],
+            images=[],
+            formulas=[],
+            structure_tree={},
+            metadata={},
+            raw_text="",
+            errors=[],
             corrections=[{"type": f"fix_{i}"} for i in range(15)],
         )
         differ = LayerDiff()
@@ -315,8 +375,8 @@ class TestLayerDiff:
 
 # ===== T055: ReviewFlow =====
 
-class TestReviewFlow:
 
+class TestReviewFlow:
     def test_add_and_get_item(self):
         session = ReviewFlow()
         item = session.add_item("R001", "requirement", "User auth")
@@ -400,8 +460,8 @@ class TestReviewFlow:
 
 # ===== T056: Pipeline Integration =====
 
-class TestPipelineIntegration:
 
+class TestPipelineIntegration:
     def test_pipeline_cross_validate(self):
         from quickagents.document.pipeline import DocumentPipeline
 
@@ -422,7 +482,9 @@ class TestPipelineIntegration:
 
     def test_full_three_layer_flow(self):
         sections = [
-            _sec(section_id="S1", title="REQ-001 用户认证", content="必须实现JWT认证功能"),
+            _sec(
+                section_id="S1", title="REQ-001 用户认证", content="必须实现JWT认证功能"
+            ),
             _sec(section_id="S2", title="性能要求", content="响应时间不超过200ms"),
         ]
         doc = _doc(sections=sections, raw_text="REQ-001 用户认证 必须实现JWT认证功能")
@@ -437,6 +499,7 @@ class TestPipelineIntegration:
         assert knowledge.get_requirement_count() >= 1
 
         from quickagents.document.matching import TraceMatchEngine
+
         engine = TraceMatchEngine()
         cross_ref = engine.match([doc], code)
         assert len(cross_ref.trace_matrix) >= 0

@@ -8,7 +8,6 @@ image extraction, and DocumentResult conversion.
 import unittest
 from pathlib import Path
 import tempfile
-import shutil
 
 from quickagents.document.parsers.pdf_parser import PDFParser
 from quickagents.document.models import DocumentResult
@@ -139,8 +138,9 @@ class TestPDFDocumentResult(unittest.TestCase):
         self.assertIsInstance(self.result, DocumentResult)
 
     def test_no_errors(self):
-        self.assertEqual(len(self.result.errors), 0,
-                         f"Unexpected errors: {self.result.errors}")
+        self.assertEqual(
+            len(self.result.errors), 0, f"Unexpected errors: {self.result.errors}"
+        )
 
     def test_metadata_present(self):
         self.assertIn("page_count", self.result.metadata)
@@ -174,6 +174,7 @@ class TestPDFParserEdgeCases(unittest.TestCase):
 
     def test_empty_pdf(self):
         import fitz
+
         with tempfile.TemporaryDirectory() as tmpdir:
             empty_path = Path(tmpdir) / "empty.pdf"
             doc = fitz.open()
@@ -189,6 +190,7 @@ class TestPDFParserEdgeCases(unittest.TestCase):
 
     def test_single_page_pdf(self):
         import fitz
+
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "single.pdf"
             doc = fitz.open()
@@ -208,6 +210,7 @@ class TestPDFTableWithPdfplumber(unittest.TestCase):
 
     def test_table_with_real_table(self):
         import fitz
+
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "table_test.pdf"
             doc = fitz.open()

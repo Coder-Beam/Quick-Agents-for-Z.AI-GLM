@@ -11,8 +11,6 @@ Tests cover:
 - T040: Granularity adjuster
 """
 
-import pytest
-
 from quickagents.document.models import (
     DocumentResult,
     DocumentSection,
@@ -142,8 +140,8 @@ def _make_class(
 
 # ===== SynonymTable Tests =====
 
-class TestSynonymTable:
 
+class TestSynonymTable:
     def test_lookup_chinese(self):
         table = SynonymTable()
         results = table.lookup("用户")
@@ -189,8 +187,8 @@ class TestSynonymTable:
 
 # ===== ConventionMatcher Tests =====
 
-class TestConventionMatcher:
 
+class TestConventionMatcher:
     def test_match_req_id_in_section(self):
         sec = _make_section(title="REQ-001 用户认证", content="通过JWT认证")
         doc = _make_doc_result(sections=[sec])
@@ -267,8 +265,8 @@ class TestConventionMatcher:
 
 # ===== KeywordMatcher Tests =====
 
-class TestKeywordMatcher:
 
+class TestKeywordMatcher:
     def test_match_by_synonym(self):
         sec = _make_section(title="用户认证", content="用户通过JWT认证登录")
         doc = _make_doc_result(sections=[sec])
@@ -307,17 +305,19 @@ class TestKeywordMatcher:
         func = _make_func(name="authenticate_user")
         code = _make_code_result(modules=[_make_module(functions=[func])])
 
-        existing = [TraceEntry(
-            trace_id="TRACE-C001",
-            requirement="认证",
-            req_source=f"test.pdf 用户认证",
-            implementation="auth.py:authenticate_user()",
-            impl_file="auth.py",
-            impl_function="authenticate_user",
-            trace_type="convention",
-            confidence=1.0,
-            status="covered",
-        )]
+        existing = [
+            TraceEntry(
+                trace_id="TRACE-C001",
+                requirement="认证",
+                req_source="test.pdf 用户认证",
+                implementation="auth.py:authenticate_user()",
+                impl_file="auth.py",
+                impl_function="authenticate_user",
+                trace_type="convention",
+                confidence=1.0,
+                status="covered",
+            )
+        ]
 
         matcher = KeywordMatcher()
         traces = matcher.match([doc], code, existing_traces=existing)
@@ -336,8 +336,8 @@ class TestKeywordMatcher:
 
 # ===== SemanticMatcher Tests =====
 
-class TestSemanticMatcher:
 
+class TestSemanticMatcher:
     def test_heuristic_match(self):
         sec = _make_section(
             title="用户认证",
@@ -365,16 +365,18 @@ class TestSemanticMatcher:
         func = _make_func(name="authenticate")
         code = _make_code_result(modules=[_make_module(functions=[func])])
 
-        existing = [TraceEntry(
-            trace_id="TRACE-C001",
-            requirement="认证",
-            req_source="test.pdf 认证",
-            impl_file="auth.py",
-            impl_function="authenticate",
-            trace_type="convention",
-            confidence=1.0,
-            status="covered",
-        )]
+        existing = [
+            TraceEntry(
+                trace_id="TRACE-C001",
+                requirement="认证",
+                req_source="test.pdf 认证",
+                impl_file="auth.py",
+                impl_function="authenticate",
+                trace_type="convention",
+                confidence=1.0,
+                status="covered",
+            )
+        ]
 
         matcher = SemanticMatcher()
         traces = matcher.match([doc], code, existing_traces=existing)
@@ -397,8 +399,8 @@ class TestSemanticMatcher:
 
 # ===== DiffAnalyzer Tests =====
 
-class TestDiffAnalyzer:
 
+class TestDiffAnalyzer:
     def test_find_gaps(self):
         sec1 = _make_section(sid="S001", title="认证", content="JWT认证")
         sec2 = _make_section(sid="S002", title="权限", content="RBAC权限")
@@ -406,16 +408,18 @@ class TestDiffAnalyzer:
         func = _make_func(name="authenticate")
         code = _make_code_result(modules=[_make_module(functions=[func])])
 
-        traces = [TraceEntry(
-            trace_id="T001",
-            requirement="JWT认证",
-            req_source="test.pdf 认证",
-            impl_file="auth.py",
-            impl_function="authenticate",
-            trace_type="convention",
-            confidence=1.0,
-            status="covered",
-        )]
+        traces = [
+            TraceEntry(
+                trace_id="T001",
+                requirement="JWT认证",
+                req_source="test.pdf 认证",
+                impl_file="auth.py",
+                impl_function="authenticate",
+                trace_type="convention",
+                confidence=1.0,
+                status="covered",
+            )
+        ]
 
         analyzer = DiffAnalyzer()
         diffs = analyzer.analyze([doc], code, traces)
@@ -429,16 +433,18 @@ class TestDiffAnalyzer:
         f2 = _make_func(fid="F002", name="send_email")
         code = _make_code_result(modules=[_make_module(functions=[f1, f2])])
 
-        traces = [TraceEntry(
-            trace_id="T001",
-            requirement="JWT认证",
-            req_source="test.pdf 认证",
-            impl_file="auth.py",
-            impl_function="authenticate",
-            trace_type="convention",
-            confidence=1.0,
-            status="covered",
-        )]
+        traces = [
+            TraceEntry(
+                trace_id="T001",
+                requirement="JWT认证",
+                req_source="test.pdf 认证",
+                impl_file="auth.py",
+                impl_function="authenticate",
+                trace_type="convention",
+                confidence=1.0,
+                status="covered",
+            )
+        ]
 
         analyzer = DiffAnalyzer()
         diffs = analyzer.analyze([doc], code, traces)
@@ -451,16 +457,18 @@ class TestDiffAnalyzer:
         func = _make_func(name="authenticate")
         code = _make_code_result(modules=[_make_module(functions=[func])])
 
-        traces = [TraceEntry(
-            trace_id="T001",
-            requirement="JWT",
-            req_source="test.pdf 认证",
-            impl_file="auth.py",
-            impl_function="authenticate",
-            trace_type="convention",
-            confidence=1.0,
-            status="covered",
-        )]
+        traces = [
+            TraceEntry(
+                trace_id="T001",
+                requirement="JWT",
+                req_source="test.pdf 认证",
+                impl_file="auth.py",
+                impl_function="authenticate",
+                trace_type="convention",
+                confidence=1.0,
+                status="covered",
+            )
+        ]
 
         analyzer = DiffAnalyzer()
         diffs = analyzer.analyze([doc], code, traces)
@@ -480,8 +488,8 @@ class TestDiffAnalyzer:
 
 # ===== FixSuggester Tests =====
 
-class TestFixSuggester:
 
+class TestFixSuggester:
     def test_suggest_for_gap(self):
         diff = DiffEntry(
             diff_id="DIFF-G001",
@@ -524,8 +532,8 @@ class TestFixSuggester:
 
 # ===== GranularityAdjuster Tests =====
 
-class TestGranularityAdjuster:
 
+class TestGranularityAdjuster:
     def _make_cross_ref(self, traces=None):
         return CrossReferenceResult(
             trace_matrix=traces or [],
@@ -594,22 +602,28 @@ class TestGranularityAdjuster:
         assert len(result.trace_matrix) == 1
 
     def test_refine(self):
-        traces = [TraceEntry(
-            trace_id="T001",
-            requirement="认证",
-            req_source="doc.pdf",
-            impl_file="auth.py",
-            impl_function="auth_module",
-            trace_type="keyword",
-            confidence=0.9,
-            status="covered",
-        )]
+        traces = [
+            TraceEntry(
+                trace_id="T001",
+                requirement="认证",
+                req_source="doc.pdf",
+                impl_file="auth.py",
+                impl_function="auth_module",
+                trace_type="keyword",
+                confidence=0.9,
+                status="covered",
+            )
+        ]
         ref = self._make_cross_ref(traces)
         adjuster = GranularityAdjuster()
-        result = adjuster.refine(ref, "T001", [
-            {"impl_function": "login", "impl_lines": "L10-20"},
-            {"impl_function": "logout", "impl_lines": "L22-30"},
-        ])
+        result = adjuster.refine(
+            ref,
+            "T001",
+            [
+                {"impl_function": "login", "impl_lines": "L10-20"},
+                {"impl_function": "logout", "impl_lines": "L22-30"},
+            ],
+        )
         assert len(result.trace_matrix) == 2
         assert result.trace_matrix[0].impl_function == "login"
 
@@ -641,21 +655,25 @@ class TestGranularityAdjuster:
 
 # ===== TraceMatchEngine Integration Tests =====
 
-class TestTraceMatchEngine:
 
+class TestTraceMatchEngine:
     def test_full_pipeline(self):
         sec1 = _make_section(
-            sid="S001", title="REQ-001 用户认证",
+            sid="S001",
+            title="REQ-001 用户认证",
             content="通过JWT认证登录系统",
         )
         sec2 = _make_section(
-            sid="S002", title="用户权限管理",
+            sid="S002",
+            title="用户权限管理",
             content="基于角色的访问控制RBAC",
         )
         doc = _make_doc_result(sections=[sec1, sec2])
 
         f1 = _make_func(fid="F001", name="req_001_authenticate", docstring="JWT auth")
-        f2 = _make_func(fid="F002", name="check_permission", docstring="RBAC permission check")
+        f2 = _make_func(
+            fid="F002", name="check_permission", docstring="RBAC permission check"
+        )
         code = _make_code_result(modules=[_make_module(functions=[f1, f2])])
 
         engine = TraceMatchEngine()

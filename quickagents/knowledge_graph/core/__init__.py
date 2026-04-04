@@ -8,10 +8,10 @@ from .searcher import KnowledgeSearcher
 from .memory_sync import MemorySync
 
 __all__ = [
-    'NodeManager',
-    'EdgeManager',
-    'KnowledgeExtractor',
-    'RelationDiscovery',
-    'KnowledgeSearcher',
-    'MemorySync'
+    "NodeManager",
+    "EdgeManager",
+    "KnowledgeExtractor",
+    "RelationDiscovery",
+    "KnowledgeSearcher",
+    "MemorySync",
 ]

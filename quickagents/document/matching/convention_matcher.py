@@ -24,16 +24,16 @@ class ConventionMatcher:
     """Level 1: Structured convention matching with confidence 1.0."""
 
     REQ_ID_PATTERN = re.compile(
-        r'(?:REQ|FR|NFR|UC|FEATURE|BUG|TODO)[-_]?(\d+(?:\.\d+)*)',
+        r"(?:REQ|FR|NFR|UC|FEATURE|BUG|TODO)[-_]?(\d+(?:\.\d+)*)",
         re.IGNORECASE,
     )
     FEATURE_TAG_PATTERN = re.compile(
-        r'(?:FEATURE)[-_]([A-Za-z][A-Za-z0-9_-]*)',
+        r"(?:FEATURE)[-_]([A-Za-z][A-Za-z0-9_-]*)",
         re.IGNORECASE,
     )
-    SECTION_NUMBER_PATTERN = re.compile(r'^(\d+(?:\.\d+)*)\s+')
+    SECTION_NUMBER_PATTERN = re.compile(r"^(\d+(?:\.\d+)*)\s+")
     TAG_COMMENT_PATTERN = re.compile(
-        r'(?:#\s*|//\s*|/\*\s*)(?:REQ|FR|FEATURE|TODO)[-_]?(\w+)',
+        r"(?:#\s*|//\s*|/\*\s*)(?:REQ|FR|FEATURE|TODO)[-_]?(\w+)",
         re.IGNORECASE,
     )
 
@@ -55,24 +55,24 @@ class ConventionMatcher:
                 if norm_key == norm_req or norm_key in norm_req or norm_req in norm_key:
                     for loc in code_locs:
                         counter += 1
-                        entries.append(TraceEntry(
-                            trace_id=f"TRACE-C{counter:03d}",
-                            requirement=req_info["text"],
-                            req_source=req_info["source"],
-                            implementation=loc["label"],
-                            impl_file=loc["file"],
-                            impl_function=loc["function"],
-                            impl_lines=loc["lines"],
-                            trace_type="convention",
-                            confidence=1.0,
-                            status="covered",
-                        ))
+                        entries.append(
+                            TraceEntry(
+                                trace_id=f"TRACE-C{counter:03d}",
+                                requirement=req_info["text"],
+                                req_source=req_info["source"],
+                                implementation=loc["label"],
+                                impl_file=loc["file"],
+                                impl_function=loc["function"],
+                                impl_lines=loc["lines"],
+                                trace_type="convention",
+                                confidence=1.0,
+                                status="covered",
+                            )
+                        )
 
         return entries
 
-    def _build_req_map(
-        self, doc_results: List[DocumentResult]
-    ) -> Dict[str, Dict]:
+    def _build_req_map(self, doc_results: List[DocumentResult]) -> Dict[str, Dict]:
         req_map: Dict[str, Dict] = {}
         for doc in doc_results:
             for section in doc.sections:
@@ -119,9 +119,7 @@ class ConventionMatcher:
             self._scan_names(module, tags)
         return tags
 
-    def _scan_functions(
-        self, module: CodeModule, tags: Dict[str, List[Dict]]
-    ) -> None:
+    def _scan_functions(self, module: CodeModule, tags: Dict[str, List[Dict]]) -> None:
         all_funcs = module.get_all_functions()
         for func in all_funcs:
             if func.docstring:
@@ -139,7 +137,9 @@ class ConventionMatcher:
                     ms = self.SECTION_NUMBER_PATTERN.match(line.strip())
                     if ms:
                         sec_num = ms.group(1)
-                        tags.setdefault(sec_num, []).append(self._make_loc(module, func))
+                        tags.setdefault(sec_num, []).append(
+                            self._make_loc(module, func)
+                        )
 
             name_lower = func.name.lower()
             m = self.REQ_ID_PATTERN.search(name_lower)
@@ -151,23 +151,21 @@ class ConventionMatcher:
                 tag = mf.group(0).upper()
                 tags.setdefault(tag, []).append(self._make_loc(module, func))
 
-    def _scan_names(
-        self, module: CodeModule, tags: Dict[str, List[Dict]]
-    ) -> None:
+    def _scan_names(self, module: CodeModule, tags: Dict[str, List[Dict]]) -> None:
         prefixes = ["req_", "feature_", "handle_", "process_"]
         all_funcs = module.get_all_functions()
         for func in all_funcs:
             name_lower = func.name.lower()
             for prefix in prefixes:
                 if name_lower.startswith(prefix):
-                    suffix = name_lower[len(prefix):]
+                    suffix = name_lower[len(prefix) :]
                     tags.setdefault(suffix, []).append(self._make_loc(module, func))
                     tag_upper = (prefix.rstrip("_") + "-" + suffix).upper()
                     tags.setdefault(tag_upper, []).append(self._make_loc(module, func))
 
     @staticmethod
     def _normalize_tag(tag: str) -> str:
-        return re.sub(r'[-_\s]+', '', tag).upper()
+        return re.sub(r"[-_\s]+", "", tag).upper()
 
     @staticmethod
     def _make_loc(module: CodeModule, func: CodeFunction) -> Dict:

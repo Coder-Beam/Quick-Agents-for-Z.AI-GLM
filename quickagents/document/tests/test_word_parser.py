@@ -164,6 +164,7 @@ class TestWordEdgeCases(unittest.TestCase):
 
     def test_empty_document(self):
         from docx import Document
+
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "empty.docx"
             doc = Document()
@@ -177,6 +178,7 @@ class TestWordEdgeCases(unittest.TestCase):
 
     def test_single_heading(self):
         from docx import Document
+
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "single.docx"
             doc = Document()
@@ -191,6 +193,7 @@ class TestWordEdgeCases(unittest.TestCase):
 
     def test_deep_nesting(self):
         from docx import Document
+
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "deep.docx"
             doc = Document()
@@ -206,6 +209,7 @@ class TestWordEdgeCases(unittest.TestCase):
 
     def test_no_headings(self):
         from docx import Document
+
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "no_headings.docx"
             doc = Document()
@@ -220,6 +224,7 @@ class TestWordEdgeCases(unittest.TestCase):
 
     def test_multiple_tables(self):
         from docx import Document
+
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "tables.docx"
             doc = Document()

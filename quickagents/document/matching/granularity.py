@@ -36,18 +36,20 @@ class GranularityAdjuster:
             reqs = [t.requirement for t in traces if t.requirement]
             req_sources = [t.req_source for t in traces if t.req_source]
             best_conf = max((t.confidence for t in traces), default=0.0)
-            merged.append(TraceEntry(
-                trace_id=f"TRACE-M{counter:03d}",
-                requirement="; ".join(dict.fromkeys(reqs)),
-                req_source="; ".join(dict.fromkeys(req_sources)),
-                implementation=file_path,
-                impl_file=file_path,
-                impl_function=None,
-                impl_lines=None,
-                trace_type="module_level",
-                confidence=best_conf,
-                status="covered",
-            ))
+            merged.append(
+                TraceEntry(
+                    trace_id=f"TRACE-M{counter:03d}",
+                    requirement="; ".join(dict.fromkeys(reqs)),
+                    req_source="; ".join(dict.fromkeys(req_sources)),
+                    implementation=file_path,
+                    impl_file=file_path,
+                    impl_function=None,
+                    impl_lines=None,
+                    trace_type="module_level",
+                    confidence=best_conf,
+                    status="covered",
+                )
+            )
 
         return CrossReferenceResult(
             trace_matrix=merged,
@@ -74,18 +76,20 @@ class GranularityAdjuster:
 
             for sub in sub_entries:
                 counter += 1
-                new_traces.append(TraceEntry(
-                    trace_id=f"TRACE-R{counter:03d}",
-                    requirement=sub.get("requirement", t.requirement),
-                    req_source=sub.get("req_source", t.req_source),
-                    implementation=sub.get("implementation", t.implementation),
-                    impl_file=sub.get("impl_file", t.impl_file),
-                    impl_function=sub.get("impl_function", t.impl_function),
-                    impl_lines=sub.get("impl_lines", t.impl_lines),
-                    trace_type=sub.get("trace_type", t.trace_type),
-                    confidence=sub.get("confidence", t.confidence),
-                    status=sub.get("status", t.status),
-                ))
+                new_traces.append(
+                    TraceEntry(
+                        trace_id=f"TRACE-R{counter:03d}",
+                        requirement=sub.get("requirement", t.requirement),
+                        req_source=sub.get("req_source", t.req_source),
+                        implementation=sub.get("implementation", t.implementation),
+                        impl_file=sub.get("impl_file", t.impl_file),
+                        impl_function=sub.get("impl_function", t.impl_function),
+                        impl_lines=sub.get("impl_lines", t.impl_lines),
+                        trace_type=sub.get("trace_type", t.trace_type),
+                        confidence=sub.get("confidence", t.confidence),
+                        status=sub.get("status", t.status),
+                    )
+                )
 
         return CrossReferenceResult(
             trace_matrix=new_traces,
@@ -134,9 +138,7 @@ class GranularityAdjuster:
         trace_id: str,
     ) -> CrossReferenceResult:
         """Remove a trace entry by ID."""
-        new_traces = [
-            t for t in result.trace_matrix if t.trace_id != trace_id
-        ]
+        new_traces = [t for t in result.trace_matrix if t.trace_id != trace_id]
 
         return CrossReferenceResult(
             trace_matrix=new_traces,

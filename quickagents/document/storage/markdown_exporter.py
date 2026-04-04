@@ -37,9 +37,9 @@ class MarkdownExporter:
             lines.append(f"> 源码源: {code_dir}")
 
         by_type = result.coverage_report.get("by_match_type", {})
-        type_str = " + ".join(
-            f"{k}({v})" for k, v in by_type.items()
-        ) if by_type else "无匹配"
+        type_str = (
+            " + ".join(f"{k}({v})" for k, v in by_type.items()) if by_type else "无匹配"
+        )
         lines.append(f"> 匹配引擎: {type_str}")
         lines.append("")
 
@@ -123,8 +123,7 @@ class MarkdownExporter:
                 lines.append(f"### {d.diff_id}: {_cell(d.description, 60)}")
                 lines.append(f"- **需求侧**: {d.req_side or '--'}")
                 suggestion = (
-                    d.suggestion_by_doc if base == "doc"
-                    else d.suggestion_by_code
+                    d.suggestion_by_doc if base == "doc" else d.suggestion_by_code
                 )
                 if suggestion:
                     lines.append(f"- **建议**: {suggestion[:200]}")
@@ -137,8 +136,7 @@ class MarkdownExporter:
                 lines.append(f"### {d.diff_id}: {_cell(d.description, 60)}")
                 lines.append(f"- **代码侧**: {d.code_side or '--'}")
                 suggestion = (
-                    d.suggestion_by_code if base == "code"
-                    else d.suggestion_by_doc
+                    d.suggestion_by_code if base == "code" else d.suggestion_by_doc
                 )
                 if suggestion:
                     lines.append(f"- **建议**: {suggestion[:200]}")
@@ -153,9 +151,13 @@ class MarkdownExporter:
                 lines.append(f"- **需求侧**: {d.req_side or '--'}")
                 lines.append(f"- **代码侧**: {d.code_side or '--'}")
                 if base == "doc" and d.suggestion_by_doc:
-                    lines.append(f"- **修正建议(以文档为准)**: {d.suggestion_by_doc[:200]}")
+                    lines.append(
+                        f"- **修正建议(以文档为准)**: {d.suggestion_by_doc[:200]}"
+                    )
                 elif base == "code" and d.suggestion_by_code:
-                    lines.append(f"- **修正建议(以代码为准)**: {d.suggestion_by_code[:200]}")
+                    lines.append(
+                        f"- **修正建议(以代码为准)**: {d.suggestion_by_code[:200]}"
+                    )
                 lines.append("")
 
         if not result.diff_report:
@@ -172,11 +174,15 @@ class MarkdownExporter:
         base: str = "doc",
     ) -> str:
         parts: List[str] = []
-        parts.append(self.export_trace_matrix(
-            result,
-            doc_sources=[d.source_file for d in doc_results] if doc_results else None,
-            code_dir=code_result.source_dir if code_result else None,
-        ))
+        parts.append(
+            self.export_trace_matrix(
+                result,
+                doc_sources=[d.source_file for d in doc_results]
+                if doc_results
+                else None,
+                code_dir=code_result.source_dir if code_result else None,
+            )
+        )
         parts.append(self.export_coverage_report(result))
         parts.append(self.export_diff_report(result, base=base))
         return "\n".join(parts)
@@ -257,5 +263,5 @@ def _cell(text: Optional[str], max_len: int = 30) -> str:
         return "--"
     cleaned = text.replace("|", "\\|").replace("\n", " ")
     if len(cleaned) > max_len:
-        return cleaned[:max_len - 3] + "..."
+        return cleaned[: max_len - 3] + "..."
     return cleaned

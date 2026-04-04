@@ -122,20 +122,24 @@ class CrossValidator:
             title_lower = section.title.lower()
             referenced_funcs = []
             for func_name in code_funcs:
-                if func_name in title_lower or self._name_in_text(func_name, section.content or ""):
+                if func_name in title_lower or self._name_in_text(
+                    func_name, section.content or ""
+                ):
                     referenced_funcs.append(func_name)
 
             if referenced_funcs:
-                supplements.append({
-                    "type": "code_reference",
-                    "section": section.title,
-                    "functions": referenced_funcs,
-                    "source": "cross_validation",
-                })
+                supplements.append(
+                    {
+                        "type": "code_reference",
+                        "section": section.title,
+                        "functions": referenced_funcs,
+                        "source": "cross_validation",
+                    }
+                )
 
         doc_keywords = set()
         for section in doc.sections:
-            words = re.findall(r'[a-zA-Z_]{3,}', (section.content or "").lower())
+            words = re.findall(r"[a-zA-Z_]{3,}", (section.content or "").lower())
             doc_keywords.update(words)
 
         for module in code.modules:
@@ -143,14 +147,18 @@ class CrossValidator:
                 if func.name.startswith("_"):
                     continue
                 if not func.docstring:
-                    corrections.append({
-                        "type": "missing_docstring",
-                        "file": module.file_path,
-                        "function": func.name,
-                        "suggestion": f"Add docstring to {func.name}() referencing document sections",
-                    })
+                    corrections.append(
+                        {
+                            "type": "missing_docstring",
+                            "file": module.file_path,
+                            "function": func.name,
+                            "suggestion": f"Add docstring to {func.name}() referencing document sections",
+                        }
+                    )
 
-        notes.append(f"Checked {len(doc.sections)} sections against {len(code_funcs)} functions")
+        notes.append(
+            f"Checked {len(doc.sections)} sections against {len(code_funcs)} functions"
+        )
 
     def _check_with_external_read(
         self,
@@ -166,12 +174,14 @@ class CrossValidator:
                     continue
                 external_info = read_func(section.title)
                 if external_info:
-                    supplements.append({
-                        "type": "external_reference",
-                        "section": section.title,
-                        "content": external_info[:200],
-                        "source": "external_read",
-                    })
+                    supplements.append(
+                        {
+                            "type": "external_reference",
+                            "section": section.title,
+                            "content": external_info[:200],
+                            "source": "external_read",
+                        }
+                    )
             notes.append("External read validation done")
         except Exception as e:
             notes.append(f"External read failed: {e}")
@@ -185,11 +195,13 @@ class CrossValidator:
         section_titles: Dict[str, int] = {}
         for section in doc.sections:
             if section.title in section_titles:
-                corrections.append({
-                    "type": "duplicate_section",
-                    "section": section.title,
-                    "suggestion": f"Duplicate section title (first at index {section_titles[section.title]})",
-                })
+                corrections.append(
+                    {
+                        "type": "duplicate_section",
+                        "section": section.title,
+                        "suggestion": f"Duplicate section title (first at index {section_titles[section.title]})",
+                    }
+                )
             section_titles[section.title] = len(section_titles)
 
         for section in doc.sections:
@@ -198,15 +210,18 @@ class CrossValidator:
                     s.section_id == section.parent_id for s in doc.sections
                 )
                 if not parent_exists:
-                    corrections.append({
-                        "type": "broken_parent_ref",
-                        "section": section.section_id,
-                        "parent_id": section.parent_id,
-                        "suggestion": "Parent section not found, hierarchy may be incorrect",
-                    })
+                    corrections.append(
+                        {
+                            "type": "broken_parent_ref",
+                            "section": section.section_id,
+                            "parent_id": section.parent_id,
+                            "suggestion": "Parent section not found, hierarchy may be incorrect",
+                        }
+                    )
 
         orphan_count = sum(
-            1 for c in corrections
+            1
+            for c in corrections
             if c.get("type") in ("duplicate_section", "broken_parent_ref")
         )
         if orphan_count:
@@ -229,14 +244,18 @@ class CrossValidator:
                 if func.name.startswith("_"):
                     continue
                 if func.name.lower() not in doc_text:
-                    supplements.append({
-                        "type": "undocumented_function",
-                        "file": module.file_path,
-                        "function": func.name,
-                        "suggestion": "Consider documenting this function in requirements",
-                    })
+                    supplements.append(
+                        {
+                            "type": "undocumented_function",
+                            "file": module.file_path,
+                            "function": func.name,
+                            "suggestion": "Consider documenting this function in requirements",
+                        }
+                    )
 
-        notes.append(f"Checked {code.get_module_count()} modules against {len(docs)} documents")
+        notes.append(
+            f"Checked {code.get_module_count()} modules against {len(docs)} documents"
+        )
 
     def _check_code_consistency(
         self,
@@ -245,7 +264,7 @@ class CrossValidator:
         notes: List[str],
     ) -> None:
         for module in code.modules:
-            imports = module.imports if hasattr(module, 'imports') else []
+            imports = module.imports if hasattr(module, "imports") else []
             for imp in imports:
                 if imp.startswith("from .") or imp.startswith("import ."):
                     parts = imp.replace("from ", "").replace("import ", "").split()

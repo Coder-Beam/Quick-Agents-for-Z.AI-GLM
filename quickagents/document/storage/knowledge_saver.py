@@ -176,9 +176,7 @@ class KnowledgeSaver:
         return edge_count
 
     @staticmethod
-    def _find_trace_source(
-        trace: TraceEntry, doc_ids: Dict[str, str]
-    ) -> Optional[str]:
+    def _find_trace_source(trace: TraceEntry, doc_ids: Dict[str, str]) -> Optional[str]:
         if trace.req_node_id and trace.req_node_id in doc_ids:
             return doc_ids[trace.req_node_id]
         return doc_ids.get("_doc")
@@ -207,9 +205,11 @@ class KnowledgeSaver:
     @staticmethod
     def _node_type(name: str):
         from quickagents.knowledge_graph.types import NodeType
+
         return NodeType(name.lower())
 
     @staticmethod
     def _edge_type(name: str):
         from quickagents.knowledge_graph.types import EdgeType
+
         return EdgeType(name.lower())

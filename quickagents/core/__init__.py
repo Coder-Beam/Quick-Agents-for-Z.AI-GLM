@@ -3,7 +3,7 @@ QuickAgents Core - 核心模块
 
 包含:
 - ConnectionManager: 连接管理器
-- TransactionManager: 事务管理器  
+- TransactionManager: 事务管理器
 - MigrationManager: 迁移管理器
 - UnifiedDB: 统一数据库（V2）
 - Repositories: 数据仓储层
@@ -47,7 +47,7 @@ from .repositories import (
     TaskPriority,
     FeedbackType,
     SearchResult,
-    RetrievalConfig
+    RetrievalConfig,
 )
 
 # 其他模块
@@ -59,50 +59,45 @@ from .evolution import SkillEvolution
 
 __all__ = [
     # V2 核心组件
-    'ConnectionManager',
-    'PoolConfig',
-    'TransactionManager',
-    'TransactionError',
-    'RetryConfig',
-    'MigrationManager',
-    'Migration',
-    'MigrationResult',
-    'Session',
-    'Session',
-    
+    "ConnectionManager",
+    "PoolConfig",
+    "TransactionManager",
+    "TransactionError",
+    "RetryConfig",
+    "MigrationManager",
+    "Migration",
+    "MigrationResult",
+    "Session",
+    "Session",
     # V2 UnifiedDB
-    'UnifiedDB',
-    'get_unified_db',
-    'reset_global_db',
-    
+    "UnifiedDB",
+    "get_unified_db",
+    "reset_global_db",
     # V1 备份
-    'UnifiedDBV1',
-    
+    "UnifiedDBV1",
     # Repositories
-    'BaseRepository',
-    'QueryBuilder',
-    'MemoryRepository',
-    'TaskRepository',
-    'ProgressRepository',
-    'FeedbackRepository',
-    
+    "BaseRepository",
+    "QueryBuilder",
+    "MemoryRepository",
+    "TaskRepository",
+    "ProgressRepository",
+    "FeedbackRepository",
     # Models
-    'Memory',
-    'Task',
-    'Progress',
-    'Feedback',
-    'MemoryType',
-    'TaskStatus',
-    'TaskPriority',
-    'FeedbackType',
-    'SearchResult',
-    'RetrievalConfig',
-    
+    "Memory",
+    "Task",
+    "Progress",
+    "Feedback",
+    "MemoryType",
+    "TaskStatus",
+    "TaskPriority",
+    "FeedbackType",
+    "SearchResult",
+    "RetrievalConfig",
     # 其他模块
-    'LoopDetector',
-    'LoopDetectorConfig',
-    'FileManager',
-    'MarkdownSync',
-    'Reminder',
-    'SkillEvolution',
+    "LoopDetector",
+    "LoopDetectorConfig",
+    "FileManager",
+    "MarkdownSync",
+    "Reminder",
+    "SkillEvolution",
 ]

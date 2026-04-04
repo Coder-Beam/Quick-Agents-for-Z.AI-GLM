@@ -27,7 +27,7 @@ package_dir = os.path.dirname(script_dir)
 if package_dir not in sys.path:
     sys.path.insert(0, package_dir)
 
-from quickagents.cli.main import main
+from quickagents.cli.main import main  # noqa: E402
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

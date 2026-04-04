@@ -68,10 +68,7 @@ class OPMLParser(BaseParser):
             if note:
                 sec.content = note
 
-            self._walk_outlines(
-                outline, sections, all_text,
-                sec.section_id, 2, counter
-            )
+            self._walk_outlines(outline, sections, all_text, sec.section_id, 2, counter)
 
         structure_tree = build_tree_by_parent_id(sections)
         raw_text = "\n".join(all_text)
@@ -121,8 +118,7 @@ class OPMLParser(BaseParser):
                 sec.content = note
 
             self._walk_outlines(
-                outline, sections, text_parts,
-                sec.section_id, level + 1, counter
+                outline, sections, text_parts, sec.section_id, level + 1, counter
             )
 
     def _build_tree(self, sections: List[DocumentSection]) -> Dict:

@@ -181,9 +181,7 @@ class DocumentPipeline:
             if source_dir.exists():
                 try:
                     code_result = self.parse_source(source_dir)
-                    logger.info(
-                        f"Parsed {len(code_result.modules)} source modules"
-                    )
+                    logger.info(f"Parsed {len(code_result.modules)} source modules")
                 except Exception as e:
                     logger.error(f"Failed to parse source directory: {e}")
 
@@ -201,13 +199,21 @@ class DocumentPipeline:
             "errors": [],
         }
 
-    def _scan_files(
-        self, pals_dir: str, with_source: bool
-    ) -> tuple:
+    def _scan_files(self, pals_dir: str, with_source: bool) -> tuple:
         """Scan PALs directory for files"""
         doc_files = []
         source_files = []
-        doc_exts = {".pdf", ".docx", ".doc", ".xlsx", ".xls", ".xmind", ".mm", ".opml", ".md"}
+        doc_exts = {
+            ".pdf",
+            ".docx",
+            ".doc",
+            ".xlsx",
+            ".xls",
+            ".xmind",
+            ".mm",
+            ".opml",
+            ".md",
+        }
         source_exts = {".py", ".js", ".ts", ".java", ".go", ".rs", ".c", ".cpp"}
 
         pals_path = Path(pals_dir)

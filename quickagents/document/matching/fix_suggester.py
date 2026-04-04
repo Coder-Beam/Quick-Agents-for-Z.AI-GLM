@@ -29,15 +29,17 @@ class FixSuggester:
                 suggestion_by_doc = self._suggest_for_inconsistency_by_doc(diff)
                 suggestion_by_code = self._suggest_for_inconsistency_by_code(diff)
 
-            enriched.append(DiffEntry(
-                diff_id=diff.diff_id,
-                diff_type=diff.diff_type,
-                description=diff.description,
-                req_side=diff.req_side,
-                code_side=diff.code_side,
-                suggestion_by_code=suggestion_by_code,
-                suggestion_by_doc=suggestion_by_doc,
-            ))
+            enriched.append(
+                DiffEntry(
+                    diff_id=diff.diff_id,
+                    diff_type=diff.diff_type,
+                    description=diff.description,
+                    req_side=diff.req_side,
+                    code_side=diff.code_side,
+                    suggestion_by_code=suggestion_by_code,
+                    suggestion_by_doc=suggestion_by_doc,
+                )
+            )
         return enriched
 
     @staticmethod
@@ -51,9 +53,9 @@ class FixSuggester:
     @staticmethod
     def _suggest_for_gap_by_code(diff: DiffEntry) -> str:
         return (
-            f"[以代码为准] 该需求描述无对应实现，可能是:\n"
-            f"  1. 需求已过时，建议从文档中移除\n"
-            f"  2. 需求已被合并到其他功能中"
+            "[以代码为准] 该需求描述无对应实现，可能是:\n"
+            "  1. 需求已过时，建议从文档中移除\n"
+            "  2. 需求已被合并到其他功能中"
         )
 
     @staticmethod
