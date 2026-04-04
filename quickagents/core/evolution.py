@@ -224,27 +224,38 @@ class SkillEvolution:
                 self.db.add_feedback(
                     FeedbackType.IMPROVEMENT,
                     title=imp['title'],
-                    description=imp['description'],
+                    description=imp.get('description', imp['title']),
                     project_name=self.project_name,
                     metadata={
                         'context': f"Commit: {commit_info.get('hash', '')[:8]}",
-                        'tags': ['git-commit', 'auto-detected']
+                        'category': imp.get('category', 'pattern'),
+                        'files': imp.get('files', []),
+                        'tags': ['git-commit', 'auto-detected', imp.get('type', 'unknown')],
+                        'suggestion': imp.get('suggestion', ''),
+                        'avoidance': ''
                     }
                 )
                 result['improvements_found'].append(imp['title'])
         
         # 3. 检测是否有Bug修复
         if 'fix' in commit_info.get('message', '').lower():
-                self.db.add_feedback(
-                    FeedbackType.BUG,
-                    title=f"Bug修复: {commit_info.get('message', '')[:50]}",
-                    description=commit_info.get('message', ''),
-                    project_name=self.project_name,
-                    metadata={
-                        'context': f"Commit: {commit_info.get('hash', '')}",
-                        'tags': ['git-commit', 'bug-fix']
-                    }
-                )
+            # 尝试从 files_changed 提取修复范围
+            files_changed = commit_info.get('files_changed', [])
+            fix_scope = ', '.join(set(f.split('/')[0] for f in files_changed if '/' in f)[:3])
+            self.db.add_feedback(
+                FeedbackType.BUG,
+                title=f"Bug修复: {commit_info.get('message', '')[:80]}",
+                description=commit_info.get('message', ''),
+                project_name=self.project_name,
+                metadata={
+                    'context': f"Commit: {commit_info.get('hash', '')}",
+                    'category': 'fix',
+                    'files': files_changed,
+                    'tags': ['git-commit', 'bug-fix'],
+                    'suggestion': f"已修复，涉及模块: {fix_scope or '未知'}",
+                    'avoidance': '同类问题可参考此修复方案'
+                }
+            )
         
         return result
     
@@ -561,60 +572,224 @@ class SkillEvolution:
         }
     
     def _extract_patterns(self, task_info: Dict) -> List[Dict]:
-        """提取可复用模式"""
-        # 简单的模式检测逻辑
+        """提取可复用模式与经验"""
         patterns = []
+        skills_used = task_info.get('skills_used', [])
+        success = task_info.get('success', True)
+        task_name = task_info.get('task_name', '')
+        duration_ms = task_info.get('duration_ms', 0)
         
-        # 检测是否有成功的工具组合
-        if task_info.get('success') and len(task_info.get('skills_used', [])) >= 2:
-            skills = task_info.get('skills_used', [])
+        # ===== 1. Skills组合模式 =====
+        if success and len(skills_used) >= 2:
             patterns.append({
-                'name': f"Skills组合: {' + '.join(skills[:2])}",
-                'description': f"成功使用了 {len(skills)} 个Skills",
-                'context': f"任务: {task_info.get('task_name', '')}"
+                'name': f"Skills组合: {' + '.join(skills_used[:3])}",
+                'description': f"成功使用 {len(skills_used)} 个Skills完成: {task_name}",
+                'context': f"任务: {task_name}, 耗时: {duration_ms}ms",
+                'category': 'pattern'
+            })
+        
+        # ===== 2. 效率异常检测 =====
+        if duration_ms > 30000:  # 超过30秒
+            patterns.append({
+                'name': f"慢任务警告: {task_name}",
+                'description': f"任务耗时 {duration_ms}ms ({duration_ms/1000:.1f}s)，超过30秒阈值",
+                'context': f"Skills: {', '.join(skills_used)}",
+                'category': 'pitfall',
+                'suggestion': '考虑拆分任务或优化性能瓶颈'
+            })
+        
+        # ===== 3. 失败经验提取 =====
+        if not success:
+            error = task_info.get('error', '')
+            if error:
+                patterns.append({
+                    'name': f"失败经验: {task_name}",
+                    'description': f"错误: {error[:200]}",
+                    'context': f"Skills: {', '.join(skills_used)}",
+                    'category': 'pitfall',
+                    'suggestion': '检查相关Skills的错误处理逻辑',
+                    'avoidance': f"避免重复触发: {', '.join(skills_used)}"
+                })
+        
+        # ===== 4. 单Skill高频使用检测 =====
+        if success and len(skills_used) == 1:
+            patterns.append({
+                'name': f"高频Skill: {skills_used[0]}",
+                'description': f"单独使用 {skills_used[0]} 完成任务",
+                'context': f"任务: {task_name}",
+                'category': 'pattern'
             })
         
         return patterns
     
     def _analyze_commit(self, commit_info: Dict) -> Dict:
-        """分析提交内容"""
+        """分析提交内容
+        
+        覆盖所有 conventional commit 类型 + files_changed 模式分析
+        """
         message = commit_info.get('message', '').lower()
         files_changed = commit_info.get('files_changed', [])
         
         improvements = []
         
-        # 检测重构
-        if 'refactor' in message:
-            improvements.append({
+        # ===== 1. Conventional commit 类型分析 =====
+        commit_type_map = {
+            'feat': {
+                'title': '新功能开发',
+                'category': 'pattern',
+            },
+            'fix': {
+                'title': 'Bug修复',
+                'category': 'fix',
+            },
+            'refactor': {
                 'title': '代码重构',
-                'description': f"提交信息: {commit_info.get('message', '')}",
-                'type': 'refactor'
-            })
-        
-        # 检测性能优化
-        if 'perf' in message or 'optim' in message:
-            improvements.append({
+                'category': 'pattern',
+            },
+            'perf': {
                 'title': '性能优化',
-                'description': f"提交信息: {commit_info.get('message', '')}",
-                'type': 'performance'
-            })
+                'category': 'pattern',
+            },
+            'docs': {
+                'title': '文档更新',
+                'category': 'pattern',
+            },
+            'test': {
+                'title': '测试补充',
+                'category': 'pattern',
+            },
+            'style': {
+                'title': '代码格式调整',
+                'category': 'pattern',
+            },
+            'chore': {
+                'title': '构建/工具变更',
+                'category': 'pattern',
+            },
+            'ci': {
+                'title': 'CI配置变更',
+                'category': 'pattern',
+            }
+        }
+        
+        for type_key, type_info in commit_type_map.items():
+            if type_key + '(' in message or type_key + ':' in message or message.startswith(type_key):
+                improvements.append({
+                    'title': type_info['title'],
+                    'description': f"提交信息: {commit_info.get('message', '')}",
+                    'type': type_key,
+                    'category': type_info['category']
+                })
+                break  # 一个提交只匹配一个类型
+        
+        # ===== 2. files_changed 模式分析 =====
+        if files_changed:
+            # 2a. 模块热点分析
+            dir_counts = {}
+            for f in files_changed:
+                parts = f.split('/')
+                if len(parts) > 1:
+                    module = parts[0]
+                    dir_counts[module] = dir_counts.get(module, 0) + 1
+            
+            hot_modules = [m for m, c in sorted(dir_counts.items(), key=lambda x: -x[1]) if c >= 2]
+            if hot_modules:
+                improvements.append({
+                    'title': f'高频变更模块: {", ".join(hot_modules)}',
+                    'description': f'本次提交中 {hot_modules[0]} 模块有 {dir_counts[hot_modules[0]]} 个文件变更，是系统核心热点',
+                    'type': 'module_hotspot',
+                    'category': 'architecture',
+                    'files': hot_modules
+                })
+            
+            # 2b. 配置文件变更检测
+            config_extensions = ('.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.env')
+            config_files = [f for f in files_changed if any(f.endswith(ext) for ext in config_extensions)]
+            if config_files:
+                improvements.append({
+                    'title': '配置文件变更',
+                    'description': f'变更的配置文件: {", ".join(config_files)}，可能影响运行时行为',
+                    'type': 'config_change',
+                    'category': 'pitfall',
+                    'files': config_files
+                })
+            
+            # 2c. 测试覆盖检测
+            src_files = [f for f in files_changed if f.startswith('src/') and not f.startswith('src/test')]
+            test_files = [f for f in files_changed if 'test' in f.lower()]
+            if src_files and not test_files:
+                improvements.append({
+                    'title': '源码变更缺少对应测试',
+                    'description': f'修改了源码但未更新测试: {", ".join(src_files[:3])}',
+                    'type': 'missing_test',
+                    'category': 'pitfall',
+                    'files': src_files,
+                    'suggestion': f'建议为 {src_files[0]} 添加对应的测试文件'
+                })
+            
+            # 2e. 大规模变更检测
+            if len(files_changed) >= 5:
+                improvements.append({
+                    'title': '大规模变更',
+                    'description': f'本次提交涉及 {len(files_changed)} 个文件，属于大规模变更',
+                    'type': 'large_change',
+                    'category': 'architecture',
+                    'suggestion': '大规模变更建议拆分为多个原子提交'
+                })
         
         return {'improvements': improvements}
     
     def _suggest_fix(self, error_info: Dict) -> str:
-        """建议修复方案"""
+        """
+        基于项目历史经验的修复建议
+        
+        检索链路:
+        1. 从 feedback 表搜索同类型错误的修复记录 (category='fix')
+        2. 有匹配 → 返回历史解决方案
+        3. 无匹配 → 返回通用建议
+        """
         error_type = error_info.get('error_type', '')
         
+        # 1. 从项目历史经验中检索
+        try:
+            feedbacks = self.db.get_feedbacks(limit=50)
+            for fb in feedbacks:
+                meta = fb.metadata if hasattr(fb, 'metadata') else {}
+                if isinstance(meta, str):
+                    import json
+                    meta = json.loads(meta) if meta else {}
+                
+                if meta.get('category') == 'fix' and error_type in str(meta.get('tags', [])):
+                    suggestion = meta.get('suggestion', '')
+                    if suggestion:
+                        return suggestion
+                    
+                
+                # 也匹配 description 中的错误类型
+                desc = fb.description if hasattr(fb, 'description') else ''
+                if desc and error_type in desc:
+                    suggestion = meta.get('suggestion', '')
+                    if suggestion:
+                        return suggestion
+        except Exception:
+            pass
+        
+        # 2. 通用映射（fallback）
         suggestions = {
-            'ImportError': '检查模块是否正确安装',
-            'FileNotFoundError': '检查文件路径是否正确',
-            'PermissionError': '检查文件权限',
-            'TimeoutError': '考虑增加超时时间或优化操作',
-            'ValueError': '检查输入参数的有效性',
-            'TypeError': '检查参数类型是否正确'
+            'ImportError': '检查模块是否正确安装，确认 package 在 PYTHONPATH 中',
+            'ModuleNotFoundError': '检查模块名称拼写，执行 pip install 安装缺失依赖',
+            'FileNotFoundError': '检查文件路径是否正确，确认文件存在',
+            'PermissionError': '检查文件/目录权限，尝试 chmod 或以管理员身份运行',
+            'TimeoutError': '考虑增加超时时间或优化操作性能',
+            'ValueError': '检查输入参数的有效性和取值范围',
+            'TypeError': '检查参数类型是否正确，确认接口签名未变更',
+            'KeyError': '检查字典键名是否正确，确认数据结构未变更',
+            'AttributeError': '检查对象属性是否存在，确认类定义未变更',
+            'IndexError': '检查索引是否越界,确认列表长度',
+            'RuntimeError': '检查运行时状态，确认前置条件已满足'
         }
         
-        return suggestions.get(error_type, '请检查错误详情并尝试修复')
+        return suggestions.get(error_type, f'请检查 {error_type} 的详情并尝试修复')
     
     def _review_skill(self, skill_name: str, stat: Dict) -> Dict:
         """评估Skill"""
