@@ -14,11 +14,9 @@ GitHooks - Git钩子集成
     hooks.uninstall()  # 卸载钩子
 """
 
-import os
 import stat
-import subprocess
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict
 
 
 class GitHooks:

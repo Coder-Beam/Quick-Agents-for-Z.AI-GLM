@@ -11,10 +11,9 @@ Token节省: 100%
 """
 
 import subprocess
-import os
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from datetime import datetime
 from enum import Enum
 
