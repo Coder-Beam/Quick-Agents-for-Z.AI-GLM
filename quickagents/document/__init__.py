@@ -15,7 +15,7 @@ Usage:
     from quickagents.document.parsers import BaseParser, ParserRegistry
 """
 
-__version__ = "0.1.0"
+__version__ = "2.8.3"
 __author__ = "QuickAgents Team"
 
 # 公开 API
