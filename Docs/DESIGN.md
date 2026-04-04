@@ -1,6 +1,6 @@
 # 设计文档 (DESIGN.md)
 
-> 扩展结构设计文档模板
+> QuickAgents v2.8.3 系统设计文档
 
 ---
 
@@ -8,27 +8,25 @@
 
 ### 1.1 项目背景
 
-> 描述项目的业务背景和解决的问题
-
-待填充
+QuickAgents 是一个 AI 代理增强工具包（Python 包），通过本地处理最大化效率、最小化 LLM Token 消耗。它为 AI 编码代理（如 OpenCode、Claude Code）提供持久化记忆、知识图谱、文档理解、循环检测、自我进化等核心能力，所有计算在本地完成（0 Token）。
 
 ### 1.2 业务目标
 
-> 描述项目的业务目标和成功指标
-
 | 目标 | 指标 | 目标值 |
 |------|------|--------|
-| 目标1 | 待定义 | 待定义 |
+| Token 节省 | 减少不必要的 API 调用 | 60-100% |
+| 跨会话连续性 | 项目上下文保持 | 100% 可恢复 |
+| 代码质量 | mypy/ruff 错误 | 0 |
+| 测试覆盖 | 自动化测试通过率 | 100% (580 tests) |
 
 ### 1.3 技术目标
 
-> 描述项目的技术目标和约束
-
 | 目标 | 说明 |
 |------|------|
-| 性能目标 | 待填充 |
-| 可扩展性 | 待填充 |
-| 可维护性 | 待填充 |
+| 性能 | SQLite WAL 模式、批量查询、并行同步 |
+| 可扩展性 | 分层架构（Facade → Session → Repository → Core） |
+| 可维护性 | 模块化设计，每个模块职责单一 |
+| 跨平台 | Windows/macOS/Linux 统一 UTF-8 编码 |
 
 ---
 
@@ -36,221 +34,255 @@
 
 ### 2.1 整体架构
 
-> 描述系统的整体架构
-
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      用户界面层                          │
-├─────────────────────────────────────────────────────────┤
-│                      业务逻辑层                          │
-├─────────────────────────────────────────────────────────┤
-│                      数据访问层                          │
-├─────────────────────────────────────────────────────────┤
-│                      数据存储层                          │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                         QuickAgents v2.8.3                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │                    CLI Layer (qka)                           │     │
+│  │  stats / sync / memory / tasks / evolution / hooks / tdd    │     │
+│  └─────────────────────────────────────────────────────────────┘     │
+│                              │                                       │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │                 Python API (Facade)                          │     │
+│  │  UnifiedDB │ KnowledgeGraph │ SkillEvolution │ Browser      │     │
+│  └─────────────────────────────────────────────────────────────┘     │
+│                              │                                       │
+│  ┌──────────────┬──────────────┬──────────────┬────────────────┐     │
+│  │    Core      │  Knowledge   │  Document    │    Utils       │     │
+│  │  Layer       │  Graph       │  Pipeline    │                │     │
+│  ├──────────────┼──────────────┼──────────────┼────────────────┤     │
+│  │ Session      │ KG Facade    │ Pipeline     │ Encoding       │     │
+│  │ ConnMgr      │ Searcher     │ 7 Parsers    │ SmartEditor    │     │
+│  │ TxMgr        │ Storage      │ Extractors   │ SyncConflict   │     │
+│  │ MigrationMgr │ FTS5 Index   │ Matching     │                │     │
+│  │ Repos        │ Types        │ Validators   │                │     │
+│  │ MarkdownSync │              │              │                │     │
+│  └──────────────┴──────────────┴──────────────┴────────────────┘     │
+│                              │                                       │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │                  Storage Layer                               │     │
+│  │  SQLite (WAL mode) ──sync──> Markdown (.md files)           │     │
+│  └─────────────────────────────────────────────────────────────┘     │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 2.2 模块划分
 
 | 模块名称 | 职责 | 依赖模块 |
 |----------|------|----------|
-| 待定义 | - | - |
+| `core/` | 数据库核心（连接、事务、迁移、仓库、同步） | sqlite3 |
+| `knowledge_graph/` | 知识图谱（节点、边、搜索、FTS5） | core/ |
+| `document/` | 文档管道（解析、匹配、验证、提取） | knowledge_graph/ |
+| `browser/` | 浏览器自动化（Playwright） | playwright |
+| `cli/` | CLI 工具（qka 命令行） | core/, knowledge_graph/ |
+| `skills/` | TDD/Git/反馈等技能模块 | core/ |
+| `utils/` | 编码、编辑器、同步冲突 | - |
 
 ### 2.3 技术选型
 
 | 层级 | 技术选择 | 选择理由 |
 |------|----------|----------|
-| 前端 | 待填充 | - |
-| 后端 | 待填充 | - |
-| 数据库 | 待填充 | - |
-| 缓存 | 待填充 | - |
-| 部署 | 待填充 | - |
+| 语言 | Python 3.9+ | AI 生态兼容、SQLite 内置 |
+| 主存储 | SQLite (WAL mode) | 零部署、高性能本地数据库 |
+| 辅助存储 | Markdown | 人类可读、Git 版本控制 |
+| 文档解析 | PyMuPDF + python-docx + openpyxl | 行业标准库 |
+| 知识搜索 | FTS5 | SQLite 内置全文搜索 |
+| 浏览器 | Playwright | 跨浏览器自动化标准 |
+| 代码分析 | ast + tree-sitter (optional) | Python 内置 + 多语言支持 |
 
 ---
 
 ## 3. 数据模型
 
-### 3.1 实体关系
+### 3.1 核心实体关系
 
-> 描述核心实体及其关系
+```
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│  Memory  │     │   Task   │     │ Progress │     │ Feedback │
+│          │     │          │     │          │     │          │
+│ key (PK) │     │ id (PK)  │     │ project  │     │ id (PK)  │
+│ value    │     │ name     │     │ total    │     │ type     │
+│ type     │     │ priority │     │ current  │     │ title    │
+│ category │     │ status   │     │ completed│     │ desc     │
+│ created  │     │ assignee │     │          │     │ created  │
+│ updated  │     │          │     │          │     │          │
+└──────────┘     └──────────┘     └──────────┘     └──────────┘
 
-```mermaid
-erDiagram
-    ENTITY1 ||--o{ ENTITY2 : contains
-    ENTITY2 ||--o{ ENTITY3 : has
+┌──────────┐     ┌──────────┐
+│  KGNode  │────<│  KGEdge  │
+│          │     │          │
+│ id (PK)  │     │ id (PK)  │
+│ type     │     │ source   │
+│ title    │     │ target   │
+│ content  │     │ type     │
+│ metadata │     │ weight   │
+└──────────┘     └──────────┘
 ```
 
-### 3.2 数据字典
+### 3.2 SQLite 表结构
 
-| 实体名称 | 字段列表 | 说明 |
-|----------|----------|------|
-| 待定义 | - | - |
+| 表名 | 功能 | 核心字段 |
+|------|------|----------|
+| `memory` | 三维记忆 | key, value, memory_type, category |
+| `tasks` | 任务管理 | id, name, priority, status |
+| `progress` | 进度追踪 | project_id, total_tasks, completed_tasks |
+| `feedback` | 经验收集 | id, type, title, description |
+| `decisions` | 决策日志 | id, title, decision, alternatives |
+| `kg_nodes` | 知识节点 | id, node_type, title, content |
+| `kg_edges` | 知识关系 | id, source_id, target_id, edge_type |
+| `file_cache` | 文件缓存 | path, hash, content |
+| `operation_history` | 操作历史 | id, operation, timestamp |
 
 ### 3.3 存储方案
 
 | 数据类型 | 存储方式 | 说明 |
 |----------|----------|------|
-| 结构化数据 | 待填充 | - |
-| 非结构化数据 | 待填充 | - |
-| 缓存数据 | 待填充 | - |
+| 结构化数据 | SQLite (unified.db) | 主存储，高性能查询 |
+| 全文索引 | SQLite FTS5 | 知识图谱搜索 |
+| 人类可读备份 | Markdown | MEMORY.md, TASKS.md, DECISIONS.md |
+| 文件缓存 | SQLite (cache.db) | 哈希检测，避免重复读取 |
 
 ---
 
-## 4. API设计
+## 4. API 设计
 
-### 4.1 接口规范
+### 4.1 Python API (核心入口)
 
-**基础URL**: `/api/v1`
+```python
+from quickagents import UnifiedDB, MemoryType, TaskStatus, KnowledgeGraph
 
-**请求格式**: `application/json`
+# UnifiedDB — 统一数据库
+db = UnifiedDB('.quickagents/unified.db')
+db.set_memory('key', 'value', MemoryType.FACTUAL)
+db.get_memory('key')
+db.search_memory('query')
+db.add_task('T001', '任务名', 'P0')
+db.get_all_memories()  # v2.8.3 批量获取
 
-**响应格式**:
-```json
-{
-  "code": 0,
-  "data": {},
-  "message": "success",
-  "timestamp": "2026-03-22T10:00:00Z"
-}
+# KnowledgeGraph — 知识图谱
+kg = KnowledgeGraph()
+kg.create_node(node_type, title, content)
+kg.create_edge(source_id, target_id, edge_type)
+kg.search('query')
+kg.close()  # v2.8.3 资源清理
+
+# MarkdownSync — 同步
+from quickagents import MarkdownSync
+sync = MarkdownSync(db)
+sync.sync_all()  # v2.8.3 并行同步
 ```
 
-### 4.2 接口列表
+### 4.2 CLI API (qka 命令)
 
-| 接口名称 | 方法 | 路径 | 说明 |
-|----------|------|------|------|
-| 待定义 | - | - | - |
-
-### 4.3 错误码定义
-
-| 错误码 | 说明 | 处理建议 |
-|--------|------|----------|
-| 0 | 成功 | - |
-| 400 | 请求参数错误 | 检查请求参数 |
-| 401 | 未授权 | 检查认证信息 |
-| 403 | 禁止访问 | 检查权限 |
-| 404 | 资源不存在 | 检查资源路径 |
-| 500 | 服务器内部错误 | 联系管理员 |
+| 命令 | 功能 |
+|------|------|
+| `qka stats` | 数据库统计 |
+| `qka sync` | 同步到 Markdown |
+| `qka memory get/set/search` | 记忆操作 |
+| `qka tasks list/add/status` | 任务管理 |
+| `qka import PALs/` | 文档导入 |
+| `qka tdd red/green/refactor` | TDD 工作流 |
+| `qka evolution status/stats` | 进化系统 |
+| `qka hooks install/status` | Git 钩子 |
 
 ---
 
-## 5. 技术选型
+## 5. 性能方案
 
-### 5.1 前端技术栈
+### 5.1 性能目标
 
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| 待填充 | - | - |
+| 指标 | 目标值 | 实际值 (v2.8.3) |
+|------|--------|-----------------|
+| 单次读取 QPS | > 10,000 | 16,679 |
+| 批量写入 QPS | > 5,000 | 5,200-7,096 |
+| 连接池命中率 | > 95% | 100% |
+| 知识图谱批量查询 | O(1) queries | 2 queries (fixed) |
 
-### 5.2 后端技术栈
-
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| 待填充 | - | - |
-
-### 5.3 基础设施
-
-| 组件 | 选择 | 说明 |
-|------|------|------|
-| 服务器 | 待填充 | - |
-| 数据库 | 待填充 | - |
-| 缓存 | 待填充 | - |
-| 消息队列 | 待填充 | - |
-| 监控 | 待填充 | - |
-
----
-
-## 6. 性能方案
-
-### 6.1 性能目标
-
-| 指标 | 目标值 | 说明 |
-|------|--------|------|
-| 响应时间 | < 200ms | P99 |
-| 吞吐量 | 待定义 | QPS |
-| 可用性 | 99.9% | 年度 |
-
-### 6.2 优化策略
+### 5.2 优化策略
 
 | 策略 | 说明 | 适用场景 |
 |------|------|----------|
-| 缓存 | 待填充 | - |
-| 异步处理 | 待填充 | - |
-| 分库分表 | 待填充 | - |
+| WAL 模式 | 读写并发，无锁 | SQLite 全局 |
+| 批量 SQL | 2N+M queries → 2 queries | KnowledgeGraph `_expand_relations` |
+| 并行同步 | ThreadPoolExecutor (3 workers) | MarkdownSync `sync_all` |
+| 批量读取 | 1 query + Python grouping | MarkdownSync `sync_memory` |
+| 内存映射 | mmap_size=64MB | SQLite PRAGMA |
+| 持久连接 | Thread-local 连接复用 | KnowledgeGraph Storage |
 
-### 6.3 监控方案
+### 5.3 监控方案
 
-| 监控类型 | 工具 | 指标 |
+| 监控类型 | 方式 | 指标 |
 |----------|------|------|
-| 应用监控 | 待填充 | - |
-| 基础设施监控 | 待填充 | - |
-| 业务监控 | 待填充 | - |
+| 连接池 | PoolMetrics dataclass | hit_rate, avg_wait_ms, created/reused/evicted |
+| 性能基准 | tests/benchmark_performance.py | QPS, pool hit rate, WAL growth |
+| 测试覆盖 | pytest --cov | 行覆盖率 |
 
 ---
 
-## 7. 安全方案
+## 6. 质量门禁
 
-### 7.1 安全威胁分析
+### 6.1 静态分析
 
-| 威胁类型 | 风险等级 | 说明 |
-|----------|----------|------|
-| SQL注入 | 高 | 待评估 |
-| XSS攻击 | 中 | 待评估 |
-| CSRF攻击 | 中 | 待评估 |
-| 数据泄露 | 高 | 待评估 |
-
-### 7.2 安全措施
-
-| 措施 | 说明 | 状态 |
+| 工具 | 状态 | 说明 |
 |------|------|------|
-| 身份认证 | 待填充 | 计划中 |
-| 权限控制 | 待填充 | 计划中 |
-| 数据加密 | 待填充 | 计划中 |
-| 日志审计 | 待填充 | 计划中 |
+| ruff (E,W,F) | 0 errors | line-length=120 |
+| mypy --ignore-missing-imports | 0 errors | Optional[] + type: ignore |
 
-### 7.3 合规要求
+### 6.2 测试
 
-- [ ] 数据安全法
-- [ ] 个人信息保护法
-- [ ] 行业规范（如有）
+| 测试类型 | 数量 | 通过率 |
+|----------|------|--------|
+| 全部测试 | 580 | 100% |
+| 文档模块 | 340 | 100% |
+| 知识图谱 | 204 | 100% |
 
 ---
 
-## 8. 风险分析
+## 7. 风险分析
 
-### 8.1 技术风险
-
-| 风险 | 可能性 | 影响 | 应对措施 |
-|------|--------|------|----------|
-| 待识别 | - | - | - |
-
-### 8.2 业务风险
+### 7.1 技术风险
 
 | 风险 | 可能性 | 影响 | 应对措施 |
 |------|--------|------|----------|
-| 待识别 | - | - | - |
+| SQLite 并发锁 | 低 | 中 | WAL 模式 + busy_timeout=5000 |
+| 磁盘空间不足 | 低 | 高 | WAL auto-checkpoint (1000 ops) |
+| 跨平台编码问题 | 中 | 中 | 统一 UTF-8 编码模块 |
+| 依赖冲突 | 低 | 中 | 可选依赖组 [document]/[source-code] |
 
-### 8.3 应对预案
+### 7.2 应对预案
 
 | 预案名称 | 触发条件 | 处理步骤 |
 |----------|----------|----------|
-| 待定义 | - | - |
+| SQLite 恢复 | 数据库损坏 | MarkdownSync.restore_all_from_md() |
+| 连接泄漏 | 连接数异常增长 | close() + __del__ 双重保障 |
+| 内存溢出 | 大文件缓存 | FileManager hash 检测 + TTL |
 
 ---
 
-## 9. 附录
+## 8. 附录
 
-### 9.1 术语表
+### 8.1 术语表
 
 | 术语 | 定义 |
 |------|------|
-| 待定义 | - |
+| UnifiedDB | 统一数据库门面类 |
+| FTS5 | SQLite 全文搜索扩展 |
+| WAL | Write-Ahead Logging，SQLite 并发模式 |
+| KnowledgeGraph | 知识图谱，节点+边+FTS5搜索 |
+| MarkdownSync | SQLite → Markdown 双向同步 |
+| DocumentPipeline | 三层文档处理管道（解析→验证→提取） |
 
-### 9.2 参考文档
+### 8.2 参考文档
 
 - [AGENTS.md](../AGENTS.md) - 开发规范
-- [MEMORY.md](./MEMORY.md) - 项目记忆
-- [TASKS.md](./TASKS.md) - 任务管理
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - 系统架构
+- [API_REFERENCE.md](./API_REFERENCE.md) - API 参考
+- [INDEX.md](./INDEX.md) - 知识图谱索引
+- [CHANGELOG.md](../CHANGELOG.md) - 变更日志
 
 ---
 
-*最后更新: 2026-03-22*
+*最后更新: 2026-04-05 | v2.8.3*

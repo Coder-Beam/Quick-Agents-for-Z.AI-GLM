@@ -20,12 +20,15 @@
 
 ## 概述
 
-QuickAgents是一个完整的AI代理项目初始化系统，基于OpenCode平台构建，提供：
+QuickAgents是一个完整的AI代理增强工具包（Python 包），通过本地处理最大化效率、最小化 Token 消耗。核心能力包括：
 
-- **17个专业代理**：覆盖项目初始化、开发、测试、部署全流程
-- **12个专项技能**：提供记忆管理、进度追踪、代码分析等核心能力
-- **6个核心命令**：支持跨会话恢复、超高效执行等操作
-- **三维记忆系统**：基于学术论文的Factual/Experiential/Working记忆架构
+- **统一数据库 (UnifiedDB V2)**: 分层架构，SQLite 主存储 + Markdown 辅助备份
+- **知识图谱 (KnowledgeGraph)**: 节点+边+FTS5 全文搜索，WAL 模式优化
+- **文档管道 (DocumentPipeline)**: 三层管道（解析→验证→提取），支持 7 种格式
+- **17个专业代理**: 覆盖项目初始化、开发、测试、部署全流程
+- **22个专项技能**: 提供记忆管理、进度追踪、代码分析等核心能力
+- **三维记忆系统**: 基于《Memory in the Age of AI Agents》论文的 Factual/Experiential/Working 记忆架构
+- **580 测试**: 100% 通过率，mypy/ruff 0 错误
 
 ---
 
@@ -439,6 +442,143 @@ tags: [tag1, tag2, tag3]
 
 ---
 
+## Python 包架构 (v2.8.3)
+
+### 核心包结构
+
+```
+quickagents/
+├── __init__.py                  # 公共 API 导出
+├── core/                        # 核心模块
+│   ├── unified_db.py            # UnifiedDB 门面类 (737 lines)
+│   ├── session.py               # Session 统一接口 (190 lines)
+│   ├── connection_manager.py    # 动态连接池 (640 lines)
+│   ├── transaction_manager.py   # ACID 事务 (364 lines)
+│   ├── migration_manager.py     # 迁移管理 (500 lines)
+│   ├── markdown_sync.py         # Markdown 同步 (并行+批量)
+│   ├── evolution.py             # SkillEvolution 自我进化
+│   ├── file_manager.py          # FileManager 文件管理
+│   ├── loop_detector.py         # LoopDetector 循环检测
+│   ├── reminder.py              # Reminder 事件提醒
+│   ├── cache_db.py              # 缓存数据库
+│   ├── git_hooks.py             # Git 钩子
+│   ├── memory.py                # 记忆辅助函数
+│   └── repositories/            # Repository 层
+│       ├── query_builder.py     # Django 风格查询构建器 (463 lines)
+│       ├── base.py              # BaseRepository
+│       ├── memory_repo.py       # MemoryRepository (528 lines)
+│       ├── task_repo.py         # TaskRepository (457 lines)
+│       ├── progress_repo.py     # ProgressRepository (271 lines)
+│       └── feedback_repo.py     # FeedbackRepository (274 lines)
+│
+├── knowledge_graph/             # 知识图谱模块
+│   ├── knowledge_graph.py       # KG 门面类
+│   ├── interfaces.py            # 接口定义 (含批量方法默认实现)
+│   ├── types.py                 # NodeType, EdgeType 枚举
+│   ├── exceptions.py            # KG 异常
+│   ├── core/
+│   │   └── searcher.py          # FTS5 搜索 + 批量关系扩展
+│   └── storage/
+│       └── sqlite_storage.py    # WAL + 线程本地持久连接 + 批量查询
+│
+├── document/                    # 文档管道模块
+│   ├── pipeline.py              # 三层管道编排
+│   ├── models.py                # 数据模型
+│   ├── parsers/                 # 7 个解析器 (PDF/Word/Excel/XMind/FreeMind/OPML/MD)
+│   ├── extractors/              # 知识提取器
+│   ├── matching/                # 三级追踪匹配
+│   ├── validators/              # 交叉验证
+│   ├── storage/                 # 文档存储
+│   └── ocr/                     # OCR 支持 (可选)
+│
+├── browser/                     # 浏览器自动化 (Playwright)
+├── cli/                         # CLI 工具 (qka 命令)
+├── skills/                      # TDD/Git/反馈等技能模块
+└── utils/                       # 编码/编辑器/同步冲突
+```
+
+### UnifiedDB V2 分层架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 UnifiedDB (Facade) — 统一入口                │
+│  set_memory / get_memory / search_memory / get_all_memories │
+│  add_task / update_task_status / init_progress / add_feedback│
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────────┐
+│                 Session Layer (v2.8.3)                       │
+│  query() / transaction() / read_only() / execute()          │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────────┐
+│                 Repository Layer                             │
+│  MemoryRepo │ TaskRepo │ ProgressRepo │ FeedbackRepo         │
+│  QueryBuilder (Django-style chainable API)                   │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────────┐
+│                 Core Components                              │
+│  ConnectionManager │ TransactionManager │ MigrationManager   │
+│  (动态连接池/pre_ping/PRAGMA增强/WAL Checkpoint)              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### v2.8.3 性能优化
+
+#### SQLite WAL 模式 + 持久连接
+
+```python
+# quickagents/knowledge_graph/storage/sqlite_storage.py
+# 线程本地持久连接，避免每次操作新建连接
+PRAGMA journal_mode=WAL        # 读写并发
+PRAGMA synchronous=NORMAL      # 平衡性能与安全
+PRAGMA cache_size=-8000        # 8MB 页面缓存
+PRAGMA temp_store=MEMORY       # 临时表在内存
+PRAGMA mmap_size=67108864      # 64MB 内存映射
+PRAGMA busy_timeout=5000       # 5秒锁等待
+```
+
+#### N+1 查询消除
+
+```python
+# 优化前: _expand_relations() 对 N 个节点执行 2N+M 次查询
+# 优化后: 2 次批量 SQL 查询
+def _expand_relations(self, nodes):
+    node_ids = [n.id for n in nodes]
+    all_edges = self.storage.query_edges_batch(node_ids)  # 1 query
+    edge_node_ids = set(e.source for e in all_edges) | set(e.target for e in all_edges)
+    related_nodes = self.storage.get_nodes_batch(edge_node_ids)  # 1 query
+    return self._build_relations(nodes, all_edges, related_nodes)
+```
+
+#### MarkdownSync 并行同步
+
+```python
+# v2.8.3: ThreadPoolExecutor 并行化
+def sync_all(self):
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = [
+            executor.submit(self.sync_memory),
+            executor.submit(self.sync_tasks),
+            executor.submit(self.sync_feedback),
+        ]
+        for f in futures:
+            f.result()
+```
+
+### 性能基准 (v2.8.3)
+
+| 指标 | 值 |
+|------|-----|
+| 单次读取 QPS | 16,679 ops/sec |
+| 批量写入 QPS | 5,200–7,096 ops/sec |
+| 连接池命中率 | 100% |
+| 连接获取时间 | 0.005–0.006 ms |
+| WAL 增长 | 0 KB (auto-checkpoint) |
+
+---
+
 ## 扩展性
 
 ### 添加新代理
@@ -461,4 +601,4 @@ tags: [tag1, tag2, tag3]
 
 ---
 
-*版本: 2.1.1 | 更新时间: 2026-03-27*
+*版本: 2.8.3 | 更新时间: 2026-04-05*

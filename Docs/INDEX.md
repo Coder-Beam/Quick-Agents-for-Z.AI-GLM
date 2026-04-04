@@ -1,6 +1,6 @@
 # 知识图谱 (INDEX.md)
 
-> 项目文档导航与知识关系索引
+> QuickAgents v2.8.3 项目文档导航与知识关系索引
 
 ---
 
@@ -10,122 +10,139 @@
 
 ```
 项目根目录
-├── AGENTS.md ──────────── 开发规范
-├── 项目需求.md ────────── 原始需求（可选）
+├── README.md ───────────── 项目说明（中英双语）
+├── AGENTS.md ───────────── 开发规范（核心文件）
+├── CHANGELOG.md ────────── 变更日志
+├── VERSION.md ──────────── 版本信息
+├── pyproject.toml ──────── Python 包配置
 │
-├── Docs/               # 主文档体系
+├── quickagents/ ────────── Python 包源代码
+│   ├── __init__.py ─────── 公共 API 导出
+│   ├── core/ ──────────── 核心模块
+│   │   ├── unified_db.py ─── UnifiedDB 门面类
+│   │   ├── session.py ────── Session 统一接口
+│   │   ├── connection_manager.py ── 连接池管理
+│   │   ├── transaction_manager.py ─ 事务管理
+│   │   ├── migration_manager.py ─── 迁移管理
+│   │   ├── markdown_sync.py ──── Markdown 同步
+│   │   ├── evolution.py ──────── 自我进化
+│   │   ├── file_manager.py ───── 文件管理
+│   │   ├── loop_detector.py ──── 循环检测
+│   │   ├── reminder.py ──────── 事件提醒
+│   │   ├── cache_db.py ──────── 缓存数据库
+│   │   ├── git_hooks.py ─────── Git 钩子
+│   │   ├── memory.py ────────── 记忆辅助函数
+│   │   └── repositories/ ────── 仓库层
+│   │       ├── query_builder.py ── Django 风格查询构建器
+│   │       ├── base.py ─────────── BaseRepository
+│   │       ├── memory_repo.py ──── MemoryRepository
+│   │       ├── task_repo.py ────── TaskRepository
+│   │       ├── progress_repo.py ── ProgressRepository
+│   │       └── feedback_repo.py ── FeedbackRepository
+│   │
+│   ├── knowledge_graph/ ── 知识图谱模块
+│   │   ├── knowledge_graph.py ── KG 门面类
+│   │   ├── interfaces.py ─────── 接口定义
+│   │   ├── types.py ──────────── 类型定义 (NodeType, EdgeType)
+│   │   ├── exceptions.py ─────── 异常定义
+│   │   ├── core/ ────────────── 核心逻辑
+│   │   │   ├── searcher.py ───── FTS5 搜索 + 批量扩展
+│   │   │   └── ...
+│   │   └── storage/ ─────────── 存储层
+│   │       └── sqlite_storage.py ── WAL 模式 + 批量查询
+│   │
+│   ├── document/ ───────── 文档管道模块
+│   │   ├── pipeline.py ─────── 三层管道
+│   │   ├── parsers/ ────────── 7 个文档解析器
+│   │   ├── extractors/ ─────── 知识提取器
+│   │   ├── matching/ ───────── 三级追踪匹配
+│   │   ├── validators/ ─────── 交叉验证
+│   │   ├── storage/ ────────── 知识存储
+│   │   ├── ocr/ ───────────── OCR 支持
+│   │   ├── models.py ──────── 数据模型
+│   │   └── tests/ ─────────── 文档测试
+│   │
+│   ├── browser/ ────────── 浏览器自动化
+│   ├── cli/ ────────────── CLI 命令 (qka)
+│   ├── skills/ ─────────── 技能模块 (TDD/Git/反馈)
+│   └── utils/ ──────────── 工具模块 (编码/编辑器)
+│
+├── tests/ ──────────────── 测试文件 (580 tests)
+│
+├── Docs/ ───────────────── 项目文档
 │   ├── MEMORY.md ──────── 项目记忆（三维记忆系统）
-│   ├── TASKS.md ───────── 任务管理（合并简化版）
-│   ├── DESIGN.md ──────── 设计文档（扩展结构）
+│   ├── TASKS.md ───────── 任务管理
+│   ├── DESIGN.md ──────── 设计文档
 │   ├── INDEX.md ───────── 知识图谱（本文件）
 │   ├── DECISIONS.md ───── 决策日志
-│   │
-│   ├── features/ ──────── 功能级文档
-│   │   └── {feature-name}/
-│   │       ├── MEMORY.md
-│   │       ├── TASKS.md
-│   │       ├── DESIGN.md
-│   │       └── INDEX.md
-│   │
-│   └── modules/ ───────── 模块级文档
-│       └── {module-name}/
-│           ├── MEMORY.md
-│           ├── TASKS.md
-│           ├── DESIGN.md
-│           └── INDEX.md
+│   ├── ARCHITECTURE.md ── 系统架构
+│   ├── API_REFERENCE.md ─ API 参考文档
+│   ├── USER_GUIDE.md ──── 用户指南
+│   ├── EXAMPLES.md ────── 使用示例
+│   ├── AGENT_GUIDE.md ─── Agent 使用指南
+│   ├── guide/
+│   │   └── installation.md ─── 安装指南
+│   ├── guides/
+│   │   ├── UNINSTALL_GUIDE.md ── 卸载指南
+│   │   └── TOOL_ERROR_FIX_GUIDE.md ── 工具错误修复
+│   ├── en/ ────────────── 英文文档
+│   └── document-module-extraction.md ── 文档模块说明
 │
-└── .opencode/          # OpenCode配置（标准结构）
-    ├── agents/          # 代理配置
-    │   ├── README.md
-    │   └── example-agent.md
-    ├── commands/        # 命令配置
-    │   ├── README.md
-    │   └── example-command.md
-    ├── plugins/         # 插件目录
-    │   └── README.md
-    ├── skills/          # 项目级Skills
-    │   ├── project-memory-skill/
-    │   ├── inquiry-skill/
-    │   └── project-memory-skill/
-    └── memory/          # OpenCode项目记忆（与Docs/双向同步）
-        ├── MEMORY.md
-        ├── TASKS.md
-        ├── DESIGN.md
-        ├── INDEX.md
-        └── DECISIONS.md
+└── .opencode/ ─────────── OpenCode 配置
+    ├── agents/ ────────── 15 个代理配置
+    ├── skills/ ────────── 22 个技能配置
+    ├── commands/ ──────── 6 个命令配置
+    ├── hooks/ ─────────── 钩子配置
+    ├── config/ ────────── 配置文件
+    ├── memory/ ────────── 项目记忆（与 Docs/ 同步）
+    └── plugins/ ───────── 插件目录
 ```
 
 ---
 
 ## 知识关系图
 
-### 整体关系
+### 模块依赖关系
 
 ```mermaid
 graph TD
-    A[项目需求] --> B[设计文档]
-    B --> C[功能1]
-    B --> D[功能2]
-    C --> E[模块1]
-    C --> F[模块2]
-    D --> G[模块3]
+    CLI[cli/ qka命令] --> API[Python API]
+    API --> UDB[UnifiedDB]
+    API --> KG[KnowledgeGraph]
+    API --> DOC[DocumentPipeline]
+    API --> EVOLUTION[SkillEvolution]
+    API --> BROWSER[Browser]
     
-    style A fill:#f9f,stroke:#333
-    style B fill:#bbf,stroke:#333
-    style C fill:#bfb,stroke:#333
-    style D fill:#bfb,stroke:#333
+    UDB --> SESSION[Session]
+    SESSION --> CONN[ConnectionManager]
+    SESSION --> TX[TransactionManager]
+    SESSION --> REPOS[Repositories]
+    UDB --> MDSYNC[MarkdownSync]
+    
+    KG --> STORAGE[SQLiteStorage]
+    KG --> SEARCHER[Searcher/FTS5]
+    
+    DOC --> PARSERS[Parsers]
+    DOC --> MATCHING[TraceMatching]
+    DOC --> KG
+    
+    style API fill:#f9f,stroke:#333
+    style UDB fill:#bbf,stroke:#333
+    style KG fill:#bfb,stroke:#333
 ```
 
-### 文档依赖关系
+### 数据同步关系
 
 ```mermaid
 graph LR
-    AGENTS[AGENTS.md] --> MEMORY[MEMORY.md]
-    AGENTS --> DESIGN[DESIGN.md]
-    MEMORY --> TASKS[TASKS.md]
-    DESIGN --> TASKS
-    TASKS --> DECISIONS[DECISIONS.md]
+    AI[AI 代理] -->|Python API| SQLite[(SQLite)]
+    SQLite -->|MarkdownSync| MD[Markdown 文件]
+    MD -->|Git| REPO[版本控制]
+    SQLite -->|FTS5| SEARCH[全文搜索]
     
-    style AGENTS fill:#ff9,stroke:#333
-    style MEMORY fill:#9ff,stroke:#333
-    style DESIGN fill:#9f9,stroke:#333
-    style TASKS fill:#f99,stroke:#333
-    style DECISIONS fill:#99f,stroke:#333
+    style SQLite fill:#ff9,stroke:#333
+    style MD fill:#9ff,stroke:#333
 ```
-
-### 文档同步关系
-
-```mermaid
-graph TD
-    DocsMain[Docs/ 主文档体系] -->|同步更新| MemoryMain[.opencode/memory/]
-    MemoryMain -->|跨会话访问| AIAgent[AI代理]
-    
-    style DocsMain fill:#bfb,stroke:#333
-    style MemoryMain fill:#bbf,stroke:#333
-    style AIAgent fill:#fbb,stroke:#333
-```
-
-### 双重文档存储说明
-
-项目采用双重文档存储体系：
-
-#### Docs/ - 主文档体系
-- 用于项目文档管理和维护
-- 可手动编辑和更新
-- 包含完整的项目文档结构
-
-#### .opencode/memory/ - OpenCode项目记忆
-- 供AI代理跨会话访问
-- 与Docs/保持双向同步
-- 自动在跨会话时加载
-
-#### 同步规则
-1. **同步时机**：Git提交前、文档更新后、跨会话衔接时
-2. **同步方向**：Docs/ → .opencode/memory/（主文档→项目记忆）
-3. **同步命令**：
-   ```bash
-   cp -r Docs/* .opencode/memory/
-   ```
 
 ---
 
@@ -135,74 +152,42 @@ graph TD
 
 | 文档 | 用途 | 最后更新 |
 |------|------|----------|
-| [AGENTS.md](../AGENTS.md) | 开发规范与工作流程 | 2026-03-22 |
-| [MEMORY.md](./MEMORY.md) | 三维记忆系统 | 2026-03-25 |
-| [TASKS.md](./TASKS.md) | 任务管理与路线图 | 2026-03-25 |
-| [DESIGN.md](./DESIGN.md) | 架构与设计文档 | 2026-03-22 |
-| [DECISIONS.md](./DECISIONS.md) | 决策日志 | 2026-03-22 |
-| [USER_GUIDE.md](./USER_GUIDE.md) | 用户指南 | 2026-03-25 |
-| [API_REFERENCE.md](./API_REFERENCE.md) | API参考文档 | 2026-03-25 |
-| [EXAMPLES.md](./EXAMPLES.md) | 示例代码 | 2026-03-25 |
+| [AGENTS.md](../AGENTS.md) | 开发规范与工作流程 | 2026-04-05 |
+| [DESIGN.md](./DESIGN.md) | 系统设计文档 | 2026-04-05 |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | 系统架构文档 | 2026-04-05 |
+| [API_REFERENCE.md](./API_REFERENCE.md) | API 参考文档 | 2026-04-05 |
+| [CHANGELOG.md](../CHANGELOG.md) | 变更日志 | 2026-04-05 |
+| [VERSION.md](../VERSION.md) | 版本信息 | 2026-04-05 |
+| [README.md](../README.md) | 项目说明 | 2026-04-05 |
 
-### OpenCode配置文档
+### Python 模块索引
 
-| 文档 | 用途 | 最后更新 |
-|------|------|----------|
-| [.opencode/agents/README.md](../.opencode/agents/README.md) | 代理配置说明 | 2026-03-22 |
-| [.opencode/commands/README.md](../.opencode/commands/README.md) | 命令配置说明 | 2026-03-22 |
-| [.opencode/commands/ultrawork.md](../.opencode/commands/ultrawork.md) | 超高效工作命令 | 2026-03-25 |
-| [.opencode/commands/start-work.md](../.opencode/commands/start-work.md) | 跨会话工作恢复 | 2026-03-25 |
-| [.opencode/plugins/README.md](../.opencode/plugins/README.md) | 插件配置说明 | 2026-03-22 |
-| [.opencode/config/categories.json](../.opencode/config/categories.json) | Category系统配置 | 2026-03-25 |
-| [.opencode/skills/](../.opencode/skills/) | 项目级Skills | 2026-03-22 |
-| [.opencode/skills/EVOLUTION.md](../.opencode/skills/EVOLUTION.md) | Skills进化记录 | 2026-03-22 |
-| [.opencode/skills/category-system-skill/SKILL.md](../.opencode/skills/category-system-skill/SKILL.md) | Category系统Skill | 2026-03-25 |
-| [.opencode/skills/background-agents-skill/SKILL.md](../.opencode/skills/background-agents-skill/SKILL.md) | 后台代理执行 | 2026-03-25 |
-| [.opencode/skills/boulder-tracking-skill/SKILL.md](../.opencode/skills/boulder-tracking-skill/SKILL.md) | 进度追踪系统 | 2026-03-25 |
-| [.opencode/hooks/todo-continuation-enforcer.md](../.opencode/hooks/todo-continuation-enforcer.md) | Todo强制完成 | 2026-03-25 |
+| 模块 | 入口类/函数 | 核心功能 |
+|------|-------------|----------|
+| `quickagents.core.unified_db` | `UnifiedDB` | 统一数据库门面 |
+| `quickagents.core.session` | `Session` | 数据库会话接口 |
+| `quickagents.core.connection_manager` | `ConnectionManager` | 动态连接池 |
+| `quickagents.core.transaction_manager` | `TransactionManager` | ACID 事务 |
+| `quickagents.core.markdown_sync` | `MarkdownSync` | Markdown 同步 |
+| `quickagents.core.evolution` | `SkillEvolution` | 自我进化 |
+| `quickagents.core.loop_detector` | `LoopDetector` | 循环检测 |
+| `quickagents.core.reminder` | `Reminder` | 事件提醒 |
+| `quickagents.core.file_manager` | `FileManager` | 文件管理 |
+| `quickagents.core.memory` | `update_memory`, `add_experiential_memory` | 记忆辅助函数 |
+| `quickagents.knowledge_graph.knowledge_graph` | `KnowledgeGraph` | 知识图谱门面 |
+| `quickagents.knowledge_graph.storage.sqlite_storage` | `SQLiteGraphStorage` | WAL + 批量查询 |
+| `quickagents.knowledge_graph.core.searcher` | `Searcher` | FTS5 搜索 |
+| `quickagents.document.pipeline` | `DocumentPipeline` | 文档管道 |
+| `quickagents.browser` | `Browser` | 浏览器自动化 |
 
-### 项目代理（Agents）
+### OpenCode 配置
 
-#### 核心代理（6个）
-
-| 代理 | 功能 | 调用方式 |
-|------|------|----------|
-| [yinglong-init](../.opencode/agents/yinglong-init.md) | 项目初始化 | @yinglong-init |
-| [boyi-consult](../.opencode/agents/boyi-consult.md) | 需求分析 | @boyi-consult |
-| [chisongzi-advise](../.opencode/agents/chisongzi-advise.md) | 技术推荐 | @chisongzi-advise |
-| [cangjie-doc](../.opencode/agents/cangjie-doc.md) | 文档管理 | @cangjie-doc |
-| [huodi-skill](../.opencode/agents/huodi-skill.md) | Skill管理 | @huodi-skill |
-| [fenghou-orchestrate](../.opencode/agents/fenghou-orchestrate.md) | 主调度器 | @fenghou-orchestrate |
-
-#### 质量代理（4个）
-
-| 代理 | 功能 | 调用方式 |
-|------|------|----------|
-| [jianming-review](../.opencode/agents/jianming-review.md) | 代码审查 | @jianming-review |
-| [lishou-test](../.opencode/agents/lishou-test.md) | 测试执行 | @lishou-test |
-| [mengzhang-security](../.opencode/agents/mengzhang-security.md) | 安全审计 | @mengzhang-security |
-| [hengge-perf](../.opencode/agents/hengge-perf.md) | 性能分析 | @hengge-perf |
-
-#### 工具代理（4个）
-
-| 代理 | 功能 | 调用方式 |
-|------|------|----------|
-| [kuafu-debug](../.opencode/agents/kuafu-debug.md) | 调试 | @kuafu-debug |
-| [gonggu-gonggu-refactor](../.opencode/agents/gonggu-gonggu-refactor.md) | 重构 | @gonggu-gonggu-refactor |
-| [huodi-deps](../.opencode/agents/huodi-deps.md) | 依赖管理 | @huodi-deps |
-| [hengge-cicd](../.opencode/agents/hengge-cicd.md) | CI/CD管理 | @hengge-cicd |
-
-### 功能文档
-
-| 功能 | 文档位置 | 状态 |
-|------|----------|------|
-| 待定义 | - | - |
-
-### 模块文档
-
-| 模块 | 文档位置 | 状态 |
-|------|----------|------|
-| 待定义 | - | - |
+| 文档 | 用途 |
+|------|------|
+| [.opencode/agents/](../.opencode/agents/) | 15 个代理配置 |
+| [.opencode/skills/](../.opencode/skills/) | 22 个技能配置 |
+| [.opencode/commands/](../.opencode/commands/) | 6 个命令配置 |
+| [.opencode/config/categories.json](../.opencode/config/categories.json) | Category 系统 |
 
 ---
 
@@ -210,132 +195,30 @@ graph TD
 
 ### 三维记忆系统
 
-基于《Memory in the Age of AI Agents》论文设计：
+| 概念 | 定义 | 用途 |
+|------|------|------|
+| **Factual Memory** | 事实记忆 | 项目名称、技术栈、架构决策 |
+| **Experiential Memory** | 经验记忆 | 踩坑记录、最佳实践 |
+| **Working Memory** | 工作记忆 | 当前任务、进度、阻塞点 |
+
+### 知识图谱 (v2.8.3)
 
 | 概念 | 定义 | 用途 |
 |------|------|------|
-| **Factual Memory** | 事实记忆 | 记录项目静态事实（元信息、决策、规则、约束） |
-| **Experiential Memory** | 经验记忆 | 记录项目动态经验（历史、总结、反馈、迭代） |
-| **Working Memory** | 工作记忆 | 记录当前活跃状态（任务、上下文、待决策项） |
+| **KGNode** | 知识节点 | 需求/决策/功能/文档/模块 |
+| **KGEdge** | 知识关系 | traces_to/implements/depends_on |
+| **FTS5 Search** | 全文搜索 | 前缀搜索，支持 CJK |
+| **Batch Queries** | 批量查询 | 消除 N+1 问题 |
 
-### Boulder进度追踪
-
-基于 Oh-My-OpenAgent 的跨会话进度管理：
-
-| 概念 | 定义 | 用途 |
-|------|------|------|
-| **Boulder.json** | 进度追踪文件 | 记录任务状态、会话ID、智慧积累 |
-| **Notepad** | 笔记本系统 | 记录学习点、决策、问题、踩坑 |
-| **Checkpoint** | 检查点 | 定期保存关键状态，支持回滚 |
-
-### Background Agents
-
-后台并行执行系统：
+### 性能优化 (v2.8.3)
 
 | 概念 | 定义 | 用途 |
 |------|------|------|
-| **Background Task** | 后台任务 | 不阻塞主线程的并行执行 |
-| **Task Queue** | 任务队列 | 管理并发任务，优先级调度 |
-| **Result Integration** | 结果整合 | 自动合并后台任务结果 |
-
-### Category系统
-
-基于 Oh-My-OpenAgent 的语义化任务分类系统：
-
-| 概念 | 定义 | 用途 |
-|------|------|------|
-| **Category** | 语义化任务分类 | 根据"做什么"而非"用哪个模型"来选择配置 |
-| **Model Fallback** | 模型降级链 | 主模型不可用时自动切换备用模型 |
-| **Auto Detection** | 自动检测 | 根据关键词、文件模式、复杂度自动选择Category |
-
-### Orchestrator架构
-
-基于 Oh-My-OpenAgent Atlas 的执行层协调器：
-
-| 概念 | 定义 | 用途 |
-|------|------|------|
-| **Wisdom Accumulation** | 智慧积累 | 从每个任务中学习，传递给后续任务 |
-| **Notepad System** | 笔记本系统 | 记录学习、决策、问题、验证 |
-| **Todo Enforcement** | Todo强制 | 确保所有任务完成，不会中途停止 |
-
-### 7层询问模型
-
-需求澄清的分层递进模型：
-
-| 层级 | 名称 | 核心问题 |
-|------|------|----------|
-| L1 | 业务本质 | 为什么做？核心痛点？ |
-| L2 | 用户画像 | 谁使用？使用场景？ |
-| L3 | 核心流程 | 完整流程？异常处理？ |
-| L4 | 功能清单 | 做什么？功能边界？ |
-| L5 | 数据模型 | 数据结构？关系？ |
-| L6 | 技术栈 | 框架？数据库？部署？ |
-| L7 | 交付标准 | 验收标准？时间节点？ |
-
-### Skills优先级
-
-技能搜索的5个来源优先级：
-
-| 优先级 | 来源 | 说明 |
-|--------|------|------|
-| 1 | GitHub - anbeime/skill | 通用技能补充库 |
-| 2 | Awesome Claude Skills | 通用开发技能 |
-| 3 | Anthropic官方Skills | 通用核心技能 |
-| 4 | SkillHub | 中文场景/企业级技能 |
-| 5 | UI UX Pro Max | UI/UX专项技能 |
+| **WAL Mode** | Write-Ahead Logging | 读写并发 |
+| **Thread-Local Connection** | 线程本地持久连接 | 避免连接创建开销 |
+| **Batch SQL** | 批量 SQL 查询 | 2N+M → 2 queries |
+| **Parallel Sync** | 并行 Markdown 同步 | ThreadPoolExecutor |
 
 ---
 
-## 主题索引
-
-### 按主题分类
-
-#### 架构相关
-- [设计文档 - 架构设计](./DESIGN.md#2-架构设计)
-- [设计文档 - 技术选型](./DESIGN.md#5-技术选型)
-
-#### 任务相关
-- [任务管理 - 当前迭代](./TASKS.md#当前迭代)
-- [任务管理 - 待办任务](./TASKS.md#待办任务)
-- [任务管理 - 里程碑](./TASKS.md#里程碑)
-
-#### 记忆相关
-- [项目记忆 - 事实记忆](./MEMORY.md#一factual-memory事实记忆)
-- [项目记忆 - 经验记忆](./MEMORY.md#二experiential-memory经验记忆)
-- [项目记忆 - 工作记忆](./MEMORY.md#三working-memory工作记忆)
-
-#### 决策相关
-- [决策日志](./DECISIONS.md)
-- [项目记忆 - 技术决策](./MEMORY.md#12-技术决策)
-
-#### OpenCode相关
-- [代理配置说明](../.opencode/agents/README.md)
-- [命令配置说明](../.opencode/commands/README.md)
-- [插件配置说明](../.opencode/plugins/README.md)
-- [项目记忆系统 Skill](../.opencode/skills/project-memory-skill/SKILL.md)
-- [互动询问卡 Skill](../.opencode/skills/inquiry-skill/SKILL.md)
-- [知识图谱 Skill](../.opencode/skills/project-memory-skill/SKILL.md)
-
-#### 文档同步相关
-- [开发规范 - 文档同步机制](../AGENTS.md#文档同步机制)
-- [开发规范 - .opencode/目录结构](../AGENTS.md#目录结构)
-
----
-
-## 更新记录
-
-| 更新时间 | 更新内容 | 更新人 |
-|----------|----------|--------|
-| 2026-03-22 | 创建INDEX.md模板 | AI |
-| 2026-03-22 | 添加完整.opencode/目录结构 | AI |
-| 2026-03-22 | 添加Docs/与.opencode/memory/双向同步说明 | AI |
-| 2026-03-22 | 添加OpenCode相关主题索引 | AI |
-
-| 2026-03-25 | 添加fenghou-orchestrate代理引用 | AI |
-| 2026-03-25 | 添加ultrawork命令和Category系统文档 | AI |
-| 2026-03-25 | 添加Category系统和Orchestrator架构概念 | AI |
-| 2026-03-25 | 添加Background Agents、Boulder、start-work文档 | AI |
-
----
-
-*最后更新: 2026-03-25*
+*最后更新: 2026-04-05 | v2.8.3*

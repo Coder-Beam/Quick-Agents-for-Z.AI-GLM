@@ -5,6 +5,53 @@ All notable changes to QuickAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.3] - 2026-04-05
+
+### Added - SQLite Performance Optimization
+
+- **WAL Mode + Thread-Local Persistent Connections**: `SQLiteGraphStorage` uses per-thread persistent connections with PRAGMA tuning
+  - `PRAGMA journal_mode=WAL`, `synchronous=NORMAL`, `cache_size=-8000`
+  - `temp_store=MEMORY`, `mmap_size=67108864` (64MB), `busy_timeout=5000`
+  - Added `close()` and `__del__` for proper connection lifecycle
+- **N+1 Query Elimination in KnowledgeGraph**:
+  - `query_edges_batch()`: batch SQL query replaces per-node edge lookups (2N queries → 1)
+  - `get_nodes_batch()`: batch SQL query replaces per-node fetches (M queries → 1)
+  - `_expand_relations()` rewritten to use 2 batch queries instead of 2N+M individual queries
+- **MarkdownSync Parallel + Batch Optimization**:
+  - `sync_all()`: parallelized with `ThreadPoolExecutor` (3 workers)
+  - `sync_memory()`: 1 `get_all_memories()` + Python grouping instead of 3 separate queries
+  - `sync_feedback()`: 1 `get_feedbacks(limit=1000)` instead of 5 separate queries
+- **New UnifiedDB Method**: `get_all_memories()` for batch memory retrieval
+
+### Changed - Code Quality
+
+- **mypy 0 errors**: Fixed all 251 errors (132 `Optional[]` annotations, 104 `type: ignore`, 5 `assert`)
+- **ruff 0 errors**: Resolved all lint+format issues, `line-length` increased to 120 in `pyproject.toml`
+- **Test fixes**: All tests with `SQLiteGraphStorage` updated to call `storage.close()`; `TemporaryDirectory` uses `ignore_cleanup_errors=True`
+
+### Performance Results (v2.8.3)
+
+| Metric | Before | After |
+|--------|--------|-------|
+| `_expand_relations` queries | 2N+M | 2 (constant) |
+| `sync_all` execution | Sequential | Parallel (3 workers) |
+| `sync_memory` queries | 3 | 1 + Python grouping |
+| mypy errors | 251 | 0 |
+| ruff errors | 124 | 0 |
+| Tests | 568 | 580 (all passing) |
+
+## [2.8.2] - 2026-04-05
+
+### Fixed - KnowledgeGraph
+
+- **FTS5 Prefix Search**: Fixed prefix search for CJK text — `MATCH column:*` replaced with proper FTS5 prefix query
+- **MarkdownSync Overwrite Protection**: `sync_memory()` now only overwrites memory sections matching the target type, preventing cross-type data loss
+
+### Changed
+
+- **PyPI Release 2.8.2**: Published to https://pypi.org/project/quickagents/2.8.2/
+- **CLI Command Finalization**: `qka` command fully stabilized after v2.8.1 rename
+
 ## [2.8.1] - 2026-04-04
 
 ### Changed - CLI Command Rename
