@@ -57,6 +57,33 @@ from .repositories import (
 logger = logging.getLogger(__name__)
 
 
+def _register_audit_migration(migration_manager) -> None:
+    """注册 AuditGuard 迁移（003_audit_tables）"""
+    from pathlib import Path
+
+    audit_sql_path = Path(__file__).parent.parent / "audit" / "migrations" / "003_audit_tables.sql"
+    audit_rollback_path = Path(__file__).parent.parent / "audit" / "migrations" / "003_audit_tables_rollback.sql"
+
+    if not audit_sql_path.exists():
+        return
+
+    up_sql = audit_sql_path.read_text(encoding="utf-8")
+    down_sql = ""
+    if audit_rollback_path.exists():
+        down_sql = audit_rollback_path.read_text(encoding="utf-8")
+
+    from .migration_manager import Migration
+
+    migration = Migration(
+        version="003",
+        name="audit_tables",
+        up_sql=up_sql,
+        down_sql=down_sql,
+        source="registered",
+    )
+    migration_manager.register_migration(migration)
+
+
 class UnifiedDB:
     """
     UnifiedDB V2 - 统一数据访问层
@@ -113,6 +140,9 @@ class UnifiedDB:
         self._task_repo = TaskRepository(self._connection_manager, self._transaction_manager)
         self._progress_repo = ProgressRepository(self._connection_manager, self._transaction_manager)
         self._feedback_repo = FeedbackRepository(self._connection_manager, self._transaction_manager)
+
+        # 注册外部迁移（AuditGuard 003）
+        _register_audit_migration(self._migration_manager)
 
         # 自动执行迁移
         self._migration_manager.migrate()
