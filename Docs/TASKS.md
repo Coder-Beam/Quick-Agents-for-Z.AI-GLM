@@ -9,13 +9,30 @@
 | 指标 | 数值 |
 |------|------|
 | 总任务数 | 9 |
-| 已完成 | 0 |
+| 已完成 | 9 |
 | 进行中 | 0 |
-| 待开始 | 9 |
 | 阻塞中 | 0 |
-| 完成率 | 0.0% |
+| 完成率 | 100.0% |
 
 ---
+
+## 当前迭代
+
+**迭代目标**: 修复经验收集系统三大断点，使 SkillEvolution 系统真正产出有效经验
+
+**关联决策**: D001 - 经验收集系统三大断点修复方案
+
+| 任务ID | 任务名称 | 优先级 | 状态 | 文件 |
+|--------|----------|--------|------|------|
+| T001 | get_connection() 自动提交 | P0 | ✅ 已完成 | connection_manager.py |
+| T002 | Skills层触发适配器 | P0 | ✅ 已完成 | skills/_evolution_trigger.py |
+| T003 | GitCommit 接入触发 | P0 | ✅ 已完成 | skills/git_commit.py |
+| T004 | TDDWorkflow 接入触发 | P0 | ✅ 已完成 | skills/tdd_workflow.py |
+| T005 | _analyze_commit() 扩展 | P1 | ✅ 已完成 | core/evolution.py |
+| T006 | _suggest_fix() 增强 | P1 | ✅ 已完成 | core/evolution.py |
+| T007 | 经验数据模型 + _extract_patterns() 增强 | P1 | ✅ 已完成 | core/evolution.py |
+| T008 | Hook脚本增强 files_changed | P2 | ✅ 已完成 | core/git_hooks.py |
+| T009 | 全量验证 | P0 | ✅ 已完成 | - |
 
 ## 当前迭代
 
