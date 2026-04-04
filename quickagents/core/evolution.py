@@ -776,7 +776,10 @@ class SkillEvolution:
                 improvements.append(
                     {
                         "title": f"高频变更模块: {', '.join(hot_modules)}",
-                        "description": f"本次提交中 {hot_modules[0]} 模块有 {dir_counts[hot_modules[0]]} 个文件变更，是系统核心热点",
+                        "description": (
+                            f"本次提交中 {hot_modules[0]} 模块有"
+                            f" {dir_counts[hot_modules[0]]} 个文件变更，是系统核心热点"
+                        ),
                         "type": "module_hotspot",
                         "category": "architecture",
                         "files": hot_modules,  # type: ignore[dict-item]

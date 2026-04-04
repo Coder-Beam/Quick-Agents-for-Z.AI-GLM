@@ -83,3 +83,6 @@ Documentation = "https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM#readme"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["quickagents*"]
+
+[tool.ruff]
+line-length = 120
