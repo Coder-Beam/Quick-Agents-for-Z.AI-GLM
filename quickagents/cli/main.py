@@ -460,9 +460,17 @@ def cmd_git(args):
             print(f"  {status} {check_name}")
     
     elif args.action == 'commit':
+        commit_type = getattr(args, 'commit_type', None) or 'chore'
+        scope = getattr(args, 'scope', None) or ''
+        subject = getattr(args, 'subject', None) or ''
+        if not subject:
+            print("[FAIL] 请提供提交信息")
+            print("  用法: qka git commit <type> <scope> <subject>")
+            print("  示例: qka git commit feat auth \"添加JWT认证\"")
+            return
         print("[Git] 执行Pre-commit检查...")
         result = git.commit(
-            args.type, args.scope, args.subject,
+            commit_type, scope, subject,
             run_checks=True
         )
         
