@@ -1,4 +1,4 @@
-# QuickAgents 模型配置指南
+﻿# QuickAgents 模型配置指南
 
 > 版本: 2.7.0 | 更新时间: 2026-03-30
 > 专为 ZhipuAI GLM Coding Plan 优化
@@ -117,7 +117,7 @@ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 **CLI命令**：
 ```bash
 # 锁定所有Agent使用GLM-5
-qa models lock GLM-5
+qka models lock GLM-5
 ```
 
 ### 方案C：混合大模型
@@ -306,30 +306,30 @@ QuickAgents 会自动检测智谱AI发布的新版本：
 
 ```bash
 # 查看当前配置
-qa models show
+qka models show
 
 # 查看可用模型列表
-qa models list
+qka models list
 
 # 检查 GLM 更新
-qa models check-updates
+qka models check-updates
 
 # 预览升级（推荐先执行）
-qa models upgrade --dry-run
+qka models upgrade --dry-run
 
 # 执行升级
-qa models upgrade --force
+qka models upgrade --force
 
 # 升级到指定版本
-qa models upgrade --to GLM-5.1 --force
+qka models upgrade --to GLM-5.1 --force
 
 # 切换策略
-qa models strategy coding-plan --force
-qa models strategy single-model --model GLM-5 --force
+qka models strategy coding-plan --force
+qka models strategy single-model --model GLM-5 --force
 
 # 锁定/解锁模型
-qa models lock GLM-5 --force
-qa models unlock
+qka models lock GLM-5 --force
+qka models unlock
 ```
 
 ### GLM 版本自动同步 Skill
@@ -389,59 +389,59 @@ python .opencode/skills/glm-version-sync-skill/scripts/glm_version_sync.py upgra
 
 ```bash
 # 查看当前配置
-qa models show
+qka models show
 
 # 列出所有可用模型
-qa models list
+qka models list
 
 # 查看特定Agent的模型
-qa models show --agent kuafu-debug
+qka models show --agent kuafu-debug
 ```
 
 ### 方案切换
 
 ```bash
 # 切换到Coding Plan方案（推荐）
-qa models strategy coding-plan
+qka models strategy coding-plan
 
 # 切换到单一大模型方案
-qa models strategy single-model --model GLM-5
+qka models strategy single-model --model GLM-5
 
 # 切换到混合方案
-qa models strategy hybrid
+qka models strategy hybrid
 ```
 
 ### 锁定单一模型
 
 ```bash
 # 所有Agent使用GLM-5
-qa models lock GLM-5
+qka models lock GLM-5
 
 # 解除锁定
-qa models unlock
+qka models unlock
 ```
 
 ### 升级模型
 
 ```bash
 # 检查更新
-qa models check-updates
+qka models check-updates
 
 # 升级指定模型
-qa models upgrade GLM-5 GLM-5.1
+qka models upgrade GLM-5 GLM-5.1
 
 # 升级特定类别
-qa models upgrade --category debug GLM-5 GLM-5.1
+qka models upgrade --category debug GLM-5 GLM-5.1
 ```
 
 ### 覆盖Agent模型
 
 ```bash
 # 为特定Agent设置模型
-qa models override kuafu-debug GLM-5
+qka models override kuafu-debug GLM-5
 
 # 清除覆盖
-qa models override --clear kuafu-debug
+qka models override --clear kuafu-debug
 ```
 
 ---
@@ -486,7 +486,7 @@ agentOverrides > categories > default > Agent配置文件
 **检查步骤**:
 1. 确认 `.opencode/config/models.json` 存在
 2. 检查JSON格式是否正确
-3. 运行 `qa models show` 查看当前配置
+3. 运行 `qka models show` 查看当前配置
 
 ### 问题4：Claude Code 兼容问题
 
@@ -534,7 +534,7 @@ agentOverrides > categories > default > Agent配置文件
 
 ## 最佳实践
 
-1. **生产环境**: 使用 `qa models lock` 锁定稳定版本
+1. **生产环境**: 使用 `qka models lock` 锁定稳定版本
 2. **开发环境**: 使用 Coding Plan 方案获得最佳编程体验
 3. **版本升级**: 先在 `agentOverrides` 中测试新模型
 4. **备份配置**: 修改前备份 `models.json`

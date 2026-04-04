@@ -1,4 +1,4 @@
-# QuickAgents 用户指南
+﻿# QuickAgents 用户指南
 
 > 完整的用户使用指南，帮助您高效使用QuickAgents
 
@@ -31,7 +31,7 @@
 ```bash
 # 方式1：CLI安装
 pip install quickagents
-qa init
+qka init
 
 # 方式2：一句话提示词（推荐）
 # 粘贴到AI代理中：
@@ -424,7 +424,7 @@ rm AGENTS.md
 │                                                                  │
 │  触发词                                                          │
 │  ─────────────────────────────────────────────────────────────  │
-│  启动QuickAgent  启动QuickAgents  启动QA  Start QA               │
+│  启动QuickAgent  启动QuickAgents  启动qka  Start qka               │
 │                                                                  │
 │  命令                                                            │
 │  ─────────────────────────────────────────────────────────────  │

@@ -1,4 +1,4 @@
-# Knowledge Graph Feature Design Specification
+﻿# Knowledge Graph Feature Design Specification
 
 > **Created**: 2026-03-29  
 > **Version**: 1.0.1  
@@ -169,7 +169,7 @@ Implement a **Knowledge Graph** system integrated with UnifiedDB:
 - **UnifiedDB Extension**: Add 3 tables (knowledge_nodes, knowledge_edges, knowledge_index)
 - **MEMORY.md Sync**: Auto-sync high-importance nodes to Factual Memory
 - **Python API**: Add knowledge_graph module to quickagents package
-- **CLI Commands**: Add `qa knowledge` command series
+- **CLI Commands**: Add `qka knowledge` command series
 
 ---
 
@@ -368,7 +368,7 @@ score = 0.4 * relevance + 0.3 * importance + 0.3 * recency
    - `importance >= 0.8` AND `node_type in [requirement, decision, fact]`
 2. **Manual setting**: User can explicitly set via:
    - Python API: `kg.create_node(..., metadata={'sync_to_memory': True})`
-   - CLI: `qa knowledge create-node ... --sync`
+   - CLI: `qka knowledge create-node ... --sync`
    - Update: `kg.update_node(node_id, metadata={'sync_to_memory': True})`
 
 **Sync Format**:
@@ -733,37 +733,37 @@ class ChromaDBVectorSearch(VectorSearchInterface):
 
 ```bash
 # Node Operations
-qa knowledge create-node --type TYPE --title TITLE --content CONTENT [OPTIONS]
-qa knowledge get-node NODE_ID [--expand]
-qa knowledge update-node NODE_ID [OPTIONS]
-qa knowledge delete-node NODE_ID [--cascade]
-qa knowledge list-nodes --type TYPE [--project NAME] [--limit N]
+qka knowledge create-node --type TYPE --title TITLE --content CONTENT [OPTIONS]
+qka knowledge get-node NODE_ID [--expand]
+qka knowledge update-node NODE_ID [OPTIONS]
+qka knowledge delete-node NODE_ID [--cascade]
+qka knowledge list-nodes --type TYPE [--project NAME] [--limit N]
 
 # Edge Operations
-qa knowledge create-edge --from SOURCE --to TARGET --type TYPE [OPTIONS]
-qa knowledge get-edge EDGE_ID
-qa knowledge delete-edge EDGE_ID
-qa knowledge show-relations NODE_ID [--direction in|out|both]
-qa knowledge discover NODE_ID [--strategies direct,semantic,structural]
+qka knowledge create-edge --from SOURCE --to TARGET --type TYPE [OPTIONS]
+qka knowledge get-edge EDGE_ID
+qka knowledge delete-edge EDGE_ID
+qka knowledge show-relations NODE_ID [--direction in|out|both]
+qka knowledge discover NODE_ID [--strategies direct,semantic,structural]
 
 # Search
-qa knowledge search QUERY [--type TYPE] [--limit N]
-qa knowledge search QUERY --type requirement,decision --project NAME --tags tag1,tag2 --min-importance 0.7 --sort-by importance --expand
+qka knowledge search QUERY [--type TYPE] [--limit N]
+qka knowledge search QUERY --type requirement,decision --project NAME --tags tag1,tag2 --min-importance 0.7 --sort-by importance --expand
 
 # Import/Export
-qa knowledge import FILE_PATH [--mode auto|manual] [--project NAME]
-qa knowledge export --format json|markdown|graphml --output FILE
+qka knowledge import FILE_PATH [--mode auto|manual] [--project NAME]
+qka knowledge export --format json|markdown|graphml --output FILE
 
 # Sync & Maintenance
-qa knowledge sync [--memory-path PATH]
-qa knowledge stats
-qa knowledge rebuild-index
-qa knowledge clean-orphans
+qka knowledge sync [--memory-path PATH]
+qka knowledge stats
+qka knowledge rebuild-index
+qka knowledge clean-orphans
 
 # Path Queries
-qa knowledge find-path --from NODE_ID --to NODE_ID [--max-depth N]
-qa knowledge trace-requirement NODE_ID
-qa knowledge subgraph NODE_ID1,NODE_ID2 [--depth N]
+qka knowledge find-path --from NODE_ID --to NODE_ID [--max-depth N]
+qka knowledge trace-requirement NODE_ID
+qka knowledge subgraph NODE_ID1,NODE_ID2 [--depth N]
 ```
 
 ### 6.5 UnifiedDB Integration
@@ -1058,7 +1058,7 @@ print(f"Synced {synced} nodes")
 
 ```bash
 # Create node
-qa knowledge create-node \
+qka knowledge create-node \
   --type requirement \
   --title "OAuth2.0支持" \
   --content "系统需要支持OAuth2.0认证" \
@@ -1066,13 +1066,13 @@ qa knowledge create-node \
   --importance 0.9
 
 # Search
-qa knowledge search "OAuth" --type requirement --expand
+qka knowledge search "OAuth" --type requirement --expand
 
 # Trace requirement
-qa knowledge trace-requirement kn_001
+qka knowledge trace-requirement kn_001
 
 # Sync
-qa knowledge sync
+qka knowledge sync
 ```
 
 ### 10.3 Future Extensions

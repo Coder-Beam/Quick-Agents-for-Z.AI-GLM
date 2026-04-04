@@ -1,4 +1,4 @@
-# QuickAgents 插件生态与业务流程
+﻿# QuickAgents 插件生态与业务流程
 
 ## 一、插件关系分析
 
@@ -88,7 +88,7 @@ QuickAgents 插件激活（Hooks注册）
 │     │    └─ 文件未变化 → FILE_UNCHANGED → 节省Token         │
 │     │    └─ 文件已变化 → 继续执行                            │
 │     │                                                       │
-│     ├─ 拦截 bash qa → LocalExecutor.qa 处理                │
+│     ├─ 拦截 bash qka → LocalExecutor.qka 处理                │
 │     │    └─ 本地执行Python → LOCAL_RESULT → 节省Token       │
 │     │                                                       │
 │     ├─ 拦截 grep → LocalExecutor.grep 处理                 │

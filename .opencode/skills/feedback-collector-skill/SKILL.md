@@ -1,4 +1,4 @@
----
+﻿---
 name: feedback-collector-skill
 description: |
   收集QuickAgents使用过程中的经验、改进方向、最佳实践。
@@ -262,10 +262,10 @@ result = evolution.on_task_complete({
 ### CLI命令（终端用户使用）
 
 ```bash
-qa feedback bug '描述'        # 记录Bug
-qa feedback improve '描述'    # 记录改进建议
-qa feedback best '描述'      # 记录最佳实践
-qa feedback view              # 查看收集的经验
+qka feedback bug '描述'        # 记录Bug
+qka feedback improve '描述'    # 记录改进建议
+qka feedback best '描述'      # 记录最佳实践
+qka feedback view              # 查看收集的经验
 ```
 
 **注意**: AI代理应优先使用Python API，0 Token消耗。

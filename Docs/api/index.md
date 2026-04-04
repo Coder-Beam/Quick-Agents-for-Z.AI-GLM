@@ -1,4 +1,4 @@
-# QuickAgents API Reference v2.7.0
+﻿# QuickAgents API Reference v2.7.0
 
 > Complete API documentation for QuickAgents toolkit
 
@@ -697,7 +697,7 @@ page.close() -> None
 ### Main Commands
 
 ```bash
-qa <command> [options]
+qka <command> [options]
 ```
 
 **Available Commands:**

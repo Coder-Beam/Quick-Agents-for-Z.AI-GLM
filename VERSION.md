@@ -1,4 +1,4 @@
-# QuickAgents Version
+﻿# QuickAgents Version
 
 > Version information file - for version detection and updates | 版本信息文件 - 用于版本检测和更新
 
@@ -8,9 +8,9 @@
 
 | Property | Value |
 |-----------|-------|
-| Version | 2.8.0 |
-| Git Tag | v2.8.0 |
-| Release Date | 2026-04-01 |
+| Version | 2.8.1 |
+| Git Tag | v2.8.1 |
+| Release Date | 2026-04-04 |
 | Minimum Compatible | 2.0.0 |
 | Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
 | PyPI Package | https://pypi.org/project/quickagents/ |
@@ -31,14 +31,14 @@ pip install quickagents[full]
 python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
 
 # CLI commands | CLI命令
-qa --help
-qa stats
-qa hooks install
+qka --help
+qka stats
+qka hooks install
 ```
 
 ---
 
-## What's New (v2.8.0) | 本次更新
+## What's New (v2.8.1) | 本次更新
 
 **Document Understanding & Source Code Analysis — 文档理解与源码分析**
 
@@ -57,13 +57,13 @@ qa hooks install
 
 ```bash
 # Import all documents from PALs/ directory
-qa import PALs/
+qka import PALs/
 
 # Include source code analysis
-qa import PALs/ --with-source
+qka import PALs/ --with-source
 
 # Preview without processing
-qa import PALs/ --dry-run
+qka import PALs/ --dry-run
 ```
 
 ---
@@ -153,22 +153,22 @@ pytest tests/ -v
 - 7 document parsers: PDF, Word, Excel, XMind, FreeMind, OPML, Markdown
 - Source code parser: Python ast + tree-sitter (optional)
 - Three-level trace matching engine with bilingual synonym table
-- `qa import` CLI command for batch document processing
+- `qka import` CLI command for batch document processing
 - Knowledge Graph extension: 4 new NodeTypes, 4 new EdgeTypes
 - Markdown export: trace matrix, coverage, diff reports
 - Optional dependency groups: [document], [source-code], [ocr]
 - 340 document tests, all passing
 
 ### v2.7.8 (2026-04-01)
-- `qa uninstall` redesign: project-level only, no global side effects
-- `qa export` command: clean export to Output/<version>/ with git commit binding
+- `qka uninstall` redesign: project-level only, no global side effects
+- `qka export` command: clean export to Output/<version>/ with git commit binding
 - Git commit enforcement: export requires clean working tree
-- `.gitignore` injection: `qa export --inject-gitignore`
+- `.gitignore` injection: `qka export --inject-gitignore`
 - 580 tests all passing
 
 ### v2.7.6 (2026-04-01)
 - Core architecture upgrade: 6-phase enhancement
-- `qa uninstall` command (superseded by v2.7.8)
+- `qka uninstall` command (superseded by v2.7.8)
 
 ### v2.7.0 (2026-03-30)
 - Pattern-based LoopDetector

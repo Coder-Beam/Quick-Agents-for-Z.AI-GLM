@@ -1,9 +1,31 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to QuickAgents will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.8.1] - 2026-04-04
+
+### Changed - CLI Command Rename
+
+- **Breaking Change**: CLI command renamed from `qa` to `qka` to avoid conflicts with existing `qa.exe` tools
+  - Updated entry point in `pyproject.toml`: `qa` → `qka`
+  - Updated all documentation references from `qa ` to `qka`
+  - Updated CLI help text in `quickagents/cli/main.py`
+
+### Fixed - Document Module
+
+- **SourceCodeParser**: Fixed inheritance from `BaseParser` for proper auto-registration
+  - Added `SUPPORTED_FORMATS`, `REQUIRES_DEPENDENCIES`, `PARSER_NAME` class attributes
+  - Added `parse()` method that delegates to `parse_directory()`
+
+### Added - Documentation
+
+- **Document Module Extraction**: Added comprehensive extraction document at `Docs/document-module-extraction.md`
+  - 14 chapters covering architecture,  8 parsers,  3-layer pipeline
+  - API usage guide
+  - Integration options
 
 ## [2.8.0] - 2026-04-01
 
@@ -21,9 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regex fallback for unsupported languages
 - Directory structure scanning, config file parsing (JSON/YAML/TOML)
 
-#### CLI: `qa import`
-- `qa import PALs/` — parse all documents in PALs/ directory
-- `qa import PALs/ --with-source` — also parse source code from SourceReference/
+#### CLI: `qka import`
+- `qka import PALs/` — parse all documents in PALs/ directory
+- `qka import PALs/ --with-source` — also parse source code from SourceReference/
 - `--dry-run`, `--output`, `--verbose`, `--no-validate`, `--no-knowledge` flags
 - Auto-dependency check with install instructions
 - Exports to Docs/PALs/ (Markdown reports + Knowledge Graph)
@@ -49,19 +71,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added - Project Isolation & Clean Export
 
-#### qa uninstall — Project-Level Isolation (Redesign)
+#### qka uninstall — Project-Level Isolation (Redesign)
 - **Strict Project Scope**: Only cleans files within the current project directory
 - **No Global Side Effects**: Never touches pip package, `~/.quickagents/`, or other projects
 - **Cleanup Targets**: `.quickagents/`, `.opencode/`, `AGENTS.md`, `VERSION.md`, `quickagents.json`, qa-related git hooks
 - **New `--keep-opencode` Flag**: Preserve `.opencode/` directory when desired
 - **Safety Banner**: Clear warning that only current project is affected, pip package untouched
 
-#### qa export — Clean Project Export
+#### qka export — Clean Project Export
 - **Clean Export to `Output/<version>/`**: Copies project files excluding all QuickAgents runtime artifacts
 - **Git Commit Binding**: Requires clean git working tree (all changes committed) before export
 - **Commit Hash Traceability**: `export-manifest.json` records full git commit hash
 - **Automatic Version Detection**: Reads from `pyproject.toml` → `package.json` → `VERSION.md` → git tag
-- **`.gitignore` Injection**: `--inject-gitignore` adds QA exclusion rules to `.gitignore`
+- **`.gitignore` Injection**: `--inject-gitignore` adds qka exclusion rules to `.gitignore`
 - **Exclusion Preview**: `--list-excludes` displays all exclusion patterns
 - **Dry-Run Mode**: `--dry-run` previews included/excluded files without executing
 
@@ -72,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Generic Excludes**: `node_modules/`, `.git/`, `dist/`, `*.egg-info`, `*.pyc`, `.env`
 
 ### Changed
-- **`qa uninstall` Complete Redesign**: Removed all global operations (no pip uninstall, no `~/.quickagents/` deletion)
+- **`qka uninstall` Complete Redesign**: Removed all global operations (no pip uninstall, no `~/.quickagents/` deletion)
 - **Removed `--keep-config` Flag**: Replaced by `--keep-opencode` (was misleading — "config" implied global)
 - **Uninstall Confirmation**: Prompt now reads "确认卸载当前项目中的 QuickAgents 文件?" instead of generic "确认卸载?"
 - **Uninstall Completion Message**: Now explicitly states "pip 包未被卸载，其他项目不受影响"
@@ -89,19 +111,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added - CLI Commands & Version Alignment
 
-#### qa version Command
+#### qka version Command
 - **Version Display**: Shows QuickAgents version and Python version
-- **Module Integrity Check**: `qa version --check` verifies all 15 core modules and 5 key classes
+- **Module Integrity Check**: `qka version --check` verifies all 15 core modules and 5 key classes
 
-#### qa update Command
-- **PyPI Upgrade**: `qa update` installs latest version from PyPI
-- **Targeted Upgrade**: `qa update --target 2.7.6` upgrades to specific version
-- **GitHub Source**: `qa update --source github` installs from GitHub main branch
-- **Dry-Run**: `qa update --dry-run` previews upgrade without executing
+#### qka update Command
+- **PyPI Upgrade**: `qka update` installs latest version from PyPI
+- **Targeted Upgrade**: `qka update --target 2.7.6` upgrades to specific version
+- **GitHub Source**: `qka update --source github` installs from GitHub main branch
+- **Dry-Run**: `qka update --dry-run` previews upgrade without executing
 
-#### qa uninstall Command (Initial Version, superseded by 2.7.8)
-- **Interactive Uninstall**: `qa uninstall` with confirmation prompt
-- **Dry-Run**: `qa uninstall --dry-run` previews cleanup
+#### qka uninstall Command (Initial Version, superseded by 2.7.8)
+- **Interactive Uninstall**: `qka uninstall` with confirmation prompt
+- **Dry-Run**: `qka uninstall --dry-run` previews cleanup
 - **Keep Flags**: `--keep-data`, `--keep-config` for selective cleanup
 - **Force Mode**: `--force` skips confirmation
 
@@ -369,14 +391,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### From 2.2.0 to 2.3.0
 
 1. Update package: `pip install --upgrade quickagents`
-2. Run migration: `qa migrate` (if prompted)
-3. Install Git hooks: `qa hooks install`
+2. Run migration: `qka migrate` (if prompted)
+3. Install Git hooks: `qka hooks install`
 
 ### From 2.x to 2.3.0
 
 1. Backup data: `cp -r .quickagents .quickagents.backup`
 2. Update package: `pip install --upgrade quickagents`
-3. Initialize new structure: `qa init`
+3. Initialize new structure: `qka init`
 4. Restore data if needed
 
 ---

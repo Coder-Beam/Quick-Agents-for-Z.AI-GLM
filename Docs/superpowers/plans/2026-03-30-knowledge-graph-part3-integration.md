@@ -1,8 +1,8 @@
-# Knowledge Graph Part 3: Integration Layer (Facade + UnifiedDB + CLI)
+﻿# Knowledge Graph Part 3: Integration Layer (Facade + UnifiedDB + CLI)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the KnowledgeGraph facade class, integrate with UnifiedDB, add `qa knowledge` CLI commands, and finalize the feature with documentation.
+**Goal:** Implement the KnowledgeGraph facade class, integrate with UnifiedDB, add `qka knowledge` CLI commands, and finalize the feature with documentation.
 
 **Architecture:** Facade pattern unifying 6 minimal-unit components from Part 2. Lazy-loaded `knowledge` property on UnifiedDB. CLI subcommand following existing argparse pattern in `quickagents/cli/main.py`.
 
@@ -94,20 +94,20 @@ class UnifiedDB:
 
 **Spec 6.4 - CLI Commands (subset for Part 3):**
 ```bash
-qa knowledge create-node --type TYPE --title TITLE --content CONTENT [OPTIONS]
-qa knowledge get-node NODE_ID [--expand]
-qa knowledge update-node NODE_ID [OPTIONS]
-qa knowledge delete-node NODE_ID [--cascade]
-qa knowledge list-nodes --type TYPE [--project NAME] [--limit N]
-qa knowledge create-edge --from SOURCE --to TARGET --type TYPE [OPTIONS]
-qa knowledge delete-edge EDGE_ID
-qa knowledge show-relations NODE_ID [--direction in|out|both]
-qa knowledge discover NODE_ID [--strategies direct,semantic,structural]
-qa knowledge search QUERY [--type TYPE] [--limit N]
-qa knowledge sync [--memory-path PATH]
-qa knowledge stats
-qa knowledge find-path --from NODE_ID --to NODE_ID [--max-depth N]
-qa knowledge trace-requirement NODE_ID
+qka knowledge create-node --type TYPE --title TITLE --content CONTENT [OPTIONS]
+qka knowledge get-node NODE_ID [--expand]
+qka knowledge update-node NODE_ID [OPTIONS]
+qka knowledge delete-node NODE_ID [--cascade]
+qka knowledge list-nodes --type TYPE [--project NAME] [--limit N]
+qka knowledge create-edge --from SOURCE --to TARGET --type TYPE [OPTIONS]
+qka knowledge delete-edge EDGE_ID
+qka knowledge show-relations NODE_ID [--direction in|out|both]
+qka knowledge discover NODE_ID [--strategies direct,semantic,structural]
+qka knowledge search QUERY [--type TYPE] [--limit N]
+qka knowledge sync [--memory-path PATH]
+qka knowledge stats
+qka knowledge find-path --from NODE_ID --to NODE_ID [--max-depth N]
+qka knowledge trace-requirement NODE_ID
 ```
 
 ---
@@ -1125,7 +1125,7 @@ class TestKnowledgeCLICreate:
         os.unlink(path)
     
     def test_create_node(self, db_path, capsys, monkeypatch):
-        """Test qa knowledge create-node."""
+        """Test qka knowledge create-node."""
         monkeypatch.setattr(sys, 'argv', [
             'qa', 'knowledge', 'create-node',
             '--type', 'requirement',
@@ -1167,7 +1167,7 @@ pytest tests/ -v
 ```bash
 git add quickagents/cli/main.py \
         tests/integration/test_knowledge_graph_cli.py
-git commit -m "feat(knowledge-graph): add qa knowledge CLI commands
+git commit -m "feat(knowledge-graph): add qka knowledge CLI commands
 
 - Add knowledge subcommand with 14 actions
 - Node CRUD: create-node, get-node, update-node, delete-node, list-nodes
@@ -1243,8 +1243,8 @@ python -c "from quickagents import UnifiedDB, KnowledgeGraph, NodeType, EdgeType
 - [ ] **Run CLI smoke test**
 
 ```bash
-qa knowledge stats
-qa knowledge search "test" --limit 5
+qka knowledge stats
+qka knowledge search "test" --limit 5
 ```
 
 - [ ] **Verify no regressions in existing functionality**
@@ -1320,9 +1320,9 @@ Total test count: 172 (existing) + ~43 (new) = **~215 tests**
 
 The knowledge graph feature will be fully integrated:
 - `from quickagents import UnifiedDB; db = UnifiedDB(); kg = db.knowledge`
-- `qa knowledge create-node --type requirement --title "..." --content "..."`
-- `qa knowledge search "query"`
-- `qa knowledge stats`
+- `qka knowledge create-node --type requirement --title "..." --content "..."`
+- `qka knowledge search "query"`
+- `qka knowledge stats`
 
 ---
 

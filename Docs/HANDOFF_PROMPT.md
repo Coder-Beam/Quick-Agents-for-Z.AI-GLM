@@ -1,4 +1,4 @@
-# 🎉 QuickAgents v1.0.0 项目完成报告
+﻿# 🎉 QuickAgents v1.0.0 项目完成报告
 
 > 项目状态：✅ 已完成并发布
 
@@ -67,9 +67,9 @@ git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
 pip install quickagents
 
 # 使用
-qa init        # 初始化项目
-qa start       # 启动会话
-qa status      # 查看状态
+qka init        # 初始化项目
+qka start       # 启动会话
+qka status      # 查看状态
 ```
 
 ---

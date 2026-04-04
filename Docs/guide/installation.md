@@ -1,4 +1,4 @@
-# QuickAgents Installation Guide
+﻿# QuickAgents Installation Guide
 
 > Version: 2.7.0 | Updated: 2026-03-30 | Author: Coder-Beam
 
@@ -50,7 +50,7 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
 
 # Check CLI
-qa --help
+qka --help
 
 # Check OpenCode config
 ls .opencode/plugins/quickagents.ts
@@ -209,7 +209,7 @@ Create `.opencode/config/models.json`:
 python -c "from quickagents import UnifiedDB; db = UnifiedDB(); print('Database initialized')"
 
 # Install Git hooks (optional)
-qa hooks install
+qka hooks install
 ```
 
 ### 6. Verify Installation
@@ -225,8 +225,8 @@ print('All modules imported successfully')
 "
 
 # 2. Check CLI
-qa --help
-qa stats
+qka --help
+qka stats
 
 # 3. Check OpenCode config
 test -f AGENTS.md && echo "✅ AGENTS.md"
@@ -243,32 +243,32 @@ test -d .opencode/skills && echo "✅ Skills ($(ls -d .opencode/skills/*/ 2>/dev
 
 ```bash
 # Database operations
-qa stats                      # Show statistics
-qa sync                       # Sync SQLite to Markdown
-qa memory get <key>           # Get memory
-qa memory set <key> <value>   # Set memory
-qa memory search <query>      # Search memory
+qka stats                      # Show statistics
+qka sync                       # Sync SQLite to Markdown
+qka memory get <key>           # Get memory
+qka memory set <key> <value>   # Set memory
+qka memory search <query>      # Search memory
 
 # Task management
-qa tasks list                 # List tasks
-qa tasks add <id> <name>      # Add task
+qka tasks list                 # List tasks
+qka tasks add <id> <name>      # Add task
 
 # Evolution system
-qa evolution status           # Show evolution status
-qa evolution optimize         # Run optimization
+qka evolution status           # Show evolution status
+qka evolution optimize         # Run optimization
 
 # Git hooks
-qa hooks install              # Install Git hooks
-qa hooks status               # Check hooks status
+qka hooks install              # Install Git hooks
+qka hooks status               # Check hooks status
 
 # Knowledge graph
-qa kg search <query>          # Search knowledge graph
-qa kg trace <node-id>         # Trace requirement
+qka kg search <query>          # Search knowledge graph
+qka kg trace <node-id>         # Trace requirement
 
 # TDD workflow
-qa tdd red <test_file>        # Run RED phase
-qa tdd green <test_file>      # Run GREEN phase
-qa tdd refactor <test_file>   # Run REFACTOR phase
+qka tdd red <test_file>        # Run RED phase
+qka tdd green <test_file>      # Run GREEN phase
+qka tdd refactor <test_file>   # Run REFACTOR phase
 ```
 
 ---
@@ -411,7 +411,7 @@ pip show quickagents
 pip install --force-reinstall quickagents
 
 # Check PATH
-qa --help
+qka --help
 ```
 
 ---
@@ -495,7 +495,7 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
 
 # 检查CLI
-qa --help
+qka --help
 
 # 检查OpenCode配置
 ls .opencode/plugins/quickagents.ts
@@ -648,7 +648,7 @@ rm -rf temp-qa
 python -c "from quickagents import UnifiedDB; db = UnifiedDB(); print('数据库已初始化')"
 
 # 安装Git钩子（可选）
-qa hooks install
+qka hooks install
 ```
 
 ### 6. 验证安装
@@ -664,8 +664,8 @@ print('所有模块导入成功')
 "
 
 # 2. 检查CLI
-qa --help
-qa stats
+qka --help
+qka stats
 
 # 3. 检查OpenCode配置
 test -f AGENTS.md && echo "✅ AGENTS.md"
@@ -682,32 +682,32 @@ test -d .opencode/skills && echo "✅ 技能 ($(ls -d .opencode/skills/*/ 2>/dev
 
 ```bash
 # 数据库操作
-qa stats                      # 显示统计信息
-qa sync                       # 同步SQLite到Markdown
-qa memory get <key>           # 获取记忆
-qa memory set <key> <value>   # 设置记忆
-qa memory search <query>      # 搜索记忆
+qka stats                      # 显示统计信息
+qka sync                       # 同步SQLite到Markdown
+qka memory get <key>           # 获取记忆
+qka memory set <key> <value>   # 设置记忆
+qka memory search <query>      # 搜索记忆
 
 # 任务管理
-qa tasks list                 # 列出任务
-qa tasks add <id> <name>      # 添加任务
+qka tasks list                 # 列出任务
+qka tasks add <id> <name>      # 添加任务
 
 # 进化系统
-qa evolution status           # 显示进化状态
-qa evolution optimize         # 执行优化
+qka evolution status           # 显示进化状态
+qka evolution optimize         # 执行优化
 
 # Git钩子
-qa hooks install              # 安装Git钩子
-qa hooks status               # 检查钩子状态
+qka hooks install              # 安装Git钩子
+qka hooks status               # 检查钩子状态
 
 # 知识图谱
-qa kg search <query>          # 搜索知识图谱
-qa kg trace <node-id>         # 追踪需求
+qka kg search <query>          # 搜索知识图谱
+qka kg trace <node-id>         # 追踪需求
 
 # TDD工作流
-qa tdd red <test_file>        # 运行RED阶段
-qa tdd green <test_file>      # 运行GREEN阶段
-qa tdd refactor <test_file>   # 运行REFACTOR阶段
+qka tdd red <test_file>        # 运行RED阶段
+qka tdd green <test_file>      # 运行GREEN阶段
+qka tdd refactor <test_file>   # 运行REFACTOR阶段
 ```
 
 ---
@@ -810,7 +810,7 @@ pip show quickagents
 pip install --force-reinstall quickagents
 
 # 检查PATH
-qa --help
+qka --help
 ```
 
 ---

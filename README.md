@@ -1,4 +1,4 @@
-# QuickAgents
+﻿# QuickAgents
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
@@ -197,109 +197,109 @@ pip install -e .
 ### 数据库操作
 
 ```bash
-qa stats                      # 统计信息
-qa sync                       # 同步SQLite到Markdown
-qa sync memory                # 仅同步记忆
-qa memory get <key>           # 获取记忆值
-qa memory set <key> <value>   # 设置记忆值
-qa memory search <query>      # 搜索记忆
+qka stats                      # 统计信息
+qka sync                       # 同步SQLite到Markdown
+qka sync memory                # 仅同步记忆
+qka memory get <key>           # 获取记忆值
+qka memory set <key> <value>   # 设置记忆值
+qka memory search <query>      # 搜索记忆
 ```
 
 ### 任务管理
 
 ```bash
-qa tasks list                 # 列出所有任务
-qa tasks add <id> <name> --priority P0  # 添加任务
-qa tasks status <id> <status> # 更新任务状态
-qa progress                   # 查看当前进度
+qka tasks list                 # 列出所有任务
+qka tasks add <id> <name> --priority P0  # 添加任务
+qka tasks status <id> <status> # 更新任务状态
+qka progress                   # 查看当前进度
 ```
 
 ### 进化系统
 
 ```bash
-qa evolution status           # 查看进化状态
-qa evolution stats [skill]    # Skills使用统计
-qa evolution optimize         # 执行定期优化
-qa evolution history <skill>  # 查看Skill进化历史
-qa evolution sync             # 同步进化数据
+qka evolution status           # 查看进化状态
+qka evolution stats [skill]    # Skills使用统计
+qka evolution optimize         # 执行定期优化
+qka evolution history <skill>  # 查看Skill进化历史
+qka evolution sync             # 同步进化数据
 ```
 
 ### Git集成
 
 ```bash
-qa hooks install              # 安装Git钩子
-qa hooks status               # 查看钩子状态
-qa git status                 # Git状态
-qa git check                  # 提交前检查
-qa git commit <type> <scope> <subject>  # 格式化提交
+qka hooks install              # 安装Git钩子
+qka hooks status               # 查看钩子状态
+qka git status                 # Git状态
+qka git check                  # 提交前检查
+qka git commit <type> <scope> <subject>  # 格式化提交
 ```
 
 ### TDD工作流
 
 ```bash
-qa tdd red <test_file>        # RED阶段（测试应失败）
-qa tdd green <test_file>      # GREEN阶段（测试应通过）
-qa tdd refactor <test_file>   # REFACTOR阶段
-qa tdd coverage               # 查看覆盖率
-qa tdd stats                  # TDD统计
+qka tdd red <test_file>        # RED阶段（测试应失败）
+qka tdd green <test_file>      # GREEN阶段（测试应通过）
+qka tdd refactor <test_file>   # REFACTOR阶段
+qka tdd coverage               # 查看覆盖率
+qka tdd stats                  # TDD统计
 ```
 
 ### 反馈收集
 
 ```bash
-qa feedback bug <desc>        # 记录Bug
-qa feedback improve <desc>    # 记录改进建议
-qa feedback best <desc>       # 记录最佳实践
-qa feedback view [--type <t>] # 查看收集的反馈
-qa feedback stats             # 反馈统计
+qka feedback bug <desc>        # 记录Bug
+qka feedback improve <desc>    # 记录改进建议
+qka feedback best <desc>       # 记录最佳实践
+qka feedback view [--type <t>] # 查看收集的反馈
+qka feedback stats             # 反馈统计
 ```
 
 ### 模型配置（ZhipuAI GLM Coding Plan）
 
 ```bash
-qa models show                # 查看当前配置
-qa models list                # 列出可用模型
-qa models check-updates       # 检查GLM更新
-qa models upgrade --dry-run   # 预览升级
-qa models upgrade --force     # 执行升级
-qa models strategy coding-plan # 切换到Coding Plan
-qa models lock GLM-5          # 锁定单一模型
-qa models unlock              # 解除锁定
+qka models show                # 查看当前配置
+qka models list                # 列出可用模型
+qka models check-updates       # 检查GLM更新
+qka models upgrade --dry-run   # 预览升级
+qka models upgrade --force     # 执行升级
+qka models strategy coding-plan # 切换到Coding Plan
+qka models lock GLM-5          # 锁定单一模型
+qka models unlock              # 解除锁定
 ```
 
 ### 其他命令
 
 ```bash
-qa cache stats                # 缓存统计
-qa cache clear                # 清空缓存
-qa loop check                 # 检查循环模式
-qa loop stats                 # 循环检测统计
-qa reminder check             # 检查提醒
-qa reminder stats             # 提醒统计
+qka cache stats                # 缓存统计
+qka cache clear                # 清空缓存
+qka loop check                 # 检查循环模式
+qka loop stats                 # 循环检测统计
+qka reminder check             # 检查提醒
+qka reminder stats             # 提醒统计
 ```
 
 ### 版本管理
 
 ```bash
-qa version                    # 查看版本信息
-qa version --check            # 检查所有模块完整性
-qa update                     # 从PyPI升级到最新版
-qa update --target 2.7.6      # 升级到指定版本
-qa update --source github     # 从GitHub源码安装
-qa update --dry-run           # 仅预览升级
+qka version                    # 查看版本信息
+qka version --check            # 检查所有模块完整性
+qka update                     # 从PyPI升级到最新版
+qka update --target 2.7.6      # 升级到指定版本
+qka update --source github     # 从GitHub源码安装
+qka update --dry-run           # 仅预览升级
 ```
 
 ### 卸载
 
 ```bash
-qa uninstall                  # 交互式卸载
-qa uninstall --dry-run        # 预览卸载内容
-qa uninstall --keep-data      # 卸载但保留项目数据
-qa uninstall --keep-config    # 卸载但保留全局配置
-qa uninstall --force          # 跳过确认直接卸载
+qka uninstall                  # 交互式卸载
+qka uninstall --dry-run        # 预览卸载内容
+qka uninstall --keep-data      # 卸载但保留项目数据
+qka uninstall --keep-config    # 卸载但保留全局配置
+qka uninstall --force          # 跳过确认直接卸载
 ```
 
-> 老版本（v2.7.5及更早）没有 `qa uninstall` 命令，请参考 [卸载指导文档](Docs/guides/UNINSTALL_GUIDE.md)
+> 老版本（v2.7.5及更早）没有 `qka uninstall` 命令，请参考 [卸载指导文档](Docs/guides/UNINSTALL_GUIDE.md)
 
 ## ⌨️ Slash命令（OpenCode内）
 
@@ -580,93 +580,93 @@ pip install -e .
 ### Database Operations
 
 ```bash
-qa stats                      # Show statistics
-qa sync                       # Sync SQLite to Markdown
-qa memory get <key>           # Get memory value
-qa memory set <key> <value>   # Set memory value
-qa memory search <query>      # Search memory
+qka stats                      # Show statistics
+qka sync                       # Sync SQLite to Markdown
+qka memory get <key>           # Get memory value
+qka memory set <key> <value>   # Set memory value
+qka memory search <query>      # Search memory
 ```
 
 ### Task Management
 
 ```bash
-qa tasks list                 # List all tasks
-qa tasks add <id> <name> --priority P0
-qa tasks status <id> <status>
-qa progress                   # Show current progress
+qka tasks list                 # List all tasks
+qka tasks add <id> <name> --priority P0
+qka tasks status <id> <status>
+qka progress                   # Show current progress
 ```
 
 ### Evolution System
 
 ```bash
-qa evolution status           # Show evolution status
-qa evolution stats [skill]    # Skill usage statistics
-qa evolution optimize         # Run periodic optimization
-qa evolution history <skill>  # View skill evolution history
+qka evolution status           # Show evolution status
+qka evolution stats [skill]    # Skill usage statistics
+qka evolution optimize         # Run periodic optimization
+qka evolution history <skill>  # View skill evolution history
 ```
 
 ### Git Integration
 
 ```bash
-qa hooks install              # Install Git hooks
-qa hooks status               # Check hooks status
-qa git status                 # Git status
-qa git check                  # Pre-commit checks
+qka hooks install              # Install Git hooks
+qka hooks status               # Check hooks status
+qka git status                 # Git status
+qka git check                  # Pre-commit checks
 ```
 
 ### TDD Workflow
 
 ```bash
-qa tdd red <test_file>        # RED phase
-qa tdd green <test_file>      # GREEN phase
-qa tdd refactor <test_file>   # REFACTOR phase
-qa tdd coverage               # Check coverage
+qka tdd red <test_file>        # RED phase
+qka tdd green <test_file>      # GREEN phase
+qka tdd refactor <test_file>   # REFACTOR phase
+qka tdd coverage               # Check coverage
 ```
 
 ### Feedback Collection
 
 ```bash
-qa feedback bug <desc>        # Record a bug
-qa feedback improve <desc>    # Record improvement suggestion
-qa feedback best <desc>       # Record best practice
-qa feedback view [--type <t>] # View collected feedback
+qka feedback bug <desc>        # Record a bug
+qka feedback improve <desc>    # Record improvement suggestion
+qka feedback best <desc>       # Record best practice
+qka feedback view [--type <t>] # View collected feedback
 ```
 
 ### Model Configuration (ZhipuAI GLM Coding Plan)
 
 ```bash
-qa models show                # View current config
-qa models list                # List available models
-qa models check-updates       # Check GLM updates
-qa models upgrade --dry-run   # Preview upgrade
-qa models upgrade --force     # Execute upgrade
-qa models strategy coding-plan # Switch to Coding Plan
-qa models lock GLM-5          # Lock single model
-qa models unlock              # Unlock
+qka models show                # View current config
+qka models list                # List available models
+qka models check-updates       # Check GLM updates
+qka models upgrade --dry-run   # Preview upgrade
+qka models upgrade --force     # Execute upgrade
+qka models strategy coding-plan # Switch to Coding Plan
+qka models lock GLM-5          # Lock single model
+qka models unlock              # Unlock
 ```
 
 ### Version Management
 
 ```bash
-qa version                    # Show version info
-qa version --check            # Check all modules
-qa update                     # Upgrade from PyPI (latest)
-qa update --target 2.7.6      # Upgrade to specific version
-qa update --source github     # Install from GitHub
-qa update --dry-run           # Preview upgrade only
+qka version                    # Show version info
+qka version --check            # Check all modules
+qka update                     # Upgrade from PyPI (latest)
+qka update --target 2.7.6      # Upgrade to specific version
+qka update --source github     # Install from GitHub
+qka update --dry-run           # Preview upgrade only
 ```
 
 ### Uninstall
 
 ```bash
-qa uninstall                  # Interactive uninstall
-qa uninstall --dry-run        # Preview what will be removed
-qa uninstall --keep-data      # Uninstall but keep project data
-qa uninstall --keep-config    # Uninstall but keep global config
-qa uninstall --force          # Skip confirmation
+qka uninstall                  # Interactive uninstall
+qka uninstall --dry-run        # Preview what will be removed
+qka uninstall --keep-data      # Uninstall but keep project data
+qka uninstall --keep-config    # Uninstall but keep global config
+qka uninstall --force          # Skip confirmation
 ```
 
-> For older versions (v2.7.5 and earlier) without `qa uninstall`, see [Uninstall Guide](Docs/guides/UNINSTALL_GUIDE.md)
+> For older versions (v2.7.5 and earlier) without `qka uninstall`, see [Uninstall Guide](Docs/guides/UNINSTALL_GUIDE.md)
 
 ## 🏗️ Architecture
 

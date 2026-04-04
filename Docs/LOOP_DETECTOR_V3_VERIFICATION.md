@@ -1,4 +1,4 @@
-# LoopDetector V3 实施验证报告
+﻿# LoopDetector V3 实施验证报告
 
 > 生成时间: 2026-03-31  
 > 版本: 3.0.0  
@@ -188,9 +188,9 @@ if is_loop:
 ### CLI 命令
 
 ```bash
-qa loop check   # 检查循环模式
-qa loop stats   # 查看统计信息
-qa loop reset   # 重置检测器
+qka loop check   # 检查循环模式
+qka loop stats   # 查看统计信息
+qka loop reset   # 重置检测器
 ```
 
 ### 配置文件 (quickagents.json)

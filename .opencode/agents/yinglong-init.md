@@ -1,4 +1,4 @@
----
+﻿---
 name: yinglong-init
 alias: 应龙
 description: 项目初始化代理 - 开辟道路，指引方向，完成项目初始化
@@ -491,8 +491,8 @@ sudo pacman -S python python-pip
 用户可在任何时候修改配置：
 ```bash
 # 方法1：使用CLI
-qa config edit models.json
-qa config edit lsp-config.json
+qka config edit models.json
+qka config edit lsp-config.json
 
 # 方法2：直接编辑文件
 # .opencode/config/models.json
@@ -507,7 +507,7 @@ qa config edit lsp-config.json
 
 ```bash
 # 检查是否有新版本模型可用
-qa models check-updates
+qka models check-updates
 
 # 输出示例：
 # 🔍 检测到新版本：
@@ -519,13 +519,13 @@ qa models check-updates
 
 ```bash
 # 交互式升级（推荐）
-qa models upgrade
+qka models upgrade
 
 # 直接升级到指定版本
-qa models upgrade --to GLM-5.1
+qka models upgrade --to GLM-5.1
 
 # 预览升级变更（不实际执行）
-qa models upgrade --dry-run
+qka models upgrade --dry-run
 ```
 
 #### 版本升级配置
@@ -554,7 +554,7 @@ qa models upgrade --dry-run
 | 策略 | autoDetect | 行为 |
 |------|------------|------|
 | **自动检测** | true | 启动时检查新版本，提示用户 |
-| **手动检查** | false | 仅在用户运行 `qa models check-updates` 时检查 |
+| **手动检查** | false | 仅在用户运行 `qka models check-updates` 时检查 |
 | **锁定版本** | lockModel设置 | 忽略新版本提示 |
 
 #### 升级影响范围
@@ -569,7 +569,7 @@ qa models upgrade --dry-run
 1. **API兼容性**：升级前确认新版本API兼容
 2. **成本变化**：新版本可能有不同的定价
 3. **功能变化**：阅读新版本的更新说明
-4. **回滚能力**：升级后可通过 `qa models rollback` 回滚
+4. **回滚能力**：升级后可通过 `qka models rollback` 回滚
 
 ## 工作流程
 

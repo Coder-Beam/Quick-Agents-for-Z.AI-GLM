@@ -1,4 +1,4 @@
-# QuickAgents User Guide
+﻿# QuickAgents User Guide
 
 > Complete user guide for using QuickAgents effectively
 
@@ -31,7 +31,7 @@
 ```bash
 # Method 1: CLI
 pip install quickagents
-qa init
+qka init
 
 # Method 2: One-line prompt (recommended)
 # Paste into your AI agent:
@@ -424,7 +424,7 @@ rm AGENTS.md
 │                                                                  │
 │  TRIGGER WORDS                                                   │
 │  ─────────────────────────────────────────────────────────────  │
-│  启动QuickAgent  启动QuickAgents  启动QA  Start QA               │
+│  启动QuickAgent  启动QuickAgents  启动qka  Start qka               │
 │                                                                  │
 │  COMMANDS                                                        │
 │  ─────────────────────────────────────────────────────────────  │

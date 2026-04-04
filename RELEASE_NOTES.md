@@ -1,4 +1,4 @@
-# QuickAgents v2.7.8 Release Notes
+﻿# QuickAgents v2.7.8 Release Notes
 
 > **Release Date**: 2026-04-01 | **Author**: Coder-Beam
 
@@ -13,10 +13,10 @@
 
 QuickAgents v2.7.8 is a **project safety release** that delivers:
 
-- ✅ **`qa uninstall` Project Isolation** — only cleans current project, never touches other projects or pip
-- ✅ **`qa export` Clean Export** — exports to `Output/<version>/` with git commit binding
+- ✅ **`qka uninstall` Project Isolation** — only cleans current project, never touches other projects or pip
+- ✅ **`qka export` Clean Export** — exports to `Output/<version>/` with git commit binding
 - ✅ **Git Commit Enforcement** — export requires clean working tree, manifest records commit hash
-- ✅ **`.gitignore` Injection** — `qa export --inject-gitignore` prevents QA files from being published
+- ✅ **`.gitignore` Injection** — `qka export --inject-gitignore` prevents qka files from being published
 - ✅ **580 Tests Passing** — all passing, 100% pass rate
 
 ---
@@ -208,36 +208,36 @@ rows = session.query_all("SELECT * FROM memory")
 
 ```bash
 # Database
-qa stats                       # Statistics
-qa sync                        # Sync SQLite → Markdown
-qa memory get/set/search       # Memory operations
+qka stats                       # Statistics
+qka sync                        # Sync SQLite → Markdown
+qka memory get/set/search       # Memory operations
 
 # Tasks
-qa tasks list/add/status       # Task management
-qa progress                    # Progress view
+qka tasks list/add/status       # Task management
+qka progress                    # Progress view
 
 # Evolution
-qa evolution status/stats/optimize/history/sync
+qka evolution status/stats/optimize/history/sync
 
 # Git
-qa hooks install/status        # Git hooks
-qa git status/check/commit     # Git operations
+qka hooks install/status        # Git hooks
+qka git status/check/commit     # Git operations
 
 # TDD
-qa tdd red/green/refactor      # TDD phases
-qa tdd coverage/stats          # Coverage & stats
+qka tdd red/green/refactor      # TDD phases
+qka tdd coverage/stats          # Coverage & stats
 
 # Feedback
-qa feedback bug/improve/best   # Record feedback
-qa feedback view/stats         # View feedback
+qka feedback bug/improve/best   # Record feedback
+qka feedback view/stats         # View feedback
 
 # Models
-qa models show/list/check-updates/upgrade/strategy/lock/unlock
+qka models show/list/check-updates/upgrade/strategy/lock/unlock
 
 # Other
-qa cache stats/clear           # Cache management
-qa loop check/stats            # Loop detection
-qa reminder check/stats        # Reminders
+qka cache stats/clear           # Cache management
+qka loop check/stats            # Loop detection
+qka reminder check/stats        # Reminders
 ```
 
 ---
@@ -525,7 +525,7 @@ Step 0: Python环境检测（必需）
 
 - Fixed 24 SKILL.md files missing YAML front matter
 - Fixed plugin version mismatch (2.2.0 → 2.7.0)
-- Fixed installation guide referencing non-existent `qa init` command
+- Fixed installation guide referencing non-existent `qka init` command
 
 ---
 
@@ -605,47 +605,47 @@ quickagents/
 ### Database Operations
 
 ```bash
-qa stats                      # Show statistics
-qa sync                       # Sync SQLite to Markdown
-qa memory get <key>           # Get memory value
-qa memory set <key> <value>   # Set memory value
-qa memory search <query>      # Search memory
+qka stats                      # Show statistics
+qka sync                       # Sync SQLite to Markdown
+qka memory get <key>           # Get memory value
+qka memory set <key> <value>   # Set memory value
+qka memory search <query>      # Search memory
 ```
 
 ### Task Management
 
 ```bash
-qa tasks list                 # List all tasks
-qa tasks add <id> <name>      # Add new task
-qa tasks status <id> <status> # Update task status
-qa progress                   # Show current progress
+qka tasks list                 # List all tasks
+qka tasks add <id> <name>      # Add new task
+qka tasks status <id> <status> # Update task status
+qka progress                   # Show current progress
 ```
 
 ### Evolution System
 
 ```bash
-qa evolution status           # Show evolution status
-qa evolution stats [skill]    # Skill usage statistics
-qa evolution optimize         # Run periodic optimization
-qa evolution history <skill>  # View skill evolution
+qka evolution status           # Show evolution status
+qka evolution stats [skill]    # Skill usage statistics
+qka evolution optimize         # Run periodic optimization
+qka evolution history <skill>  # View skill evolution
 ```
 
 ### Git Integration
 
 ```bash
-qa hooks install              # Install Git hooks
-qa hooks status               # Check hooks status
-qa git status                 # Git status
-qa git check                  # Pre-commit checks
+qka hooks install              # Install Git hooks
+qka hooks status               # Check hooks status
+qka git status                 # Git status
+qka git check                  # Pre-commit checks
 ```
 
 ### TDD Workflow
 
 ```bash
-qa tdd red <test_file>        # RED phase
-qa tdd green <test_file>      # GREEN phase
-qa tdd refactor <test_file>   # REFACTOR phase
-qa tdd coverage               # Check coverage
+qka tdd red <test_file>        # RED phase
+qka tdd green <test_file>      # GREEN phase
+qka tdd refactor <test_file>   # REFACTOR phase
+qka tdd coverage               # Check coverage
 ```
 
 ---

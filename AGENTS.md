@@ -1,4 +1,4 @@
-# AGENTS.md - AI 编码代理开发指引
+﻿# AGENTS.md - AI 编码代理开发指引
 
 本文档为 AI 编码代理提供项目的开发规范和命令参考。
 
@@ -228,11 +228,11 @@ trace = db.knowledge.trace_requirement(node.id)
 
 | 命令 | 状态 | 替代方案 |
 |------|------|---------|
-| `qa memory get xxx` | ❌ 禁止 | `db.get_memory('xxx')` |
-| `qa memory set xxx yyy` | ❌ 禁止 | `db.set_memory('xxx', 'yyy', MemoryType.FACTUAL)` |
-| `qa stats` | ❌ 禁止 | `db.get_stats()` |
-| `qa loop check` | ❌ 禁止 | `detector.get_loop_patterns()` |
-| `qa evolution status` | ❌ 禁止 | `evolution = get_evolution(); evolution.check_periodic_trigger()` |
+| `qka memory get xxx` | ❌ 禁止 | `db.get_memory('xxx')` |
+| `qka memory set xxx yyy` | ❌ 禁止 | `db.set_memory('xxx', 'yyy', MemoryType.FACTUAL)` |
+| `qka stats` | ❌ 禁止 | `db.get_stats()` |
+| `qka loop check` | ❌ 禁止 | `detector.get_loop_patterns()` |
+| `qka evolution status` | ❌ 禁止 | `evolution = get_evolution(); evolution.check_periodic_trigger()` |
 | `git add/commit/push` | ✅ 允许 | `bash(command="git add . && git commit -m 'msg'")` |
 | `pip install xxx` | ✅ 允许 | `bash(command="pip install xxx")` |
 
@@ -256,21 +256,21 @@ QuickAgents功能检查：
 □ 知识图谱 → 使用 KnowledgeGraph Python API
 
 禁止操作检查：
-□ 是否想用 qa xxx 命令？ → 改用 Python API
+□ 是否想用 qka xxx 命令？ → 改用 Python API
 □ 是否想用 bash 执行 qa？ → 改用 Python API
 ```
 
 ### 六、CLI命令的用途
 
-CLI命令（`qa xxx`）是给**终端用户**使用的，不是给AI代理使用的。
+CLI命令（`qka xxx`）是给**终端用户**使用的，不是给AI代理使用的。
 
 **终端用户使用场景**：
 ```bash
 # 用户在终端手动执行
-qa stats                 # 查看统计
-qa sync                  # 同步到Markdown
-qa evolution status      # 查看进化状态
-qa hooks install         # 安装Git钩子
+qka stats                 # 查看统计
+qka sync                  # 同步到Markdown
+qka evolution status      # 查看进化状态
+qka hooks install         # 安装Git钩子
 ```
 
 **AI代理使用场景**：
@@ -279,10 +279,10 @@ qa hooks install         # 安装Git钩子
 from quickagents import UnifiedDB, get_evolution
 
 db = UnifiedDB()
-stats = db.get_stats()  # 等同于 qa stats
+stats = db.get_stats()  # 等同于 qka stats
 
 evolution = get_evolution()
-evolution.check_periodic_trigger()  # 等同于 qa evolution status
+evolution.check_periodic_trigger()  # 等同于 qka evolution status
 ```
 
 ---
@@ -811,14 +811,14 @@ Docs/
     
     ```bash
     # 方式2: 使用CLI命令
-    qa memory set project.name MyProject
-    qa sync memory
+    qka memory set project.name MyProject
+    qka sync memory
     ```
     
     **为什么不能直接 write MEMORY.md？**
     
     1. **数据一致性**：直接 write 会绕过 SQLite，导致数据不一致
-    2. **同步覆盖**：`qa sync` 会从 SQLite 生成内容覆盖 MEMORY.md
+    2. **同步覆盖**：`qka sync` 会从 SQLite 生成内容覆盖 MEMORY.md
     3. **丢失数据**：直接 write 的内容可能在同步时被覆盖丢失
     
     **允许直接 write 的文件**：
@@ -2178,22 +2178,22 @@ if evolution.check_periodic_trigger():
 
 ```bash
 # 查看进化系统状态
-qa evolution status
+qka evolution status
 
 # 查看Skills使用统计
-qa evolution stats [skill_name]
+qka evolution stats [skill_name]
 
 # 执行定期优化
-qa evolution optimize
+qka evolution optimize
 
 # 查看Skill进化历史
-qa evolution history <skill_name>
+qka evolution history <skill_name>
 
 # 同步到Markdown
-qa evolution sync
+qka evolution sync
 
 # 安装Git钩子（自动触发）
-qa hooks install
+qka hooks install
 ```
 
 ### （四）Git钩子集成
@@ -2202,10 +2202,10 @@ qa hooks install
 
 ```bash
 # 安装钩子
-qa hooks install
+qka hooks install
 
 # 钩子状态
-qa hooks status
+qka hooks status
 ```
 
 ### （五）数据存储
@@ -2305,11 +2305,11 @@ evolution.on_error_detected({
 ### （三）CLI命令
 
 ```bash
-qa feedback bug <描述>       # 记录Bug
-qa feedback improve <描述>   # 记录改进建议
-qa feedback best <描述>      # 记录最佳实践
-qa feedback view [类型]      # 查看收集的经验
-qa feedback stats            # 查看统计
+qka feedback bug <描述>       # 记录Bug
+qka feedback improve <描述>   # 记录改进建议
+qka feedback best <描述>      # 记录最佳实践
+qka feedback view [类型]      # 查看收集的经验
+qka feedback stats            # 查看统计
 /feedback best <描述>      # 记录最佳实践
 /feedback skill <名> <评>  # 评估Skill
 /feedback agent <名> <评>  # 评估Agent
@@ -2495,32 +2495,32 @@ stats = db.get_stats()
 
 ```bash
 # 统计信息
-qa stats                 # 数据库统计
+qka stats                 # 数据库统计
 
 # 同步到Markdown
-qa sync                  # 同步所有表
-qa sync memory           # 仅同步记忆
+qka sync                  # 同步所有表
+qka sync memory           # 仅同步记忆
 
 # 记忆操作
-qa memory get project.name
-qa memory set project.tech_stack '["Python", "TypeScript"]'
-qa memory search 认证
+qka memory get project.name
+qka memory set project.tech_stack '["Python", "TypeScript"]'
+qka memory search 认证
 
 # 任务操作
-qa tasks list            # 任务列表
-qa tasks add T001 "任务名" --priority P0
-qa tasks status T001 completed
+qka tasks list            # 任务列表
+qka tasks add T001 "任务名" --priority P0
+qka tasks status T001 completed
 
 # 进度查看
-qa progress              # 当前进度
+qka progress              # 当前进度
 
 # 循环检测
-qa loop check            # 检查循环
-qa loop stats            # 统计信息
+qka loop check            # 检查循环
+qka loop stats            # 统计信息
 
 # 缓存管理
-qa cache stats           # 缓存统计
-qa cache clear           # 清空缓存
+qka cache stats           # 缓存统计
+qka cache clear           # 清空缓存
 ```
 
 ### （五）同步策略

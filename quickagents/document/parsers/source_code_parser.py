@@ -19,6 +19,7 @@ from ..models import (
     CodeFunction,
     CodeDependency,
 )
+from . import BaseParser
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +53,15 @@ _SKIP_DIRS = {
 }
 
 
-class SourceCodeParser:
+class SourceCodeParser(BaseParser):
     """Source code directory parser"""
+
+    SUPPORTED_FORMATS = ["source", "py", "js", "ts", "java", "go", "rs", "c", "cpp"]
+    REQUIRES_DEPENDENCIES = ["ast"]
+    PARSER_NAME = "source"
+
+    def parse(self, file_path: Path) -> SourceCodeResult:
+        return self.parse_directory(file_path)
 
     def parse_directory(self, source_dir: Path) -> SourceCodeResult:
         source_dir = Path(source_dir)

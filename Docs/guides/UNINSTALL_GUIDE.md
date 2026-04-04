@@ -1,4 +1,4 @@
-# QuickAgents 卸载指导
+﻿# QuickAgents 卸载指导
 
 > 适用于: QuickAgents v2.7.6+ 及所有老版本
 
@@ -6,40 +6,40 @@
 
 ## 一、标准卸载（v2.7.6+）
 
-如果你安装的是 **v2.7.6 或更高版本**，使用内置的 `qa uninstall` 命令：
+如果你安装的是 **v2.7.6 或更高版本**，使用内置的 `qka uninstall` 命令：
 
 ### 1.1 预览卸载内容
 
 ```bash
 # 查看将要删除的文件和目录（不实际执行）
-qa uninstall --dry-run
+qka uninstall --dry-run
 ```
 
 ### 1.2 交互式卸载
 
 ```bash
 # 逐步确认后卸载
-qa uninstall
+qka uninstall
 ```
 
 ### 1.3 跳过确认直接卸载
 
 ```bash
 # 跳过确认提示（适用于脚本/CI环境）
-qa uninstall --force
+qka uninstall --force
 ```
 
 ### 1.4 保留数据卸载
 
 ```bash
 # 仅卸载pip包，保留项目数据 (.quickagents/)
-qa uninstall --keep-data
+qka uninstall --keep-data
 
 # 仅卸载pip包，保留全局配置 (~/.quickagents/)
-qa uninstall --keep-config
+qka uninstall --keep-config
 
 # 同时保留项目和全局数据
-qa uninstall --keep-data --keep-config
+qka uninstall --keep-data --keep-config
 ```
 
 ### 1.5 清理范围说明
@@ -55,7 +55,7 @@ qa uninstall --keep-data --keep-config
 
 ## 二、老版本手动卸载（v2.7.5 及更早版本）
 
-如果你安装的是 **v2.7.5 或更早版本**，没有 `qa uninstall` 命令，请按以下步骤手动卸载。
+如果你安装的是 **v2.7.5 或更早版本**，没有 `qka uninstall` 命令，请按以下步骤手动卸载。
 
 ### 2.1 卸载步骤总览
 
@@ -85,7 +85,7 @@ pip uninstall quickagents pywin32 wmi -y
 
 ```bash
 # 以下命令应该报错 "command not found" 或 "No module named"
-qa --help                    # 应该不存在
+qka --help                    # 应该不存在
 python -c "import quickagents"  # 应该报 ImportError
 ```
 
@@ -102,7 +102,7 @@ cat .git/hooks/post-commit 2>/dev/null | grep -i quickagents
 # Windows (PowerShell)
 if (Test-Path .git\hooks\post-commit) {
     $content = Get-Content .git\hooks\post-commit -Raw
-    if ($content -match "quickagents|qa ") {
+    if ($content -match "quickagents|qka ") {
         Write-Host "Found QuickAgents hook"
     }
 }
@@ -120,7 +120,7 @@ rm .git/hooks/post-commit
 Remove-Item .git\hooks\post-commit -Force
 
 # 如果 post-commit 文件里还有其他逻辑（非QuickAgents），只删除相关行
-# 用文本编辑器打开 .git/hooks/post-commit，删除包含 quickagents 或 qa 的行
+# 用文本编辑器打开 .git/hooks/post-commit，删除包含 quickagents 或 qka 的行
 ```
 
 ### 2.4 步骤3：清理项目数据
@@ -200,7 +200,7 @@ pip show quickagents
 # 预期输出: WARNING: Package(s) not found: quickagents
 
 # 2. CLI命令已不存在
-qa --help
+qka --help
 # 预期: 'qa' is not recognized / command not found
 
 # 3. Python模块已不存在
@@ -329,9 +329,9 @@ pip install git+https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git@main
 可能存在多个 Python 环境或 PATH 缓存：
 
 ```bash
-# 查找 qa 命令位置
-which qa        # Linux/macOS
-where qa        # Windows
+# 查找 qka 命令位置
+which qka        # Linux/macOS
+where qka        # Windows
 
 # 删除残留的 CLI 入口
 # Linux/macOS
@@ -350,10 +350,10 @@ del %USERPROFILE%\AppData\Local\Programs\Python\Python3XX\Scripts\qa.exe
 pip install --upgrade quickagents
 
 # 或使用内置命令
-qa update
+qka update
 ```
 
-### Q4: 老版本没有 `qa update` 怎么升级？
+### Q4: 老版本没有 `qka update` 怎么升级？
 
 ```bash
 # 直接 pip 升级，不需要先卸载

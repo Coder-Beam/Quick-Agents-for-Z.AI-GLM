@@ -1,4 +1,4 @@
-# QuickAgents 工具调用错误修复指南
+﻿# QuickAgents 工具调用错误修复指南
 
 ## 概述
 
@@ -38,7 +38,7 @@ else:
 
 ```bash
 # 方案B: 使用CLI工具
-qa edit <file> "<old>" "<new>"
+qka edit <file> "<old>" "<new>"
 ```
 
 ### 1.2 Write工具 - 文件未先读取
@@ -64,7 +64,7 @@ fm.write('path/to/file.py', 'new content')
 
 ```bash
 # 方案B: 使用CLI工具
-qa write <file> "<content>"
+qka write <file> "<content>"
 ```
 
 ### 1.3 路径错误
@@ -162,16 +162,16 @@ print(f"节省Token估算: {stats['tokens']['total_saved']}")
 
 ```bash
 # 智能读取
-qa read Docs/MEMORY.md
+qka read Docs/MEMORY.md
 
 # 查看缓存统计
-qa cache stats
+qka cache stats
 
 # 查看缓存文件列表
-qa cache list
+qka cache list
 
 # 清空缓存
-qa cache clear
+qka cache clear
 ```
 
 ---

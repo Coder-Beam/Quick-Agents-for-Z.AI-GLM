@@ -1,4 +1,4 @@
-# OpenCode Plugins Directory
+﻿# OpenCode Plugins Directory
 
 This directory contains plugins for OpenCode.
 
@@ -57,10 +57,10 @@ The plugin intercepts these commands and executes them locally:
 
 | Command | Description |
 |---------|-------------|
-| `qa memory get/set/search` | Memory operations |
-| `qa knowledge search/trace` | Knowledge graph queries |
-| `qa stats` | Statistics |
-| `qa progress` | Progress tracking |
+| `qka memory get/set/search` | Memory operations |
+| `qka knowledge search/trace` | Knowledge graph queries |
+| `qka stats` | Statistics |
+| `qka progress` | Progress tracking |
 | `grep` tool | Content search (local ripgrep) |
 | `glob` tool | File search (local traversal) |
 

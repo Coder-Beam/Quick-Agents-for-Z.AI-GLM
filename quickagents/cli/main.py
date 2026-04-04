@@ -2,78 +2,78 @@
 QuickAgents CLI - 命令行工具
 
 命令:
-    qa read <file>           # 智能读取文件（哈希检测）
-    qa write <file> <content> # 写入文件
-    qa edit <file> <old> <new> # 编辑文件
-    qa hash <file>           # 获取文件哈希
-    qa cache stats           # 查看缓存统计
-    qa cache clear           # 清空缓存
-    qa memory get <key>      # 获取记忆
-    qa memory set <key> <val> # 设置记忆
-    qa memory search <keyword> # 搜索记忆
-    qa loop check            # 检查循环模式
-    qa loop reset            # 重置循环检测
-    qa stats                 # 查看整体统计
-    qa sync [table]          # 同步SQLite到Markdown
+    qka read <file>           # 智能读取文件（哈希检测）
+    qka write <file> <content> # 写入文件
+    qka edit <file> <old> <new> # 编辑文件
+    qka hash <file>           # 获取文件哈希
+    qka cache stats           # 查看缓存统计
+    qka cache clear           # 清空缓存
+    qka memory get <key>      # 获取记忆
+    qka memory set <key> <val> # 设置记忆
+    qka memory search <keyword> # 搜索记忆
+    qka loop check            # 检查循环模式
+    qka loop reset            # 重置循环检测
+    qka stats                 # 查看整体统计
+    qka sync [table]          # 同步SQLite到Markdown
     
     # 版本与升级命令
-    qa version               # 查看当前版本
-    qa version --check       # 检查所有模块完整性
-    qa update                # 从PyPI升级到最新版
-    qa update --target 2.7.6 # 升级到指定版本
-    qa update --source github # 从GitHub源码安装
-    qa update --dry-run      # 仅预览升级，不执行
-    qa uninstall             # 卸载当前项目的QuickAgents文件（项目级）
-    qa uninstall --dry-run   # 预览卸载内容
-    qa uninstall --keep-data # 卸载但保留项目数据
-    qa uninstall --force     # 跳过确认直接卸载
+    qka version               # 查看当前版本
+    qka version --check       # 检查所有模块完整性
+    qka update                # 从PyPI升级到最新版
+    qka update --target 2.7.6 # 升级到指定版本
+    qka update --source github # 从GitHub源码安装
+    qka update --dry-run      # 仅预览升级，不执行
+    qka uninstall             # 卸载当前项目的QuickAgents文件（项目级）
+    qka uninstall --dry-run   # 预览卸载内容
+    qka uninstall --keep-data # 卸载但保留项目数据
+    qka uninstall --force     # 跳过确认直接卸载
     
     # 导出命令
-    qa export                # 导出到 Output/<版本号>/（自动检测版本+git commit）
-    qa export --version 1.0  # 指定版本号
-    qa export --dry-run      # 预览导出内容
-    qa export --inject-gitignore  # 将QA排除规则注入 .gitignore
-    qa export --list-excludes     # 列出所有排除规则
+    qka export                # 导出到 Output/<版本号>/（自动检测版本+git commit）
+    qka export --version 1.0  # 指定版本号
+    qka export --dry-run      # 预览导出内容
+    qka export --inject-gitignore  # 将QA排除规则注入 .gitignore
+    qka export --list-excludes     # 列出所有排除规则
     
     # 模型配置命令
-    qa models status         # 查看当前模型配置
-    qa models check          # 检查GLM版本更新
-    qa models upgrade [version] # 升级GLM模型
-    qa models rollback       # 回滚到上一版本
+    qka models status         # 查看当前模型配置
+    qka models check          # 检查GLM版本更新
+    qka models upgrade [version] # 升级GLM模型
+    qka models rollback       # 回滚到上一版本
     
     # 自我进化系统命令
-    qa evolution status      # 进化系统状态
-    qa evolution stats [skill] # Skills使用统计
-    qa evolution optimize    # 执行定期优化
-    qa evolution history <skill> # 查看Skill进化历史
-    qa evolution sync        # 同步到Markdown
+    qka evolution status      # 进化系统状态
+    qka evolution stats [skill] # Skills使用统计
+    qka evolution optimize    # 执行定期优化
+    qka evolution history <skill> # 查看Skill进化历史
+    qka evolution sync        # 同步到Markdown
     
     # Git钩子命令
-    qa hooks install         # 安装Git钩子
-    qa hooks uninstall       # 卸载Git钩子
-    qa hooks status          # 钩子状态
+    qka hooks install         # 安装Git钩子
+    qka hooks uninstall       # 卸载Git钩子
+    qka hooks status          # 钩子状态
     
     # Skills本地化命令
-    qa feedback bug <desc>   # 记录Bug
-    qa feedback improve <desc> # 记录改进建议
-    qa feedback best <desc>  # 记录最佳实践
-    qa feedback view [type]  # 查看收集的经验
+    qka feedback bug <desc>   # 记录Bug
+    qka feedback improve <desc> # 记录改进建议
+    qka feedback best <desc>  # 记录最佳实践
+    qka feedback view [type]  # 查看收集的经验
     
-    qa tdd red [test_file]   # RED阶段：运行测试（应失败）
-    qa tdd green [test_file] # GREEN阶段：运行测试（应通过）
-    qa tdd refactor [test_file] # REFACTOR阶段
-    qa tdd stats             # TDD统计
-    qa tdd coverage          # 检查覆盖率
+    qka tdd red [test_file]   # RED阶段：运行测试（应失败）
+    qka tdd green [test_file] # GREEN阶段：运行测试（应通过）
+    qka tdd refactor [test_file] # REFACTOR阶段
+    qka tdd stats             # TDD统计
+    qka tdd coverage          # 检查覆盖率
     
-    qa git status            # Git状态
-    qa git check             # Pre-commit检查
-    qa git commit <type> <scope> <subject> # 执行提交
-    qa git push              # 推送到远程
+    qka git status            # Git状态
+    qka git check             # Pre-commit检查
+    qka git commit <type> <scope> <subject> # 执行提交
+    qka git push              # 推送到远程
     
     # 文档导入命令
-    qa import PALs/           # 导入PALs目录下的文档
-    qa import PALs/ --with-source  # 同时导入源码
-    qa import PALs/ --dry-run # 预览导入
+    qka import PALs/           # 导入PALs目录下的文档
+    qka import PALs/ --with-source  # 同时导入源码
+    qka import PALs/ --dry-run # 预览导入
 """
 
 import sys
@@ -720,7 +720,7 @@ def cmd_models(args):
         
         if not target:
             print(f"[FAIL] 未找到 {current_primary} 的升级路径")
-            print("  使用: qa models upgrade --to GLM-5.1")
+            print("  使用: qka models upgrade --to GLM-5.1")
             return
         
         print(f"  当前: {current_primary}")
@@ -836,11 +836,11 @@ def cmd_uninstall(args):
         3. 项目配置 (.opencode/ 目录中的qa相关文件)
 
     用法:
-        qa uninstall                # 交互式卸载（仅项目级）
-        qa uninstall --dry-run      # 预览将被清理的内容
-        qa uninstall --keep-data    # 保留 .quickagents/ 目录
-        qa uninstall --keep-opencode # 保留 .opencode/ 目录
-        qa uninstall --force        # 跳过确认提示
+        qka uninstall                # 交互式卸载（仅项目级）
+        qka uninstall --dry-run      # 预览将被清理的内容
+        qka uninstall --keep-data    # 保留 .quickagents/ 目录
+        qka uninstall --keep-opencode # 保留 .opencode/ 目录
+        qka uninstall --force        # 跳过确认提示
     """
     import shutil
 
@@ -867,7 +867,7 @@ def cmd_uninstall(args):
             if hook_file.is_file() and not hook_file.name.endswith('.sample'):
                 try:
                     content = hook_file.read_text(encoding='utf-8', errors='ignore')
-                    if 'quickagents' in content.lower() or 'qa ' in content:
+                    if 'quickagents' in content.lower() or 'qka ' in content:
                         qa_hooks.append(hook_file)
                 except Exception:
                     pass
@@ -1125,12 +1125,12 @@ def cmd_export(args):
     此命令可由 AI Agents 自动调用（当用户说"发布/打包/上传/导出"等关键词时）。
 
     用法:
-        qa export                       # 导出到 Output/<版本号>/
-        qa export --version 1.0.0       # 指定版本号
-        qa export --output ./dist       # 指定输出根目录（默认 ./Output）
-        qa export --dry-run             # 仅预览将被排除的文件
-        qa export --list-excludes       # 列出所有排除规则
-        qa export --inject-gitignore    # 将排除规则注入 .gitignore
+        qka export                       # 导出到 Output/<版本号>/
+        qka export --version 1.0.0       # 指定版本号
+        qka export --output ./dist       # 指定输出根目录（默认 ./Output）
+        qka export --dry-run             # 仅预览将被排除的文件
+        qka export --list-excludes       # 列出所有排除规则
+        qka export --inject-gitignore    # 将排除规则注入 .gitignore
     """
     import shutil
     import json
@@ -1196,7 +1196,7 @@ def cmd_export(args):
     git_dir = project_root / '.git'
     if not git_dir.exists():
         print("[FAIL] 当前目录不是 git 仓库")
-        print("  qa export 要求在 git 仓库中执行，确保导出与 commit 对应")
+        print("  qka export 要求在 git 仓库中执行，确保导出与 commit 对应")
         print("  请先执行: git init")
         return
 
@@ -1241,7 +1241,7 @@ def cmd_export(args):
 
     if is_dirty:
         print(f"[FAIL] 工作树有 {dirty_count} 个未提交的变更")
-        print("  qa export 要求所有变更已 commit，确保导出与 commit 一一对应")
+        print("  qka export 要求所有变更已 commit，确保导出与 commit 一一对应")
         print()
         print("  请先提交:")
         print("    git add .")
@@ -1971,7 +1971,7 @@ def main():
 
     # import 命令
     p_import = subparsers.add_parser('import', help='Import documents from PALs/ directory',
-                                     usage='qa import [pals_dir] [options]')
+                                     usage='qka import [pals_dir] [options]')
     p_import.add_argument('pals_dir', nargs='?', default='PALs',
                           help='PALs directory path (default: PALs)')
     p_import.add_argument('--with-source', '-s', action='store_true',

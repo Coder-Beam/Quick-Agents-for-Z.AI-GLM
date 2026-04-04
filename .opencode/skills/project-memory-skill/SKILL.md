@@ -1,4 +1,4 @@
----
+﻿---
 name: project-memory-skill
 description: |
   Manage the three-dimensional memory system (Factual/Experiential/Working)
@@ -447,15 +447,15 @@ stats = db.get_stats()
 
 ```bash
 # 记忆操作
-qa memory get project.name
-qa memory set project.tech_stack '["Python", "TypeScript"]'
-qa memory search 认证
+qka memory get project.name
+qka memory set project.tech_stack '["Python", "TypeScript"]'
+qka memory search 认证
 
 # 同步到Markdown
-qa sync
+qka sync
 
 # 查看统计
-qa stats
+qka stats
 ```
 
 **重要**: AI代理应使用Python API而非CLI命令，以实现0 Token消耗。
