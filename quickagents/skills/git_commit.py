@@ -434,7 +434,25 @@ class GitCommit:
                     text=True,
                     cwd=str(self.project_root)
                 )
-                result['commit_hash'] = hash_result.stdout.strip()[:7]
+                commit_hash = hash_result.stdout.strip()[:7]
+                result['commit_hash'] = commit_hash
+                
+                # 触发进化分析（失败不影响主流程）
+                try:
+                    from ._evolution_trigger import trigger_git_commit
+                    # 获取变更文件列表
+                    files_result = subprocess.run(
+                        ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', commit_hash],
+                        capture_output=True, text=True, timeout=5
+                    )
+                    files_changed = files_result.stdout.strip().split('\n') if files_result.returncode == 0 else []
+                    trigger_git_commit({
+                        'hash': commit_hash,
+                        'message': message,
+                        'files_changed': [f for f in files_changed if f]
+                    })
+                except Exception:
+                    pass  # 进化分析失败不影响提交结果
             else:
                 result['message'] = proc.stderr
                 
