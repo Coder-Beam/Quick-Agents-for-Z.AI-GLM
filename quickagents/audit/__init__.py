@@ -8,17 +8,6 @@ AuditGuard - 审计问责与品控测试模块
 - AuditConfig: 配置管理
 - AuditReporter: Markdown/JSON 报告生成
 
-架构:
-    ┌─────────────────────────────────────────┐
-    │         AuditGuard (Facade)              │
-    ├─────────────────────────────────────────┤
-    │  CodeAuditTracker  — 变更追踪           │
-    │  QualityGate       — 质量门禁           │
-    │  AccountabilityEngine — 问责引擎        │
-    │  AuditConfig       — 配置管理           │
-    │  AuditReporter     — 报告生成           │
-    └─────────────────────────────────────────┘
-
 版本: 0.1.0 (v2.9.0-preview)
 创建时间: 2026-04-05
 """
@@ -34,10 +23,13 @@ from .models import (
     IssueType,
     IssueStatus,
     LessonType,
+    QualityStatus,
 )
 from .audit_config import AuditConfig
 from .code_audit import CodeAuditTracker
 from .audit_reporter import AuditReporter
+from .quality_gate import QualityGate, CheckStatus
+from .accountability import AccountabilityEngine
 
 __all__ = [
     # 数据模型
@@ -51,8 +43,12 @@ __all__ = [
     "IssueType",
     "IssueStatus",
     "LessonType",
+    "QualityStatus",
     # 核心组件
     "AuditConfig",
     "CodeAuditTracker",
     "AuditReporter",
+    "QualityGate",
+    "CheckStatus",
+    "AccountabilityEngine",
 ]
