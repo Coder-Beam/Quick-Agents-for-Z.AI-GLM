@@ -53,8 +53,14 @@ pnpm-lock.yaml
 # === Reference/Learning files (local only) ===
 reference/
 skills/
-Docs/EXAMPLES.md
-Docs/API_REFERENCE.md
+Docs/
+
+# === Test files (root directory only) ===
+/test_*.py
+!tests/
+*_output.txt
+*_test_report.md
+!TEST_REPORT.md
 
 # === Python cache ===
 __pycache__/

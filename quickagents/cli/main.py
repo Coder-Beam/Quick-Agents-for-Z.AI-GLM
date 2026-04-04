@@ -1061,13 +1061,24 @@ def _should_exclude(rel_path: str, project_root: Path) -> bool:
     rel_path_posix = rel_path.replace('\\', '/')
     parts = rel_path_posix.split('/')
 
+    # 加载自定义配置
+    custom_config = _load_custom_export_config(project_root)
+
+    # 合并规则
+    all_dirs = QA_PROJECT_PATTERNS['dirs'] + custom_config.get('dirs', [])
+    all_root_files = QA_PROJECT_PATTERNS['root_files'] + custom_config.get('root_files', [])
+    all_docs_files = QA_PROJECT_PATTERNS['docs_files'] + custom_config.get('docs_files', [])
+    all_docs_dirs = QA_PROJECT_PATTERNS['docs_dirs'] + custom_config.get('docs_dirs', [])
+    all_generic = QA_PROJECT_PATTERNS['generic_exclude']
+    custom_patterns = custom_config.get('patterns', [])
+
     # 排除目录
-    for d in QA_PROJECT_PATTERNS['dirs']:
+    for d in all_dirs:
         if d in parts:
             return True
 
     # 排除通用目录
-    for d in QA_PROJECT_PATTERNS['generic_exclude']:
+    for d in all_generic:
         clean = d.replace('*', '')
         if clean in parts:
             return True
@@ -1083,10 +1094,10 @@ def _should_exclude(rel_path: str, project_root: Path) -> bool:
 
     # 根目录文件（只在根目录时排除）
     if len(parts) == 1:
-        for f in QA_PROJECT_PATTERNS['root_files']:
+        for f in all_root_files:
             if filename == f:
                 return True
-        for f in QA_PROJECT_PATTERNS['generic_exclude']:
+        for f in all_generic:
             if '*' in f:
                 import fnmatch
                 if fnmatch.fnmatch(filename, f):
@@ -1095,18 +1106,51 @@ def _should_exclude(rel_path: str, project_root: Path) -> bool:
     # Docs/ 下的 QA 文件
     if len(parts) >= 2 and parts[0] == 'Docs':
         docs_rel = '/'.join(parts[:2]) if len(parts) >= 2 else parts[0]
-        for f in QA_PROJECT_PATTERNS['docs_files']:
+        for f in all_docs_files:
             if docs_rel == f:
                 return True
-        for d in QA_PROJECT_PATTERNS['docs_dirs']:
+        for d in all_docs_dirs:
             if rel_path_posix.startswith(d + '/'):
                 return True
+
+    # 自定义模式匹配
+    if custom_patterns:
+        import fnmatch
+        for pattern in custom_patterns:
+            # 支持 **/test_*.py 这样的模式
+            if pattern.startswith('**/'):
+                sub_pattern = pattern[3:]
+                if fnmatch.fnmatch(filename, sub_pattern):
+                    return True
+            elif '*' in pattern:
+                if fnmatch.fnmatch(rel_path_posix, pattern):
+                    return True
 
     # __pycache__ 在任意层级
     if '__pycache__' in parts:
         return True
 
     return False
+
+
+def _load_custom_export_config(project_root: Path) -> dict:
+    """加载用户自定义的导出配置文件"""
+    config_path = project_root / '.qkaexport'
+    if not config_path.exists():
+        return {}
+
+    try:
+        import json as _json
+        content = config_path.read_text(encoding='utf-8')
+        config = _json.loads(content)
+
+        # 返回 exclude 部分
+        if 'exclude' in config:
+            return config['exclude']
+        return {}
+    except Exception as e:
+        print(f"[WARN] 加载 .qkaexport 配置文件失败: {e}")
+        return {}
 
 
 def cmd_export(args):
@@ -1121,6 +1165,10 @@ def cmd_export(args):
         - 工作树必须干净（所有变更已 commit），否则拒绝导出
         - 输出目录名包含版本号，与当前 commit 绑定
         - manifest 中记录 commit hash 用于溯源
+
+    支持自定义配置:
+        - 项目根目录的 .qkaexport 文件可以定义额外的排除规则
+        - .qkaexport 格式见: https://quickagents.ai/schemas/qkaexport.json
 
     此命令可由 AI Agents 自动调用（当用户说"发布/打包/上传/导出"等关键词时）。
 
@@ -1144,30 +1192,48 @@ def cmd_export(args):
     output_root = getattr(args, 'output', 'Output') or 'Output'
     version = getattr(args, 'version', None)
 
+    # 获取项目根目录
+    project_root = Path.cwd()
+
     # --- 列出排除规则 ---
     if list_excludes:
         print("[Export] QuickAgents 排除规则列表")
         print("=" * 60)
 
+        # 加载自定义配置
+        custom_config = _load_custom_export_config(project_root)
+
         print("\n排除目录:")
-        for d in QA_PROJECT_PATTERNS['dirs']:
+        all_dirs = QA_PROJECT_PATTERNS['dirs'] + custom_config.get('dirs', [])
+        for d in sorted(set(all_dirs)):
             print(f"  - {d}/")
 
         print("\n排除根目录文件:")
-        for f in QA_PROJECT_PATTERNS['root_files']:
+        all_root_files = QA_PROJECT_PATTERNS['root_files'] + custom_config.get('root_files', [])
+        for f in sorted(set(all_root_files)):
             print(f"  - {f}")
 
         print("\n排除 Docs/ 文件:")
-        for f in QA_PROJECT_PATTERNS['docs_files']:
+        all_docs_files = QA_PROJECT_PATTERNS['docs_files'] + custom_config.get('docs_files', [])
+        for f in sorted(set(all_docs_files)):
             print(f"  - {f}")
 
         print("\n排除 Docs/ 子目录:")
-        for d in QA_PROJECT_PATTERNS['docs_dirs']:
+        all_docs_dirs = QA_PROJECT_PATTERNS['docs_dirs'] + custom_config.get('docs_dirs', [])
+        for d in sorted(set(all_docs_dirs)):
             print(f"  - {d}/")
 
         print("\n通用排除:")
-        for f in QA_PROJECT_PATTERNS['generic_exclude']:
+        all_generic = QA_PROJECT_PATTERNS['generic_exclude']
+        for f in sorted(set(all_generic)):
             print(f"  - {f}")
+
+        # 显示自定义模式
+        custom_patterns = custom_config.get('patterns', [])
+        if custom_patterns:
+            print("\n自定义模式:")
+            for p in custom_patterns:
+                print(f"  - {p}")
 
         return
 
@@ -1190,7 +1256,6 @@ def cmd_export(args):
         return
 
     # --- Git 前置检查 ---
-    project_root = Path.cwd()
     project_name = project_root.name
 
     git_dir = project_root / '.git'
