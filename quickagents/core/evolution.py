@@ -16,8 +16,8 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+from datetime import datetime
 from enum import Enum
 
 from .unified_db import UnifiedDB, FeedbackType
@@ -241,7 +241,7 @@ class SkillEvolution:
         if 'fix' in commit_info.get('message', '').lower():
             # 尝试从 files_changed 提取修复范围
             files_changed = commit_info.get('files_changed', [])
-            fix_scope = ', '.join(set(f.split('/')[0] for f in files_changed if '/' in f)[:3])
+            fix_scope = ', '.join(sorted(set(f.split('/')[0] for f in files_changed if '/' in f))[:3])
             self.db.add_feedback(
                 FeedbackType.BUG,
                 title=f"Bug修复: {commit_info.get('message', '')[:80]}",
@@ -794,7 +794,6 @@ class SkillEvolution:
     def _review_skill(self, skill_name: str, stat: Dict) -> Dict:
         """评估Skill"""
         success_rate = stat.get('success_rate', 1)
-        count = stat.get('count', 0)
         
         if success_rate >= 0.9:
             recommendation = 'excellent'
