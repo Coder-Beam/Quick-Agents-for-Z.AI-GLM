@@ -438,11 +438,40 @@ class UnifiedDB:
             List[Task]: 任务列表
         """
         return self._task_repo.get_pending(limit)
-    
+
+    def get_decisions(self) -> List[Dict[str, Any]]:
+        """
+        获取所有决策日志
+
+        Returns:
+            List[Dict]: 决策列表，每个决策包含 id, title, decision, created_at 等信息
+        """
+        try:
+            # 从数据库查询决策表
+            with self._connection_manager.get_connection() as conn:
+                cursor = conn.execute("""
+                    SELECT id, title, decision, context, created_at
+                    FROM decisions
+                    ORDER BY created_at DESC
+                """)
+                decisions = []
+                for row in cursor.fetchall():
+                    decisions.append({
+                        'id': row[0],
+                        'title': row[1],
+                        'decision': row[2],
+                        'context': row[3] if len(row) > 3 else None,
+                        'created_at': row[4] if len(row) > 4 else None
+                    })
+                return decisions
+        except Exception as e:
+            logger.error(f"获取决策失败: {e}")
+            return []
+
     def get_next_task(self) -> Optional[Task]:
         """
         获取下一个待处理的任务（最高优先级）
-        
+
         Returns:
             Optional[Task]: 任务实体
         """

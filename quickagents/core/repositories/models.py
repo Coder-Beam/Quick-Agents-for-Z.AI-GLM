@@ -50,6 +50,8 @@ class FeedbackType(Enum):
     BEST_PRACTICE = "best_practice"
     PITFALL = "pitfall"
     QUESTION = "question"
+    SKILL_REVIEW = "skill_review"    # Skills评估反馈
+    AGENT_REVIEW = "agent_review"    # Agent评估反馈
 
 
 # ==================== 实体类定义 ====================

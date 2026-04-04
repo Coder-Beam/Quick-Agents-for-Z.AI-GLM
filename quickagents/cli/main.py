@@ -395,6 +395,11 @@ def cmd_tdd(args):
     
     if args.action == 'red':
         result = tdd.run_red(args.test_file)
+        # 检查文件不存在等错误
+        if result.get('error') == 'file_not_found':
+            print(f"[RED] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
+            print("  请确认文件路径是否正确")
+            return
         print(f"[RED] RED阶段: {'测试失败 [OK]' if not result['passed'] else '测试通过 [WARN]'}")
         print(f"  耗时: {result['duration_ms']}ms")
         if result['passed']:
@@ -402,6 +407,11 @@ def cmd_tdd(args):
     
     elif args.action == 'green':
         result = tdd.run_green(args.test_file)
+        # 检查文件不存在等错误
+        if result.get('error') == 'file_not_found':
+            print(f"[GREEN] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
+            print("  请确认文件路径是否正确")
+            return
         print(f"[GREEN] GREEN阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
         print(f"  耗时: {result['duration_ms']}ms")
         if result['passed']:
@@ -409,6 +419,11 @@ def cmd_tdd(args):
     
     elif args.action == 'refactor':
         result = tdd.run_refactor(args.test_file)
+        # 检查文件不存在等错误
+        if result.get('error') == 'file_not_found':
+            print(f"[REFACTOR] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
+            print("  请确认文件路径是否正确")
+            return
         print(f"[REFACTOR] REFACTOR阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
         print(f"  耗时: {result['duration_ms']}ms")
     

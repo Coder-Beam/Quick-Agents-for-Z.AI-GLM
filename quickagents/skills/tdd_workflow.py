@@ -145,7 +145,20 @@ class TDDWorkflow:
     def _run_tests(self, test_file: str, phase: TDDPhase) -> Dict:
         """运行测试"""
         start_time = datetime.now()
-        
+
+        # 检查测试文件是否存在
+        if test_file:
+            test_path = self.project_root / test_file
+            if not test_path.exists():
+                return {
+                    'passed': False,
+                    'output': f'错误: 测试文件不存在: {test_file}',
+                    'duration_ms': 0,
+                    'phase': phase.value,
+                    'test_file': test_file,
+                    'error': 'file_not_found'
+                }
+
         # 构建命令
         cmd = self.test_command
         if test_file:
@@ -153,7 +166,7 @@ class TDDWorkflow:
                 cmd = f"{cmd} {test_file}"
             elif 'npm' in cmd:
                 cmd = f"{cmd} -- {test_file}"
-        
+
         # 执行测试
         try:
             result = subprocess.run(
@@ -164,22 +177,22 @@ class TDDWorkflow:
                 cwd=str(self.project_root),
                 timeout=60
             )
-            
+
             output = result.stdout + result.stderr
             passed = result.returncode == 0
-            
+
         except subprocess.TimeoutExpired:
             output = "测试执行超时"
             passed = False
         except Exception as e:
             output = str(e)
             passed = False
-        
+
         duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
-        
+
         # 记录状态
         self._record_phase(phase, passed, test_file)
-        
+
         return {
             'passed': passed,
             'output': output,
