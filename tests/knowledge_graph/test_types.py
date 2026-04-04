@@ -15,10 +15,14 @@ class TestNodeType:
         assert NodeType.FACT.value == "fact"
         assert NodeType.CONCEPT.value == "concept"
         assert NodeType.SOURCE.value == "source"
+        assert NodeType.DOCUMENT.value == "document"
+        assert NodeType.SECTION.value == "section"
+        assert NodeType.MODULE.value == "module"
+        assert NodeType.FUNCTION.value == "function"
     
     def test_node_type_count(self):
         """Test total number of node types."""
-        assert len(NodeType) == 6
+        assert len(NodeType) == 10
     
     def test_node_type_from_string(self):
         """Test creating NodeType from string."""
@@ -43,7 +47,11 @@ class TestEdgeType:
         assert EdgeType.SUPPORTS.value == "supports"
         assert EdgeType.RELATED_TO.value == "related_to"
         assert EdgeType.INDIRECTLY_RELATED_TO.value == "indirectly_related_to"
+        assert EdgeType.CONTAINS.value == "contains"
+        assert EdgeType.IMPLEMENTS.value == "implements"
+        assert EdgeType.CALLS.value == "calls"
+        assert EdgeType.EXTRACTED_FROM.value == "extracted_from"
     
     def test_edge_type_count(self):
         """Test total number of edge types."""
-        assert len(EdgeType) == 11
+        assert len(EdgeType) == 15

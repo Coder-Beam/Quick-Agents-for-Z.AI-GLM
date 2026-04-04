@@ -204,8 +204,8 @@ class TestGitCommitTrigger:
         # Mock git command
         result = evolution.on_git_commit()
         
-        # Result should contain commit info or None
-        assert result is None or 'commit_hash' in result
+        # Result should contain commit info, None, or a status dict (e.g. no_commits)
+        assert result is None or 'commit_hash' in result or 'status' in result
     
     def test_git_commit_with_info(self, temp_db):
         """Git commit with info analyzes commit."""
