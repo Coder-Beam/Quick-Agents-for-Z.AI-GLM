@@ -20,6 +20,7 @@ import json
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from .unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType, get_unified_db
 
 
@@ -76,13 +77,9 @@ class MarkdownSync:
         # 冲突检测器
         from ..utils.sync_conflict import SyncConflictDetector
 
-        self.conflict_detector = SyncConflictDetector(
-            str(self.docs_dir), str(self.quickagents_dir)
-        )
+        self.conflict_detector = SyncConflictDetector(str(self.docs_dir), str(self.quickagents_dir))
 
-    def sync_all(
-        self, check_conflicts: bool = True, force: bool = False
-    ) -> Dict[str, Any]:
+    def sync_all(self, check_conflicts: bool = True, force: bool = False) -> Dict[str, Any]:
         """
         同步所有表到Markdown
 
@@ -106,14 +103,28 @@ class MarkdownSync:
                     "message": "检测到文件冲突，请使用 force=True 强制同步或先处理冲突",
                 }
 
-        # 执行同步
-        results = {
-            "memory": self.sync_memory(False),
-            "tasks": self.sync_tasks(False),
-            "decisions": self.sync_decisions(False),
-            "progress": self.sync_progress(False),
-            "feedback": self.sync_feedback(False),
-        }
+        # 执行同步（并行写入）
+        results: Dict[str, Any] = {}
+
+        def _run_sync(name: str, fn, results: dict):
+            try:
+                results[name] = fn(False)
+            except Exception as e:
+                results[name] = {"error": str(e)}
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(_run_sync, n, fn, results): n
+                for n, fn in [
+                    ("memory", self.sync_memory),
+                    ("tasks", self.sync_tasks),
+                    ("decisions", self.sync_decisions),
+                    ("progress", self.sync_progress),
+                    ("feedback", self.sync_feedback),
+                ]
+            }
+            for f in as_completed(futures):
+                f.result()
 
         # 记录同步状态
         self.conflict_detector.record_all_sync_states()
@@ -176,10 +187,10 @@ class MarkdownSync:
                 return False
 
         try:
-            # 获取所有记忆
-            factual = self.db.get_memories_by_type(MemoryType.FACTUAL)
-            experiential = self.db.get_memories_by_type(MemoryType.EXPERIENTIAL)
-            working = self.db.get_memories_by_type(MemoryType.WORKING)
+            all_memories = self.db.get_all_memories()
+            factual = [m for m in all_memories if _get_attr(m, "memory_type") == MemoryType.FACTUAL]
+            experiential = [m for m in all_memories if _get_attr(m, "memory_type") == MemoryType.EXPERIENTIAL]
+            working = [m for m in all_memories if _get_attr(m, "memory_type") == MemoryType.WORKING]
 
             # 生成Markdown内容
             content = self._generate_memory_md(factual, experiential, working)
@@ -198,9 +209,7 @@ class MarkdownSync:
             print(f"同步记忆失败: {e}")
             return False
 
-    def _generate_memory_md(
-        self, factual: List, experiential: List, working: List
-    ) -> str:
+    def _generate_memory_md(self, factual: List, experiential: List, working: List) -> str:
         """生成MEMORY.md内容"""
         lines = [
             "# MEMORY.md",
@@ -296,9 +305,7 @@ class MarkdownSync:
             # 获取所有任务
             all_tasks = self.db.get_tasks()
             completed = [t for t in all_tasks if _get_attr(t, "status") == "completed"]
-            in_progress = [
-                t for t in all_tasks if _get_attr(t, "status") == "in_progress"
-            ]
+            in_progress = [t for t in all_tasks if _get_attr(t, "status") == "in_progress"]
             pending = [t for t in all_tasks if _get_attr(t, "status") == "pending"]
             blocked = [t for t in all_tasks if _get_attr(t, "status") == "blocked"]
 
@@ -367,9 +374,7 @@ class MarkdownSync:
                 name = _get_attr(task, "name")
                 priority = _get_attr(task, "priority")
                 started_at = _get_attr(task, "started_at", "-")
-                lines.append(
-                    f"| {task_id} | {name} | {priority} | 进行中 | {started_at[:10] if started_at else '-'} |"
-                )
+                lines.append(f"| {task_id} | {name} | {priority} | 进行中 | {started_at[:10] if started_at else '-'} |")
             lines.append("")
 
         lines.extend(["---", "", "## 待办任务", ""])
@@ -419,9 +424,7 @@ class MarkdownSync:
             task_id = _get_attr(task, "id") or _get_attr(task, "task_id")
             name = _get_attr(task, "name")
             completed_at = _get_attr(task, "completed_at", "")
-            lines.append(
-                f"- [x] {task_id}: {name} - 完成于 {completed_at[:10] if completed_at else ''}"
-            )
+            lines.append(f"- [x] {task_id}: {name} - 完成于 {completed_at[:10] if completed_at else ''}")
 
         lines.append("")
         return "\n".join(lines)
@@ -477,9 +480,7 @@ class MarkdownSync:
             created_at = _get_attr(d, "created_at", "")
             impact = _get_attr(d, "impact", "-")
             status = _get_attr(d, "status")
-            lines.append(
-                f"| {decision_id} | {title} | {created_at[:10] if created_at else ''} | {impact} | {status} |"
-            )
+            lines.append(f"| {decision_id} | {title} | {created_at[:10] if created_at else ''} | {impact} | {status} |")
 
         lines.extend(["", "---", ""])
 
@@ -568,9 +569,7 @@ class MarkdownSync:
 
             # 写入文件
             boulder_path = self.quickagents_dir / "boulder.json"
-            boulder_path.write_text(
-                json.dumps(boulder_data, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+            boulder_path.write_text(json.dumps(boulder_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
             # 记录同步状态
             if record_state:
@@ -594,7 +593,6 @@ class MarkdownSync:
             feedback_dir = self.quickagents_dir / "feedback"
             feedback_dir.mkdir(parents=True, exist_ok=True)
 
-            # 按类型分组
             type_files = {
                 FeedbackType.BUG: "bugs.md",
                 FeedbackType.IMPROVEMENT: "improvements.md",
@@ -603,10 +601,15 @@ class MarkdownSync:
                 FeedbackType.AGENT_REVIEW: "agent-review.md",
             }
 
-            for fb_type, filename in type_files.items():
-                feedbacks = self.db.get_feedbacks(fb_type)  # type: ignore[arg-type]
-                content = self._generate_feedback_md(fb_type, feedbacks)  # type: ignore[arg-type]
+            all_feedbacks = self.db.get_feedbacks(limit=1000)
+            grouped: Dict[FeedbackType, list] = {t: [] for t in type_files}
+            for fb in all_feedbacks:
+                fb_type_val = _get_attr(fb, "feedback_type")
+                if fb_type_val in grouped:
+                    grouped[fb_type_val].append(fb)
 
+            for fb_type, filename in type_files.items():
+                content = self._generate_feedback_md(fb_type, grouped[fb_type])
                 file_path = feedback_dir / filename
                 file_path.write_text(content, encoding="utf-8")
 
@@ -620,9 +623,7 @@ class MarkdownSync:
             print(f"同步反馈失败: {e}")
             return False
 
-    def _generate_feedback_md(
-        self, fb_type: FeedbackType, feedbacks: List[Dict]
-    ) -> str:
+    def _generate_feedback_md(self, fb_type: FeedbackType, feedbacks: List[Dict]) -> str:
         """生成反馈Markdown内容"""
         type_names = {
             FeedbackType.BUG: "Bug/错误",
@@ -699,9 +700,7 @@ class MarkdownSync:
         # 解析任务格式
         # 格式1: - [x] T001: 任务名称 - 完成于 2026-03-25
         # 格式2: - [ ] T002: 任务名称
-        pattern = (
-            r"-\s*\[([ x])\]\s*(T\d+):\s*(.+?)(?:\s*-\s*完成于\s*(\d{4}-\d{2}-\d{2}))?$"
-        )
+        pattern = r"-\s*\[([ x])\]\s*(T\d+):\s*(.+?)(?:\s*-\s*完成于\s*(\d{4}-\d{2}-\d{2}))?$"
 
         for match in re.finditer(pattern, content, re.MULTILINE):
             completed = match.group(1) == "x"
@@ -722,9 +721,7 @@ class MarkdownSync:
 
     def restore_decisions_from_md(self, decisions_path: Optional[str] = None) -> int:
         """从DECISIONS.md恢复决策"""
-        path = (
-            Path(decisions_path) if decisions_path else self.docs_dir / "DECISIONS.md"
-        )
+        path = Path(decisions_path) if decisions_path else self.docs_dir / "DECISIONS.md"
 
         if not path.exists():
             return 0
@@ -746,11 +743,7 @@ class MarkdownSync:
 
     def restore_progress_from_json(self, boulder_path: Optional[str] = None) -> int:
         """从boulder.json恢复进度"""
-        path = (
-            Path(boulder_path)
-            if boulder_path
-            else self.quickagents_dir / "boulder.json"
-        )
+        path = Path(boulder_path) if boulder_path else self.quickagents_dir / "boulder.json"
 
         if not path.exists():
             return 0

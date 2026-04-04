@@ -109,18 +109,10 @@ class UnifiedDB:
         self._session = Session(self._connection_manager, self._transaction_manager)
 
         # 初始化 Repositories
-        self._memory_repo = MemoryRepository(
-            self._connection_manager, self._transaction_manager
-        )
-        self._task_repo = TaskRepository(
-            self._connection_manager, self._transaction_manager
-        )
-        self._progress_repo = ProgressRepository(
-            self._connection_manager, self._transaction_manager
-        )
-        self._feedback_repo = FeedbackRepository(
-            self._connection_manager, self._transaction_manager
-        )
+        self._memory_repo = MemoryRepository(self._connection_manager, self._transaction_manager)
+        self._task_repo = TaskRepository(self._connection_manager, self._transaction_manager)
+        self._progress_repo = ProgressRepository(self._connection_manager, self._transaction_manager)
+        self._feedback_repo = FeedbackRepository(self._connection_manager, self._transaction_manager)
 
         # 自动执行迁移
         self._migration_manager.migrate()
@@ -247,9 +239,7 @@ class UnifiedDB:
 
         return memory
 
-    def search_memory(
-        self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10
-    ) -> List[Memory]:
+    def search_memory(self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10) -> List[Memory]:
         """
         搜索记忆
 
@@ -279,9 +269,7 @@ class UnifiedDB:
         """
         return self._memory_repo.search_with_scoring(query, config, memory_type)
 
-    def delete_memory(
-        self, key: str, memory_type: Optional[MemoryType] = None, category: Optional[str] = None
-    ) -> bool:
+    def delete_memory(self, key: str, memory_type: Optional[MemoryType] = None, category: Optional[str] = None) -> bool:
         """
         删除记忆
 
@@ -310,9 +298,16 @@ class UnifiedDB:
         """
         return self._memory_repo.get_by_type(memory_type)
 
-    def get_important_memories(
-        self, min_score: float = 0.7, limit: int = 10
-    ) -> List[Memory]:
+    def get_all_memories(self) -> List[Memory]:
+        """
+        获取所有记忆（不分类型）
+
+        Returns:
+            List[Memory]: 所有记忆列表
+        """
+        return self._memory_repo.get_all()
+
+    def get_important_memories(self, min_score: float = 0.7, limit: int = 10) -> List[Memory]:
         """
         获取高重要性记忆
 
@@ -362,9 +357,7 @@ class UnifiedDB:
 
         return self._task_repo.add(task)
 
-    def update_task_status(
-        self, task_id: str, status: str, notes: Optional[str] = None
-    ) -> Optional[Task]:
+    def update_task_status(self, task_id: str, status: str, notes: Optional[str] = None) -> Optional[Task]:
         """
         更新任务状态
 
@@ -390,9 +383,7 @@ class UnifiedDB:
         """
         return self._task_repo.get(task_id)
 
-    def get_tasks(
-        self, status: Optional[str] = None, priority: Optional[str] = None, limit: int = 100
-    ) -> List[Task]:
+    def get_tasks(self, status: Optional[str] = None, priority: Optional[str] = None, limit: int = 100) -> List[Task]:
         """
         获取任务列表
 
@@ -410,9 +401,7 @@ class UnifiedDB:
         if priority:
             filters["priority"] = priority
 
-        return self._task_repo.get_all(
-            filters=filters, order_by="created_at DESC", limit=limit
-        )
+        return self._task_repo.get_all(filters=filters, order_by="created_at DESC", limit=limit)
 
     def get_pending_tasks(self, limit: int = 100) -> List[Task]:
         """
@@ -542,15 +531,11 @@ class UnifiedDB:
             self._progress_repo.update_current_task(project_name, current_task)
 
         if completed_increment > 0:
-            return self._progress_repo.increment_completed(
-                project_name, completed_increment
-            )
+            return self._progress_repo.increment_completed(project_name, completed_increment)
 
         return self._progress_repo.get_by_project(project_name)
 
-    def increment_progress(
-        self, project_name: str, increment: int = 1
-    ) -> Optional[Progress]:
+    def increment_progress(self, project_name: str, increment: int = 1) -> Optional[Progress]:
         """
         增加进度
 
@@ -640,10 +625,7 @@ class UnifiedDB:
         return {
             "memory": {
                 "total": self._memory_repo.count(),
-                "by_type": {
-                    t.value: self._memory_repo.count({"memory_type": t.value})
-                    for t in MemoryType
-                },
+                "by_type": {t.value: self._memory_repo.count({"memory_type": t.value}) for t in MemoryType},
             },
             "tasks": {
                 "total": self._task_repo.count(),
