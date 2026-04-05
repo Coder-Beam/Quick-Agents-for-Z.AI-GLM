@@ -30,6 +30,7 @@ from .code_audit import CodeAuditTracker
 from .audit_reporter import AuditReporter
 from .quality_gate import QualityGate, CheckStatus
 from .accountability import AccountabilityEngine
+from .audit_guard import AuditGuard
 
 __all__ = [
     # 数据模型
@@ -51,4 +52,6 @@ __all__ = [
     "QualityGate",
     "CheckStatus",
     "AccountabilityEngine",
+    # 门面类
+    "AuditGuard",
 ]

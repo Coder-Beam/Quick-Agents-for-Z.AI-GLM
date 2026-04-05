@@ -49,14 +49,14 @@ Usage:
         evolution.run_periodic_optimization()
 
 CLI Usage:
-    qa stats                 # 数据库统计
-    qa sync                  # 同步到Markdown
-    qa evolution status      # 进化系统状态
-    qa evolution optimize    # 执行定期优化
-    qa hooks install         # 安装Git钩子
-    qa memory get <key>      # 获取记忆
-    qa tasks list            # 任务列表
-    qa progress              # 当前进度
+    qka stats                 # 数据库统计
+    qka sync                  # 同步到Markdown
+    qka evolution status      # 进化系统状态
+    qka evolution optimize    # 执行定期优化
+    qka hooks install         # 安装Git钩子
+    qka memory get <key>      # 获取记忆
+    qka tasks list            # 任务列表
+    qka progress              # 当前进度
 """
 
 __version__ = "2.8.3"
@@ -126,6 +126,9 @@ from .utils.smart_editor import smart_edit, diagnose_edit
 # 浏览器自动化（可选依赖）
 from .browser import Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest
 
+# AuditGuard 审计问责（v2.9.0+）
+from .audit import AuditGuard, AuditConfig
+
 __all__ = [
     # Unified database (v2.2.0+)
     "UnifiedDB",
@@ -192,6 +195,9 @@ __all__ = [
     "DatabaseIntegrityError",
     "ExtractionError",
     "SyncError",
+    # AuditGuard (v2.9.0+)
+    "AuditGuard",
+    "AuditConfig",
     # Version
     "__version__",
 ]
