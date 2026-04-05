@@ -5,7 +5,21 @@ All notable changes to QuickAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.8.3] - 2026-04-05
+### Added - AuditGuard 审计问责与品控测试模块
+- CodeAuditTracker: 实时文件变更追踪， - QualityGate: 分层质量门禁（原子级/全量级)
+  - AccountabilityEngine: 问题归因、修复闭环、 学习经验提取
+  - AuditReporter: Markdown/JSON 报告生成
+  - CLI commands: `qka audit status/run/log/issues/lessons/report/init`
+
+- 新 data models: AuditLog, AuditIssue, AuditLesson, GateReport, QualityResult
+- 145 tests across 4 phases
+- Async QualityGate with ticket-based execution
+- Fix loop detection with 3-level escalation
+- SQLite → Markdown synchronization
+
+- PyPI release ready
+
+
 
 ### Added - SQLite Performance Optimization
 
@@ -57,8 +71,132 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed - CLI Command Rename
 
 - **Breaking Change**: CLI command renamed from `qa` to `qka` to avoid conflicts with existing `qa.exe` tools
-  - Updated entry point in `pyproject.toml`: `qa` → `qka`
-  - Updated all documentation references from `qa ` to `qka`
+## [2.9.0] - 2026-04-05
+
+### AuditGuard - 审计问责与品控测试模块
+
+AuditGuard 是 QuickAgents v2.9.0 引入的新模块，提供全自动代码审计、质量门禁、问题归因、学习提取和闭环反馈能力。
+
+#### 新功能
+- **CodeAuditTracker**: 实时文件变更追踪，  - **QualityGate**: 分层质量门禁（原子级/全量级) + 异步 Ticket 机制
+  - **AccountabilityEngine**: 问题归因、修复闭环、经验提取
+  - **AuditGuard**: 门面类，统一入口
+- **CLI Commands**: `qka audit status/run/log/issues/lessons/report/init`
+- **配置管理**: `audit_config.json` 支持
+
+- **报告生成**: Markdown/JSON 格式
+
+- **严重性映射**: P0/P1/P2 三级
+- **修复循环检测**: 3级升级机制
+
+- **学习提取**: 自动从问题中提取最佳实践
+
+- **异步执行**: Ticket-based 质量检查（非阻塞)
+- **数据模型**: AuditLog, AuditIssue, AuditLesson, GateReport, QualityResult
+- **枚举类型**: ChangeType, IssueSeverity, IssueType, IssueStatus, LessonType, QualityStatus, CheckStatus
+
+- **数据库迁移**: 003_audit_tables.sql
+- **SQLite主存储**: 与 UnifiedDB 鷆成
+- **API**: `AuditGuard`, `AuditConfig`, `CodeAuditTracker`, `QualityGate`, `AccountabilityEngine`
+- **CLI**: `qka audit status`, `qka audit run`, `qka audit log`, `qka audit issues`, `qka audit lessons`, `qka audit report`, `qka audit init`
+- **公共 API**: `from quickagents import AuditGuard, AuditConfig`
+
+#### 测试
+- **Phase 1**: 48 tests (CodeAuditTracker + AuditConfig + AuditReporter)
+- **Phase 2**: 32 tests (QualityGate)
+- **Phase 3**: 25 tests (AccountabilityEngine)
+- **Phase 4**: 40 tests (AuditGuard + CLI)
+- **Total**: 145 tests, 100% passing
+
+- **0 failures in full regression**
+
+#### 技术细节
+- **分层检查**: atomic (commit 触发) + full (task 完成触发)
+- **异步 Ticket**: 鑽非阻塞提交 + `wait_for_check()` 錁塞
+- **错误解析**: ruff/mypy/pytest/coverage 输出解析
+- **严重性映射**: 可配置的 P0/P1/P2 映射
+- **修复循环**: 3级升级 (1次→ P2 → 2次 → P1 → 3次 → P0+阻塞)
+- **经验提取**: 自动分类为 PITFALL/PATTERN/BEST_PRACTICE
+- **配置验证**: 启动时 + 懒加载验证
+- **保留策略**: 30天完整 diff, 90天摘要, >90 天统计
+- **报告格式**: Markdown (人类可读) + JSON (机器可读)
+
+- **0 Token 消耗**: 所有操作本地执行
+
+#### 配置示例 (`audit_config.json`)
+```json
+{
+    "version": "1.0.0",
+    "code_audit": {
+        "enabled": true,
+        "ignore_patterns": [
+            "**/.git/**",
+            "**/__pycache__/**",
+            "**/node_modules/**",
+            "**/.quickagents/**"
+        ],
+        "max_diff_lines": 500
+    },
+    "quality_gate": {
+        "enabled": true,
+        "atomic_checks": {
+            "lint_command": "auto",
+            "typecheck_command": "auto",
+            "test_command": "auto",
+            "timeout_seconds": 30
+        },
+        "full_checks": {
+            "coverage_threshold": 80,
+            "timeout_seconds": 120
+        }
+    },
+    "accountability": {
+        "enabled": true,
+        "lesson_extraction": true,
+        "auto_feedback_enabled": false
+    }
+}
+```
+
+#### 使用示例
+```python
+from quickagents import AuditGuard
+
+# Initialize
+guard = AuditGuard()
+
+# Track file changes
+guard.on_file_change('src/main.py', 'create', diff='...')
+
+# Run quality gate on git commit
+report = guard.on_git_commit(['src/main.py'])
+if report.passed:
+    print("All checks passed!")
+else:
+    # Handle failures
+    for issue in report.failed_checks:
+        guard.accountability.record_issue(issue)
+    
+    # Extract lessons
+    lessons = guard.accountability.extract_lessons(issues)
+```
+
+#### API Reference
+```python
+from quickagents import AuditGuard, AuditConfig
+
+# Get audit summary
+summary = guard.get_audit_summary()
+
+# Query issues
+issues = guard.get_issues(status='OPEN')
+
+# Query lessons
+lessons = guard.get_lessons()
+
+# Generate report
+report = guard.generate_report(fmt='markdown')
+```
   - Updated CLI help text in `quickagents/cli/main.py`
 
 ### Fixed - Document Module

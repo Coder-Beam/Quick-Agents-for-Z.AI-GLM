@@ -59,7 +59,7 @@ CLI Usage:
     qka progress              # 当前进度
 """
 
-__version__ = "2.8.3"
+__version__ = "2.9.0"
 __author__ = "Coder-Beam"
 
 from .core.unified_db import (
