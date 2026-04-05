@@ -22,8 +22,6 @@ AuditGuard - 审计问责门面类
 """
 
 import logging
-import os
-import time
 from typing import Optional, List, Dict, Any
 
 from .audit_config import AuditConfig
@@ -70,7 +68,7 @@ class AuditGuard:
         self.tracker = CodeAuditTracker(self.conn_mgr)
         self.gate = QualityGate(".", self.config)
         self.accountability = AccountabilityEngine(self.conn_mgr, self.config)
-        self.reporter = AuditReporter(self.conn_mgr)
+        self.reporter = AuditReporter(self.tracker)
 
         logger.info("AuditGuard initialized")
 

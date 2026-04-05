@@ -53,6 +53,15 @@ QuickAgents CLI - 命令行工具
     qka hooks uninstall       # 卸载Git钩子
     qka hooks status          # 钩子状态
 
+    # 审计问责命令（v2.9.0+）
+    qka audit status          # 审计系统状态
+    qka audit run --type atomic|full  # 手动触发质量检查
+    qka audit log [--session ID] [--file PATH]  # 查看审计日志
+    qka audit issues [--status OPEN|RESOLVED]  # 查看问责记录
+    qka audit lessons [--category CAT]  # 查看学习经验
+    qka audit report [--format md|json]  # 生成审计报告
+    qka audit init            # 初始化审计配置文件
+
     # Skills本地化命令
     qka feedback bug <desc>   # 记录Bug
     qka feedback improve <desc> # 记录改进建议
@@ -151,18 +160,14 @@ def cmd_cache(args):
     elif args.action == "list":
         with db._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT path, content_hash, size, access_count FROM file_cache"
-            )
+            cursor.execute("SELECT path, content_hash, size, access_count FROM file_cache")
             rows = cursor.fetchall()
 
             print("[Cache] 缓存文件列表")
             print("-" * 80)
             for row in rows:
                 print(f"  {row['path']}")
-                print(
-                    f"    哈希: {row['content_hash']}, 大小: {row['size']}B, 访问: {row['access_count']}次"
-                )
+                print(f"    哈希: {row['content_hash']}, 大小: {row['size']}B, 访问: {row['access_count']}次")
 
 
 def cmd_memory(args):
@@ -193,9 +198,7 @@ def cmd_memory(args):
         print(f"[Search] 搜索结果 ({len(results)} 条)")
         print("-" * 50)
         for r in results:
-            print(
-                f"  [{r['type']}] {r.get('key', r.get('category', ''))}: {r.get('value', r.get('content', ''))}"
-            )
+            print(f"  [{r['type']}] {r.get('key', r.get('category', ''))}: {r.get('value', r.get('content', ''))}")
 
 
 def cmd_loop(args):
@@ -364,18 +367,14 @@ def cmd_feedback(args):
             print("[INFO] 重复记录已忽略")
 
     elif args.action == "improve":
-        success = collector.record(
-            "improvement", args.description, scenario=args.scenario
-        )
+        success = collector.record("improvement", args.description, scenario=args.scenario)
         if success:
             print(f"[OK] 已记录改进建议: {args.description}")
         else:
             print("[INFO] 重复记录已忽略")
 
     elif args.action == "best":
-        success = collector.record(
-            "best_practice", args.description, scenario=args.scenario
-        )
+        success = collector.record("best_practice", args.description, scenario=args.scenario)
         if success:
             print(f"[OK] 已记录最佳实践: {args.description}")
         else:
@@ -407,14 +406,10 @@ def cmd_tdd(args):
         result = tdd.run_red(args.test_file)
         # 检查文件不存在等错误
         if result.get("error") == "file_not_found":
-            print(
-                f"[RED] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}"
-            )
+            print(f"[RED] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
             print("  请确认文件路径是否正确")
             return
-        print(
-            f"[RED] RED阶段: {'测试失败 [OK]' if not result['passed'] else '测试通过 [WARN]'}"
-        )
+        print(f"[RED] RED阶段: {'测试失败 [OK]' if not result['passed'] else '测试通过 [WARN]'}")
         print(f"  耗时: {result['duration_ms']}ms")
         if result["passed"]:
             print("  [WARN] 测试已通过，需要先写失败的测试！")
@@ -423,14 +418,10 @@ def cmd_tdd(args):
         result = tdd.run_green(args.test_file)
         # 检查文件不存在等错误
         if result.get("error") == "file_not_found":
-            print(
-                f"[GREEN] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}"
-            )
+            print(f"[GREEN] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
             print("  请确认文件路径是否正确")
             return
-        print(
-            f"[GREEN] GREEN阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}"
-        )
+        print(f"[GREEN] GREEN阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
         print(f"  耗时: {result['duration_ms']}ms")
         if result["passed"]:
             print("  [OK] 可以进入Refactor阶段")
@@ -439,14 +430,10 @@ def cmd_tdd(args):
         result = tdd.run_refactor(args.test_file)
         # 检查文件不存在等错误
         if result.get("error") == "file_not_found":
-            print(
-                f"[REFACTOR] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}"
-            )
+            print(f"[REFACTOR] 错误: 测试文件不存在: {result.get('test_file', args.test_file)}")
             print("  请确认文件路径是否正确")
             return
-        print(
-            f"[REFACTOR] REFACTOR阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}"
-        )
+        print(f"[REFACTOR] REFACTOR阶段: {'测试通过 [OK]' if result['passed'] else '测试失败 [FAIL]'}")
         print(f"  耗时: {result['duration_ms']}ms")
 
     elif args.action == "stats":
@@ -493,11 +480,7 @@ def cmd_git(args):
 
         print(f"\n{'[OK]' if checks['all_passed'] else '[FAIL]'} 检查结果")
         for check_name, result in checks["checks"].items():
-            status = (
-                "[OK]"
-                if result["passed"]
-                else ("[SKIP]" if result.get("skipped") else "[FAIL]")
-            )
+            status = "[OK]" if result["passed"] else ("[SKIP]" if result.get("skipped") else "[FAIL]")
             print(f"  {status} {check_name}")
 
     elif args.action == "commit":
@@ -589,13 +572,9 @@ def cmd_evolution(args):
             print(f"[Evolution] 所有Skills统计 ({len(all_stats)} 个)")
             print("=" * 50)
 
-            for skill, stats in sorted(
-                all_stats.items(), key=lambda x: x[1]["count"], reverse=True
-            ):
+            for skill, stats in sorted(all_stats.items(), key=lambda x: x[1]["count"], reverse=True):
                 rate = stats["success_rate"]
-                status = (
-                    "[OK]" if rate >= 0.8 else ("[WARN]" if rate >= 0.6 else "[FAIL]")
-                )
+                status = "[OK]" if rate >= 0.8 else ("[WARN]" if rate >= 0.6 else "[FAIL]")
                 print(f"  {status} {skill}: {stats['count']}次, 成功率 {rate:.0%}")
 
     elif args.action == "optimize":
@@ -662,11 +641,192 @@ def cmd_hooks(args):
         print("[Hooks] Git钩子状态")
         print("=" * 50)
         print(f"  是Git仓库: {'是' if status['is_git_repo'] else '否'}")
-        print(
-            f"  post-commit: {'已安装' if status['post_commit_installed'] else '未安装'}"
-        )
+        print(f"  post-commit: {'已安装' if status['post_commit_installed'] else '未安装'}")
         if status["post_commit_has_backup"]:
             print("  存在备份: 是")
+
+
+# ==================== 审计问责命令 ====================
+
+
+def cmd_audit(args):
+    """审计问责命令"""
+    from ..audit import AuditGuard
+
+    db_path = ".quickagents/unified.db"
+
+    if not os.path.exists(db_path):
+        print(f"[FAIL] 数据库不存在: {db_path}")
+        print("  请先使用UnifiedDB创建数据库")
+        return
+
+    guard = AuditGuard(db_path=db_path)
+
+    try:
+        if args.action == "status":
+            print("[Audit] 审计系统状态")
+            print("=" * 50)
+
+            summary = guard.get_audit_summary()
+
+            print("\n[CodeAudit] 变更追踪")
+            tracker = summary["tracker"]
+            print(f"  总变更数: {tracker['total_changes']}")
+            print(f"  今日变更: {tracker['today_changes']}")
+
+            print("\n[Accountability] 问责统计")
+            acc = summary["accountability"]
+            print(f"  总问题数: {acc['total_issues']}")
+            print(f"  学习经验: {acc['total_lessons']}")
+            if acc["by_status"]:
+                print("  按状态:")
+                for status, count in acc["by_status"].items():
+                    print(f"    {status}: {count}")
+
+            print("\n[Config] 配置")
+            cfg = summary["config"]
+            print(f"  变更追踪: {'启用' if cfg['code_audit_enabled'] else '禁用'}")
+            print(f"  质量门禁: {'启用' if cfg['quality_gate_enabled'] else '禁用'}")
+            print(f"  经验提取: {'启用' if cfg['lesson_extraction'] else '禁用'}")
+
+        elif args.action == "run":
+            check_type = args.type if hasattr(args, "type") and args.type else "atomic"
+
+            if check_type == "atomic":
+                print("[Audit] 执行原子级检查...")
+                report = guard.on_git_commit(session_id="cli")
+
+                if report.passed:
+                    print("[OK] 所有检查通过")
+                else:
+                    print(f"[FAIL] 检查失败: {len(report.failed_checks)} 项")
+                    for check in report.failed_checks:
+                        print(f"  - {check.check_name}: {check.error_count} errors")
+
+            elif check_type == "full":
+                print("[Audit] 执行全量级检查...")
+                report = guard.on_task_complete(task_id="cli-manual")
+
+                if report.passed:
+                    print("[OK] 所有检查通过")
+                else:
+                    print(f"[FAIL] 检查失败: {len(report.failed_checks)} 项")
+                    for check in report.failed_checks:
+                        print(f"  - {check.check_name}: {check.error_count} errors")
+
+            else:
+                print(f"[FAIL] 不支持的检查类型: {check_type}")
+
+        elif args.action == "log":
+            session_id = args.session if hasattr(args, "session") and args.session else None
+            file_path = args.file if hasattr(args, "file") and args.file else None
+
+            print("[Audit] 审计日志")
+            print("=" * 50)
+
+            if session_id:
+                changes = guard.tracker.get_changes_by_session(session_id)
+            elif file_path:
+                changes = guard.tracker.get_file_history(file_path)
+            else:
+                changes = guard.tracker.get_changes(limit=20)
+
+            for change in changes:
+                print(f"  [{change.change_type}] {change.file_path}")
+                print(f"    时间: {change.created_at}")
+
+        elif args.action == "issues":
+            status = args.status if hasattr(args, "status") and args.status else None
+            severity = args.severity if hasattr(args, "severity") and args.severity else None
+
+            print("[Audit] 问责记录")
+            print("=" * 50)
+
+            issues = guard.get_issues(status=status, severity=severity, limit=20)
+
+            if not issues:
+                print("  无匹配记录")
+            else:
+                for issue in issues:
+                    icon = {"P0": "🔴", "P1": "🟡", "P2": "🔵"}.get(issue.severity.value, "⚪")
+                    print(f"  {icon} [{issue.severity.value}] {issue.check_name}")
+                    print(f"    文件: {issue.file_path or 'N/A'}")
+                    print(f"    消息: {issue.error_message[:60]}...")
+                    print(f"    状态: {issue.status.value}")
+
+        elif args.action == "lessons":
+            category = args.category if hasattr(args, "category") and args.category else None
+
+            print("[Audit] 学习经验")
+            print("=" * 50)
+
+            lessons = guard.get_lessons(category=category, limit=20)
+
+            if not lessons:
+                print("  无学习经验")
+            else:
+                for lesson in lessons:
+                    print(f"  [{lesson.lesson_type.value}] {lesson.title}")
+                    print(f"    类别: {lesson.category}")
+                    print(f"    建议: {lesson.prevention_tip[:50]}...")
+
+        elif args.action == "report":
+            fmt = args.format if hasattr(args, "format") and args.format else "markdown"
+            session_id = args.session if hasattr(args, "session") and args.session else ""
+
+            print("[Audit] 生成审计报告...")
+
+            report = guard.generate_report(session_id=session_id, fmt=fmt)
+
+            if fmt == "json":
+                print(report)
+            else:
+                # Markdown 格式
+                print(report)
+
+        elif args.action == "init":
+            import json
+
+            config_path = "audit_config.json"
+            default_config = {
+                "version": "1.0.0",
+                "code_audit": {
+                    "enabled": True,
+                    "ignore_patterns": [
+                        "**/.git/**",
+                        "**/__pycache__/**",
+                        "**/node_modules/**",
+                        "**/.quickagents/**",
+                    ],
+                    "max_diff_lines": 500,
+                },
+                "quality_gate": {
+                    "enabled": True,
+                    "atomic_checks": {
+                        "lint_command": "auto",
+                        "typecheck_command": "auto",
+                        "test_command": "auto",
+                        "timeout_seconds": 30,
+                    },
+                    "full_checks": {
+                        "coverage_threshold": 80,
+                        "timeout_seconds": 120,
+                    },
+                },
+                "accountability": {
+                    "enabled": True,
+                    "lesson_extraction": True,
+                    "auto_feedback_enabled": False,
+                },
+            }
+
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(default_config, f, indent=2, ensure_ascii=False)
+
+            print(f"[OK] 已创建配置文件: {config_path}")
+
+    finally:
+        guard.close()
 
 
 # ==================== 模型管理命令 ====================
@@ -800,9 +960,7 @@ def cmd_models(args):
             import shutil
             from datetime import datetime
 
-            backup_path = Path(
-                f".quickagents/backups/models_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            )
+            backup_path = Path(f".quickagents/backups/models_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
             backup_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(models_json_path, backup_path)
             print(f"\n[OK] 备份已创建: {backup_path}")
@@ -815,9 +973,7 @@ def cmd_models(args):
                 if model == current_primary:
                     config["categories"][cat] = target
 
-            write_file_utf8(
-                str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
-            )
+            write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
 
             print(f"[OK] 升级完成: {current_primary} -> {target}")
 
@@ -849,9 +1005,7 @@ def cmd_models(args):
             config["lockModel"] = args.model
             config["default"]["primary"] = args.model
 
-        write_file_utf8(
-            str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
-        )
+        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
 
         print(f"[OK] 策略已切换: {strategy}")
 
@@ -871,9 +1025,7 @@ def cmd_models(args):
         config["lockModel"] = model
         config["default"]["primary"] = model
 
-        write_file_utf8(
-            str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
-        )
+        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
 
         print(f"[OK] 已锁定模型: {model}")
 
@@ -882,9 +1034,7 @@ def cmd_models(args):
 
         config["lockModel"] = None
 
-        write_file_utf8(
-            str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False)
-        )
+        write_file_utf8(str(models_json_path), json.dumps(config, indent=2, ensure_ascii=False))
 
         print("[OK] 已解除锁定")
 
@@ -937,16 +1087,12 @@ def cmd_uninstall(args):
                 except Exception:
                     pass
     if qa_hooks:
-        items_to_clean.append(
-            ("git_hooks", qa_hooks, f"Git Hooks (qa相关, {len(qa_hooks)}个)")
-        )
+        items_to_clean.append(("git_hooks", qa_hooks, f"Git Hooks (qa相关, {len(qa_hooks)}个)"))
 
     # 1b. 项目数据 .quickagents/
     project_data = Path(".quickagents")
     if project_data.exists():
-        total_size = sum(
-            f.stat().st_size for f in project_data.rglob("*") if f.is_file()
-        )
+        total_size = sum(f.stat().st_size for f in project_data.rglob("*") if f.is_file())
         items_to_clean.append(
             (
                 "project_data",
@@ -958,9 +1104,7 @@ def cmd_uninstall(args):
     # 1c. .opencode/ 目录
     opencode_dir = Path(".opencode")
     if opencode_dir.exists():
-        total_size = sum(
-            f.stat().st_size for f in opencode_dir.rglob("*") if f.is_file()
-        )
+        total_size = sum(f.stat().st_size for f in opencode_dir.rglob("*") if f.is_file())
         items_to_clean.append(
             (
                 "opencode_dir",
@@ -1016,9 +1160,7 @@ def cmd_uninstall(args):
     if not force:
         print()
         try:
-            answer = (
-                input("确认卸载当前项目中的 QuickAgents 文件? [y/N]: ").strip().lower()
-            )
+            answer = input("确认卸载当前项目中的 QuickAgents 文件? [y/N]: ").strip().lower()
         except (EOFError, KeyboardInterrupt):
             print("\n[INFO] 已取消卸载")
             return
@@ -1154,15 +1296,9 @@ def _should_exclude(rel_path: str, project_root: Path) -> bool:
 
     # 合并规则
     all_dirs = QA_PROJECT_PATTERNS["dirs"] + custom_config.get("dirs", [])
-    all_root_files = QA_PROJECT_PATTERNS["root_files"] + custom_config.get(
-        "root_files", []
-    )
-    all_docs_files = QA_PROJECT_PATTERNS["docs_files"] + custom_config.get(
-        "docs_files", []
-    )
-    all_docs_dirs = QA_PROJECT_PATTERNS["docs_dirs"] + custom_config.get(
-        "docs_dirs", []
-    )
+    all_root_files = QA_PROJECT_PATTERNS["root_files"] + custom_config.get("root_files", [])
+    all_docs_files = QA_PROJECT_PATTERNS["docs_files"] + custom_config.get("docs_files", [])
+    all_docs_dirs = QA_PROJECT_PATTERNS["docs_dirs"] + custom_config.get("docs_dirs", [])
     all_generic = QA_PROJECT_PATTERNS["generic_exclude"]
     custom_patterns = custom_config.get("patterns", [])
 
@@ -1307,23 +1443,17 @@ def cmd_export(args):
             print(f"  - {d}/")
 
         print("\n排除根目录文件:")
-        all_root_files = QA_PROJECT_PATTERNS["root_files"] + custom_config.get(
-            "root_files", []
-        )
+        all_root_files = QA_PROJECT_PATTERNS["root_files"] + custom_config.get("root_files", [])
         for f in sorted(set(all_root_files)):
             print(f"  - {f}")
 
         print("\n排除 Docs/ 文件:")
-        all_docs_files = QA_PROJECT_PATTERNS["docs_files"] + custom_config.get(
-            "docs_files", []
-        )
+        all_docs_files = QA_PROJECT_PATTERNS["docs_files"] + custom_config.get("docs_files", [])
         for f in sorted(set(all_docs_files)):
             print(f"  - {f}")
 
         print("\n排除 Docs/ 子目录:")
-        all_docs_dirs = QA_PROJECT_PATTERNS["docs_dirs"] + custom_config.get(
-            "docs_dirs", []
-        )
+        all_docs_dirs = QA_PROJECT_PATTERNS["docs_dirs"] + custom_config.get("docs_dirs", [])
         for d in sorted(set(all_docs_dirs)):
             print(f"  - {d}/")
 
@@ -1406,8 +1536,7 @@ def cmd_export(args):
             dirty_lines = [
                 line
                 for line in result.stdout.strip().splitlines()
-                if not line.strip().startswith("?? Output")
-                and not line.strip().startswith("?? Output/")
+                if not line.strip().startswith("?? Output") and not line.strip().startswith("?? Output/")
             ]
             if dirty_lines:
                 is_dirty = True
@@ -1483,16 +1612,11 @@ def cmd_export(args):
                 excluded_by_gitignore = False
                 for pattern in gitignore_lines:
                     if pattern.endswith("/"):
-                        if (
-                            f.replace("\\", "/").startswith(pattern)
-                            or ("/" + pattern) in f
-                        ):
+                        if f.replace("\\", "/").startswith(pattern) or ("/" + pattern) in f:
                             excluded_by_gitignore = True
                             break
                     elif "*" in pattern:
-                        if _fnmatch.fnmatch(f, pattern) or _fnmatch.fnmatch(
-                            Path(f).name, pattern
-                        ):
+                        if _fnmatch.fnmatch(f, pattern) or _fnmatch.fnmatch(Path(f).name, pattern):
                             excluded_by_gitignore = True
                             break
                     else:
@@ -1543,9 +1667,7 @@ def cmd_export(args):
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(str(src), str(dst))
 
-    total_size = sum(
-        f.stat().st_size for f in versioned_output.rglob("*") if f.is_file()
-    )
+    total_size = sum(f.stat().st_size for f in versioned_output.rglob("*") if f.is_file())
 
     # 生成 manifest（含 git commit 溯源）
     from datetime import datetime
@@ -1561,9 +1683,7 @@ def cmd_export(args):
         "excluded_files": len(excluded_files),
     }
     manifest_path = versioned_output / "export-manifest.json"
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print("\n[OK] 导出完成!")
     print(f"  输出目录: {versioned_output}/")
@@ -1732,9 +1852,7 @@ def cmd_update(args):
     target_version = getattr(args, "target", None)
 
     if source == "github":
-        package_spec = (
-            "git+https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git@main"
-        )
+        package_spec = "git+https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git@main"
         print("Source: GitHub (main branch)")
     elif target_version:
         package_spec = f"quickagents=={target_version}"
@@ -1897,9 +2015,7 @@ def cmd_import(args):
             title = result.title or file_path.name
             sections = len(result.sections)
             tables = len(result.tables)
-            print(
-                f'  [OK] {file_path.name} - "{title}" ({sections} sections, {tables} tables)'
-            )
+            print(f'  [OK] {file_path.name} - "{title}" ({sections} sections, {tables} tables)')
         except Exception as e:
             errors.append((str(file_path), str(e)))
             print(f"  [FAIL] {file_path.name}: {e}")
@@ -1931,9 +2047,7 @@ def cmd_import(args):
             traces = len(cross_ref.trace_matrix)
             gaps = len(cross_ref.diff_report)
             coverage = cross_ref.coverage_report.get("overall_coverage", 0)
-            print(
-                f"  [OK] {traces} trace entries, {gaps} diffs, coverage: {coverage:.0%}"
-            )
+            print(f"  [OK] {traces} trace entries, {gaps} diffs, coverage: {coverage:.0%}")
         except Exception as e:
             errors.append(("cross_reference", str(e)))
             print(f"  [FAIL] Cross-reference: {e}")
@@ -1945,9 +2059,7 @@ def cmd_import(args):
             try:
                 validated = pipeline.cross_validate(doc_result, code_result)
                 issues = len(validated.corrections) + len(validated.supplements)
-                print(
-                    f"  [OK] {Path(doc_result.source_file).name} - {issues} issues found"
-                )
+                print(f"  [OK] {Path(doc_result.source_file).name} - {issues} issues found")
             except Exception as e:
                 errors.append((f"validate:{doc_result.source_file}", str(e)))
                 print(f"  [FAIL] Validation: {e}")
@@ -2038,9 +2150,7 @@ def cmd_import(args):
             code_ids_map = {}
             if code_result:
                 code_ids_map = saver.save_source(code_result)
-                print(
-                    f"  [OK] KG saved: source code ({len(code_result.modules)} modules)"
-                )
+                print(f"  [OK] KG saved: source code ({len(code_result.modules)} modules)")
 
             if cross_ref and doc_ids_map and code_ids_map:
                 edge_count = saver.save_traces(cross_ref, doc_ids_map, code_ids_map)
@@ -2148,9 +2258,7 @@ def main():
 
     # feedback 命令
     p_feedback = subparsers.add_parser("feedback", help="经验收集")
-    p_feedback.add_argument(
-        "action", choices=["bug", "improve", "best", "view", "stats"], help="操作"
-    )
+    p_feedback.add_argument("action", choices=["bug", "improve", "best", "view", "stats"], help="操作")
     p_feedback.add_argument("description", nargs="?", help="描述")
     p_feedback.add_argument("--scenario", "-s", help="场景上下文")
     p_feedback.add_argument("--type", "-t", help="反馈类型（view时使用）")
@@ -2158,17 +2266,13 @@ def main():
 
     # tdd 命令
     p_tdd = subparsers.add_parser("tdd", help="TDD工作流")
-    p_tdd.add_argument(
-        "action", choices=["red", "green", "refactor", "stats", "coverage"], help="操作"
-    )
+    p_tdd.add_argument("action", choices=["red", "green", "refactor", "stats", "coverage"], help="操作")
     p_tdd.add_argument("test_file", nargs="?", help="测试文件")
     p_tdd.set_defaults(func=cmd_tdd)
 
     # git 命令
     p_git = subparsers.add_parser("git", help="Git提交管理")
-    p_git.add_argument(
-        "action", choices=["status", "check", "commit", "push"], help="操作"
-    )
+    p_git.add_argument("action", choices=["status", "check", "commit", "push"], help="操作")
     p_git.add_argument("commit_type", nargs="?", help="提交类型")
     p_git.add_argument("scope", nargs="?", help="范围")
     p_git.add_argument("subject", nargs="?", help="主题")
@@ -2188,10 +2292,26 @@ def main():
 
     # hooks 命令
     p_hooks = subparsers.add_parser("hooks", help="Git钩子管理")
-    p_hooks.add_argument(
-        "action", choices=["install", "uninstall", "status"], help="操作"
-    )
+    p_hooks.add_argument("action", choices=["install", "uninstall", "status"], help="操作")
     p_hooks.set_defaults(func=cmd_hooks)
+
+    # ==================== 审计问责命令 ====================
+
+    # audit 命令
+    p_audit = subparsers.add_parser("audit", help="审计问责与品控测试")
+    p_audit.add_argument(
+        "action",
+        choices=["status", "run", "log", "issues", "lessons", "report", "init"],
+        help="操作",
+    )
+    p_audit.add_argument("--type", "-t", choices=["atomic", "full"], help="检查类型")
+    p_audit.add_argument("--session", "-s", help="会话ID")
+    p_audit.add_argument("--file", "-f", help="文件路径")
+    p_audit.add_argument("--status", help="问题状态过滤 (OPEN/RESOLVED)")
+    p_audit.add_argument("--severity", help="严重级别过滤 (P0/P1/P2)")
+    p_audit.add_argument("--category", "-c", help="学习经验类别")
+    p_audit.add_argument("--format", choices=["markdown", "md", "json"], help="报告格式")
+    p_audit.set_defaults(func=cmd_audit)
 
     # ==================== 文档导入命令 ====================
 
@@ -2213,19 +2333,11 @@ def main():
         action="store_true",
         help="Include source code from SourceReference/",
     )
-    p_import.add_argument(
-        "--output", "-o", help="Output directory (default: Docs/PALs)"
-    )
-    p_import.add_argument(
-        "--dry-run", "-d", action="store_true", help="Preview files without processing"
-    )
+    p_import.add_argument("--output", "-o", help="Output directory (default: Docs/PALs)")
+    p_import.add_argument("--dry-run", "-d", action="store_true", help="Preview files without processing")
     p_import.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
-    p_import.add_argument(
-        "--no-validate", action="store_true", help="Skip Layer 2 cross-validation"
-    )
-    p_import.add_argument(
-        "--no-knowledge", action="store_true", help="Skip Layer 3 knowledge extraction"
-    )
+    p_import.add_argument("--no-validate", action="store_true", help="Skip Layer 2 cross-validation")
+    p_import.add_argument("--no-knowledge", action="store_true", help="Skip Layer 3 knowledge extraction")
     p_import.set_defaults(func=cmd_import)
 
     # ==================== 模型管理命令 ====================
@@ -2258,9 +2370,7 @@ def main():
 
     # version 命令
     p_version = subparsers.add_parser("version", help="查看版本信息")
-    p_version.add_argument(
-        "--check", "-c", action="store_true", help="检查所有模块完整性"
-    )
+    p_version.add_argument("--check", "-c", action="store_true", help="检查所有模块完整性")
     p_version.set_defaults(func=cmd_version)
 
     # update 命令
@@ -2273,31 +2383,19 @@ def main():
         help="安装源 (pypi/github, 默认pypi)",
     )
     p_update.add_argument("--target", "-t", help="指定目标版本 (如 2.7.5)")
-    p_update.add_argument(
-        "--dry-run", "-d", action="store_true", help="仅预览，不执行升级"
-    )
+    p_update.add_argument("--dry-run", "-d", action="store_true", help="仅预览，不执行升级")
     p_update.set_defaults(func=cmd_update)
 
     # uninstall 命令
-    p_uninstall = subparsers.add_parser(
-        "uninstall", help="卸载当前项目的QuickAgents文件（项目级）"
-    )
-    p_uninstall.add_argument(
-        "--dry-run", "-d", action="store_true", help="仅预览，不执行卸载"
-    )
-    p_uninstall.add_argument(
-        "--keep-data", action="store_true", help="保留 .quickagents/ 目录"
-    )
-    p_uninstall.add_argument(
-        "--keep-opencode", action="store_true", help="保留 .opencode/ 目录"
-    )
+    p_uninstall = subparsers.add_parser("uninstall", help="卸载当前项目的QuickAgents文件（项目级）")
+    p_uninstall.add_argument("--dry-run", "-d", action="store_true", help="仅预览，不执行卸载")
+    p_uninstall.add_argument("--keep-data", action="store_true", help="保留 .quickagents/ 目录")
+    p_uninstall.add_argument("--keep-opencode", action="store_true", help="保留 .opencode/ 目录")
     p_uninstall.add_argument("--force", "-f", action="store_true", help="跳过确认提示")
     p_uninstall.set_defaults(func=cmd_uninstall)
 
     # export 命令
-    p_export = subparsers.add_parser(
-        "export", help="导出干净的项目文件（排除QA运行时）"
-    )
+    p_export = subparsers.add_parser("export", help="导出干净的项目文件（排除QA运行时）")
     p_export.add_argument(
         "--output",
         "-o",
@@ -2309,15 +2407,9 @@ def main():
         "-v",
         help="指定版本号（默认自动检测 pyproject.toml/package.json/git tag）",
     )
-    p_export.add_argument(
-        "--dry-run", "-d", action="store_true", help="仅预览，不执行导出"
-    )
-    p_export.add_argument(
-        "--list-excludes", action="store_true", help="列出所有排除规则"
-    )
-    p_export.add_argument(
-        "--inject-gitignore", action="store_true", help="将排除规则注入 .gitignore"
-    )
+    p_export.add_argument("--dry-run", "-d", action="store_true", help="仅预览，不执行导出")
+    p_export.add_argument("--list-excludes", action="store_true", help="列出所有排除规则")
+    p_export.add_argument("--inject-gitignore", action="store_true", help="将排除规则注入 .gitignore")
     p_export.set_defaults(func=cmd_export)
 
     args = parser.parse_args()
