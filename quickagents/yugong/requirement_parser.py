@@ -10,11 +10,14 @@
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Union
 
 from .models import UserStory, ParsedRequirement, StoryPriority
 from .config import YuGongConfig
+
+logger = logging.getLogger(__name__)
 
 
 class RequirementParser:
@@ -68,7 +71,8 @@ class RequirementParser:
         try:
             json.loads(content)
             return "json"
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.debug("Content is not valid JSON, trying other formats: %s", e)
             pass
         if content.startswith("#") or "##" in content:
             return "markdown"

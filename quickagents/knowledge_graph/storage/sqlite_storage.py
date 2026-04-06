@@ -6,6 +6,7 @@ Implements GraphStorageInterface using SQLite with FTS5.
 
 import sqlite3
 import json
+import logging
 import threading
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -15,6 +16,8 @@ from contextlib import contextmanager
 from ..interfaces import GraphStorageInterface
 from ..types import KnowledgeNode, KnowledgeEdge, NodeType, EdgeType
 from ..exceptions import NodeNotFoundError, DuplicateEdgeError
+
+logger = logging.getLogger(__name__)
 
 
 class SQLiteGraphStorage(GraphStorageInterface):
@@ -49,7 +52,8 @@ class SQLiteGraphStorage(GraphStorageInterface):
         conn.execute("PRAGMA busy_timeout = 5000")
         try:
             conn.execute("PRAGMA mmap_size = 67108864")
-        except sqlite3.Error:
+        except sqlite3.Error as e:
+            logger.debug("PRAGMA mmap_size not supported: %s", e)
             pass
         return conn
 
@@ -75,7 +79,8 @@ class SQLiteGraphStorage(GraphStorageInterface):
         if conn is not None:
             try:
                 conn.close()
-            except Exception:
+            except Exception as e:
+                logger.debug("Failed to close SQLite connection during close(): %s", e)
                 pass
             self._local.conn = None
 
@@ -172,21 +177,11 @@ class SQLiteGraphStorage(GraphStorageInterface):
                 )
             """)
 
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_nodes_type ON knowledge_nodes(node_type)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_nodes_project ON knowledge_nodes(project_name)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_nodes_feature ON knowledge_nodes(feature_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_nodes_importance ON knowledge_nodes(importance DESC)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_nodes_created ON knowledge_nodes(created_at DESC)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_type ON knowledge_nodes(node_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_project ON knowledge_nodes(project_name)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_feature ON knowledge_nodes(feature_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_importance ON knowledge_nodes(importance DESC)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_created ON knowledge_nodes(created_at DESC)")
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS knowledge_edges (
@@ -208,18 +203,10 @@ class SQLiteGraphStorage(GraphStorageInterface):
                 )
             """)
 
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_edges_source ON knowledge_edges(source_node_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_edges_target ON knowledge_edges(target_node_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_edges_type ON knowledge_edges(edge_type)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_edges_weight ON knowledge_edges(weight DESC)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_source ON knowledge_edges(source_node_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_target ON knowledge_edges(target_node_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_type ON knowledge_edges(edge_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_weight ON knowledge_edges(weight DESC)")
 
             cursor.execute("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_index USING fts5(
@@ -293,9 +280,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
                     created_at.isoformat(),
                     updated_at.isoformat(),
                     node.access_count,
-                    node.last_accessed_at.isoformat()
-                    if node.last_accessed_at
-                    else None,
+                    node.last_accessed_at.isoformat() if node.last_accessed_at else None,
                 ),
             )
             conn.commit()
@@ -425,9 +410,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
                 conn.commit()
         except sqlite3.IntegrityError as e:
             if "UNIQUE constraint failed" in str(e):
-                raise DuplicateEdgeError(
-                    edge.source_node_id, edge.target_node_id, edge.edge_type.value
-                )
+                raise DuplicateEdgeError(edge.source_node_id, edge.target_node_id, edge.edge_type.value)
             raise
 
         result = self.get_edge(edge.id)
@@ -456,9 +439,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
 
             return cursor.rowcount > 0
 
-    def query_nodes(
-        self, filters: Dict[str, Any], limit: int = 100, offset: int = 0
-    ) -> List[KnowledgeNode]:
+    def query_nodes(self, filters: Dict[str, Any], limit: int = 100, offset: int = 0) -> List[KnowledgeNode]:
         """Query nodes with filters."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -480,9 +461,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
             rows = cursor.fetchall()
             return [self._row_to_node(row) for row in rows]
 
-    def query_edges(
-        self, filters: Dict[str, Any], limit: int = 100
-    ) -> List[KnowledgeEdge]:
+    def query_edges(self, filters: Dict[str, Any], limit: int = 100) -> List[KnowledgeEdge]:
         """Query edges with filters."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -504,9 +483,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
             rows = cursor.fetchall()
             return [self._row_to_edge(row) for row in rows]
 
-    def query_edges_batch(
-        self, node_ids: List[str], limit_per_node: int = 100
-    ) -> List[KnowledgeEdge]:
+    def query_edges_batch(self, node_ids: List[str], limit_per_node: int = 100) -> List[KnowledgeEdge]:
         """
         Batch query edges for multiple nodes in 2 SQL queries.
 
@@ -648,9 +625,7 @@ class SQLiteGraphStorage(GraphStorageInterface):
 
             return cursor.fetchone()[0]
 
-    def find_path(
-        self, from_node: str, to_node: str, max_depth: int = 5
-    ) -> Optional[List[str]]:
+    def find_path(self, from_node: str, to_node: str, max_depth: int = 5) -> Optional[List[str]]:
         """
         Find shortest path between two nodes using BFS.
 
@@ -705,14 +680,10 @@ class SQLiteGraphStorage(GraphStorageInterface):
             cursor.execute("SELECT COUNT(*) FROM knowledge_edges")
             total_edges = cursor.fetchone()[0]
 
-            cursor.execute(
-                "SELECT node_type, COUNT(*) as count FROM knowledge_nodes GROUP BY node_type"
-            )
+            cursor.execute("SELECT node_type, COUNT(*) as count FROM knowledge_nodes GROUP BY node_type")
             by_type = {row[0]: row[1] for row in cursor.fetchall()}
 
-            cursor.execute(
-                "SELECT edge_type, COUNT(*) as count FROM knowledge_edges GROUP BY edge_type"
-            )
+            cursor.execute("SELECT edge_type, COUNT(*) as count FROM knowledge_edges GROUP BY edge_type")
             by_edge_type = {row[0]: row[1] for row in cursor.fetchall()}
 
             return {

@@ -88,7 +88,10 @@ QuickAgents CLI - 命令行工具
 import sys
 import os
 import argparse
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from ..core.file_manager import FileManager
 from ..core.memory import MemoryManager
@@ -1085,7 +1088,7 @@ def cmd_uninstall(args):
                     if "quickagents" in content.lower() or "qka " in content:
                         qa_hooks.append(hook_file)
                 except Exception:
-                    pass
+                    logger.debug("Failed to read git hook file: %s", hook_file)
     if qa_hooks:
         items_to_clean.append(("git_hooks", qa_hooks, f"Git Hooks (qa相关, {len(qa_hooks)}个)"))
 
@@ -1617,7 +1620,7 @@ def cmd_export(args):
                     excluded_files.append(f)
             included_files = final_included
         except Exception:
-            pass
+            logger.debug("Failed to process export file list")
 
     # --- dry-run 模式 ---
     if dry_run:
@@ -1704,7 +1707,7 @@ def _detect_project_version():
                     if v and v[0].isdigit():
                         return v
         except Exception:
-            pass
+            logger.debug("Failed to parse pyproject.toml for version")
 
     # 2. package.json
     package_json = Path("package.json")
@@ -1717,7 +1720,7 @@ def _detect_project_version():
             if v and v[0].isdigit():
                 return v
         except Exception:
-            pass
+            logger.debug("Failed to parse package.json for version")
 
     # 3. VERSION.md
     version_md = Path("VERSION.md")
@@ -1731,7 +1734,7 @@ def _detect_project_version():
                         if p and p[0].isdigit():
                             return p
         except Exception:
-            pass
+            logger.debug("Failed to parse VERSION.md for version")
 
     # 4. git tag
     try:
@@ -1750,7 +1753,7 @@ def _detect_project_version():
             if tag and tag[0].isdigit():
                 return tag
     except Exception:
-        pass
+        logger.debug("Failed to get version from git tag")
 
     return None
 

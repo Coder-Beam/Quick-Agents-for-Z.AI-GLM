@@ -19,8 +19,11 @@ import os
 import sys
 import subprocess
 import platform
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class ScriptHelper:
@@ -313,9 +316,7 @@ class ScriptHelper:
             import psutil
 
             processes = []
-            for proc in psutil.process_iter(
-                ["pid", "name", "cpu_percent", "memory_percent"]
-            ):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
                 try:
                     processes.append(
                         {
@@ -325,8 +326,8 @@ class ScriptHelper:
                             "memory": proc.info["memory_percent"],
                         }
                     )
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.debug("Process vanished or access denied while listing processes: %s", e)
             return processes
         except ImportError:
             # psutil未安装，使用subprocess
@@ -392,9 +393,7 @@ class ScriptHelper:
     # ==================== Windows特有功能 ====================
 
     @staticmethod
-    def create_shortcut(
-        target: str, shortcut_path: str, description: str = "", arguments: str = ""
-    ) -> bool:
+    def create_shortcut(target: str, shortcut_path: str, description: str = "", arguments: str = "") -> bool:
         """
         创建快捷方式（仅Windows）
 
@@ -464,9 +463,7 @@ class ScriptHelper:
             return None
 
     @staticmethod
-    def set_registry_value(
-        key: str, subkey: str, value_name: str, value: str, value_type: str = "REG_SZ"
-    ) -> bool:
+    def set_registry_value(key: str, subkey: str, value_name: str, value: str, value_type: str = "REG_SZ") -> bool:
         """
         写入注册表值（仅Windows，可能需要管理员权限）
 
@@ -557,15 +554,11 @@ class ScriptHelper:
 
                 c = wmi.WMI()
                 info["cpu"] = c.Win32_Processor()[0].Name
-                info["ram"] = (
-                    f"{int(c.Win32_ComputerSystem()[0].TotalPhysicalMemory / (1024**3))} GB"
-                )
+                info["ram"] = f"{int(c.Win32_ComputerSystem()[0].TotalPhysicalMemory / (1024**3))} GB"
                 info["hostname"] = c.Win32_ComputerSystem()[0].Name
             except ImportError:
                 # 使用PowerShell获取
-                result = ScriptHelper.run_powershell(
-                    "Get-CimInstance Win32_ComputerSystem | ConvertTo-Json"
-                )
+                result = ScriptHelper.run_powershell("Get-CimInstance Win32_ComputerSystem | ConvertTo-Json")
                 if result["success"]:
                     import json
 

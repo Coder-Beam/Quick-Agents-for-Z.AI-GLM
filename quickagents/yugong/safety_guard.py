@@ -9,7 +9,6 @@
 """
 
 import logging
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
@@ -42,8 +41,8 @@ class SafetyGuard:
             from ..core.loop_detector import LoopDetector
 
             self._loop_detector = LoopDetector()
-        except ImportError:
-            logger.debug("LoopDetector not available, loop detection disabled")
+        except ImportError as e:
+            logger.debug("LoopDetector not available, loop detection disabled: %s", e)
 
         # 速率限制
         self.hourly_calls: int = 0

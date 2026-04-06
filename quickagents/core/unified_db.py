@@ -755,8 +755,8 @@ class UnifiedDB:
         """Auto-close on garbage collection"""
         try:
             self.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to close UnifiedDB during __del__: %s", e)
 
 
 # ==================== 全局实例 ====================
@@ -770,8 +770,8 @@ def _cleanup_global_db():
     if _global_db is not None:
         try:
             _global_db.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to close global UnifiedDB during cleanup: %s", e)
         _global_db = None
 
 

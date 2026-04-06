@@ -27,11 +27,14 @@ ModelRouter - 多模型路由与fallback
 
 import os
 import json
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class ModelTier(Enum):
@@ -473,10 +476,12 @@ class ModelRouter:
                 try:
                     tier = ModelTier(tier_str)
                     self.fallback_chains[tier] = chain
-                except ValueError:
+                except ValueError as e:
+                    logger.debug("Unknown ModelTier value '%s' in fallback_chains: %s", tier_str, e)
                     pass
 
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError) as e:
+            logger.debug("Failed to load model router config from file: %s", e)
             pass
 
     def _apply_env_overrides(self) -> None:

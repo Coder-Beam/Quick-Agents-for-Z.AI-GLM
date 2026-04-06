@@ -28,11 +28,14 @@ Browser - 浏览器自动化核心实现 (v2.4.0)
 
 import time
 import socket
+import logging
 from typing import Dict, List, Optional, Any
 from enum import Enum
 from dataclasses import dataclass, field
 
 from .installer import ensure_browser_installed, check_lightpanda, update_dependencies
+
+logger = logging.getLogger(__name__)
 
 
 class BrowserBackend(Enum):
@@ -145,20 +148,12 @@ class Page:
     def get_network_requests(self, resource_type: Optional[str] = None) -> List[NetworkRequest]:
         """获取网络请求"""
         if resource_type:
-            return [
-                req
-                for req in self._network_requests
-                if req.resource_type == resource_type
-            ]
+            return [req for req in self._network_requests if req.resource_type == resource_type]
         return self._network_requests.copy()
 
     def get_api_requests(self) -> List[NetworkRequest]:
         """获取API请求"""
-        return [
-            req
-            for req in self._network_requests
-            if req.resource_type in ("xhr", "fetch")
-        ]
+        return [req for req in self._network_requests if req.resource_type in ("xhr", "fetch")]
 
     def get_performance(self) -> List[PerformanceMetric]:
         """获取性能指标"""
@@ -175,10 +170,9 @@ class Page:
                 };
             }""")
 
-            return [
-                PerformanceMetric(name=k, value=v, unit="ms") for k, v in timing.items()
-            ]
-        except Exception:
+            return [PerformanceMetric(name=k, value=v, unit="ms") for k, v in timing.items()]
+        except Exception as e:
+            logger.debug("Failed to get performance metrics: %s", e)
             return []
 
     def evaluate(self, script: str) -> Any:
@@ -195,7 +189,8 @@ class Page:
         try:
             self._page.wait_for_selector(selector, timeout=timeout)
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug("Timeout waiting for selector '%s': %s", selector, e)
             return False
 
     def click(self, selector: str) -> bool:
@@ -203,7 +198,8 @@ class Page:
         try:
             self._page.click(selector)
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to click selector '%s': %s", selector, e)
             return False
 
     def fill(self, selector: str, value: str) -> bool:
@@ -211,7 +207,8 @@ class Page:
         try:
             self._page.fill(selector, value)
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to fill selector '%s': %s", selector, e)
             return False
 
     def get_content(self) -> str:
@@ -304,9 +301,7 @@ class Browser:
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
-            raise ImportError(
-                "Playwright未安装。请运行: pip install playwright && playwright install chromium"
-            )
+            raise ImportError("Playwright未安装。请运行: pip install playwright && playwright install chromium")
 
         self._playwright = sync_playwright().start()
 
@@ -400,8 +395,8 @@ class Browser:
         for page in self._pages:
             try:
                 page.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to close page during browser shutdown: %s", e)
 
         if self._context:
             self._context.close()

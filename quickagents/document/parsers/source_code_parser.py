@@ -109,9 +109,7 @@ class SourceCodeParser(BaseParser):
                 if lang in _AST_LANGUAGES:
                     mod = self._parse_python(file_path, content, source_dir)
                 elif lang in _TREE_SITTER_LANGUAGES:
-                    mod = self._parse_with_tree_sitter(
-                        file_path, content, source_dir, lang
-                    )
+                    mod = self._parse_with_tree_sitter(file_path, content, source_dir, lang)
                 else:
                     mod = self._parse_generic(file_path, content, source_dir, lang)
 
@@ -170,9 +168,7 @@ class SourceCodeParser(BaseParser):
 
     # ---------- Python AST Parser (T029) ----------
 
-    def _parse_python(
-        self, file_path: Path, content: str, base_dir: Path
-    ) -> Optional[CodeModule]:
+    def _parse_python(self, file_path: Path, content: str, base_dir: Path) -> Optional[CodeModule]:
         try:
             tree = ast.parse(content, filename=str(file_path))
         except SyntaxError as e:
@@ -300,9 +296,7 @@ class SourceCodeParser(BaseParser):
             return self._annotation_str(node.returns)
         return None
 
-    def _build_signature(
-        self, name: str, params: List[Dict], ret_type: Optional[str]
-    ) -> str:
+    def _build_signature(self, name: str, params: List[Dict], ret_type: Optional[str]) -> str:
         parts = [p["name"] for p in params]
         sig = f"{name}({', '.join(parts)})"
         if ret_type:
@@ -369,9 +363,7 @@ class SourceCodeParser(BaseParser):
 
     # ---------- Tree-sitter Parser (T030) ----------
 
-    def _parse_with_tree_sitter(
-        self, file_path: Path, content: str, base_dir: Path, lang: str
-    ) -> Optional[CodeModule]:
+    def _parse_with_tree_sitter(self, file_path: Path, content: str, base_dir: Path, lang: str) -> Optional[CodeModule]:
         try:
             import tree_sitter
         except ImportError:
@@ -412,8 +404,8 @@ class SourceCodeParser(BaseParser):
             import tree_sitter_languages
 
             return tree_sitter_languages.get_language(lang_name)
-        except ImportError:
-            pass
+        except ImportError as e:
+            logger.debug("tree_sitter_languages not available, trying per-language package: %s", e)
 
         try:
             mod_name = f"tree_sitter_{lang_name}"
@@ -421,8 +413,7 @@ class SourceCodeParser(BaseParser):
             return mod.language()
         except ImportError:
             logger.warning(
-                f"tree-sitter language '{lang_name}' not available. "
-                f"Install with: pip install tree-sitter-languages"
+                f"tree-sitter language '{lang_name}' not available. Install with: pip install tree-sitter-languages"
             )
             return None
 
@@ -430,17 +421,9 @@ class SourceCodeParser(BaseParser):
         imports = []
         source = content.encode("utf-8")
         for node in self._ts_query_nodes(tree, "import_statement"):
-            imports.append(
-                source[node.start_byte : node.end_byte].decode(
-                    "utf-8", errors="replace"
-                )[:120]
-            )
+            imports.append(source[node.start_byte : node.end_byte].decode("utf-8", errors="replace")[:120])
         for node in self._ts_query_nodes(tree, "import_from_statement"):
-            imports.append(
-                source[node.start_byte : node.end_byte].decode(
-                    "utf-8", errors="replace"
-                )[:120]
-            )
+            imports.append(source[node.start_byte : node.end_byte].decode("utf-8", errors="replace")[:120])
         return imports
 
     def _ts_extract_classes(self, tree, content: str, rel: str) -> List[CodeClass]:
@@ -475,10 +458,7 @@ class SourceCodeParser(BaseParser):
                 )
             )
         for node in self._ts_query_nodes(tree, "method_definition"):
-            name = (
-                self._ts_get_child_text(node, "property_identifier", source)
-                or "anonymous"
-            )
+            name = self._ts_get_child_text(node, "property_identifier", source) or "anonymous"
             funcs.append(
                 CodeFunction(
                     func_id=f"F{hash(f'{rel}:{name}:{node.start_point[0]}') & 0xFFFF:04x}",
@@ -505,16 +485,12 @@ class SourceCodeParser(BaseParser):
     def _ts_get_child_text(self, node, child_type: str, source: bytes) -> Optional[str]:
         for child in node.children:
             if child.type == child_type:
-                return source[child.start_byte : child.end_byte].decode(
-                    "utf-8", errors="replace"
-                )
+                return source[child.start_byte : child.end_byte].decode("utf-8", errors="replace")
         return None
 
     # ---------- Generic / Regex Parser ----------
 
-    def _parse_generic(
-        self, file_path: Path, content: str, base_dir: Path, lang: str
-    ) -> CodeModule:
+    def _parse_generic(self, file_path: Path, content: str, base_dir: Path, lang: str) -> CodeModule:
         rel = self._rel_path(file_path, base_dir)
         loc = len(content.splitlines())
 
@@ -534,9 +510,7 @@ class SourceCodeParser(BaseParser):
             variables=[],
         )
 
-    def _regex_extract_functions(
-        self, content: str, rel: str, lang: str
-    ) -> List[CodeFunction]:
+    def _regex_extract_functions(self, content: str, rel: str, lang: str) -> List[CodeFunction]:
         funcs = []  # type: ignore[var-annotated]
         patterns = {
             "python": re.compile(r"^(\s*)(async\s+)?def\s+(\w+)\s*\(", re.MULTILINE),
@@ -555,20 +529,14 @@ class SourceCodeParser(BaseParser):
             "go": re.compile(r"func\s+(?:\([^)]+\)\s*)?(\w+)\s*\(", re.MULTILINE),
             "rust": re.compile(r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)", re.MULTILINE),
             "c": re.compile(r"(?:[\w*]+\s+)+(\w+)\s*\([^)]*\)\s*\{", re.MULTILINE),
-            "cpp": re.compile(
-                r"(?:[\w*]+\s+)+(\w+)\s*\([^)]*\)\s*(?:const)?\s*(?:\{|:)", re.MULTILINE
-            ),
+            "cpp": re.compile(r"(?:[\w*]+\s+)+(\w+)\s*\([^)]*\)\s*(?:const)?\s*(?:\{|:)", re.MULTILINE),
         }
         pat = patterns.get(lang)
         if not pat:
             return funcs
 
         for m in pat.finditer(content):
-            name = (
-                m.group(1) or m.group(2)
-                if m.lastindex and m.lastindex >= 2
-                else m.group(1)
-            )
+            name = m.group(1) or m.group(2) if m.lastindex and m.lastindex >= 2 else m.group(1)
             if not name:
                 continue
             line_num = content[: m.start()].count("\n") + 1
@@ -590,9 +558,7 @@ class SourceCodeParser(BaseParser):
                 r"(?:import\s+.+\s+from\s+['\"](.+?)['\"]|require\s*\(\s*['\"](.+?)['\"]\s*\))",
                 re.MULTILINE,
             ),
-            "typescript": re.compile(
-                r"import\s+.+\s+from\s+['\"](.+?)['\"]", re.MULTILINE
-            ),
+            "typescript": re.compile(r"import\s+.+\s+from\s+['\"](.+?)['\"]", re.MULTILINE),
             "java": re.compile(r"import\s+([\w.]+)\s*;", re.MULTILINE),
             "go": re.compile(r'import\s+(?:"([^"]+)"|\(\s*([^)]+)\s*\))', re.MULTILINE),
             "rust": re.compile(r"use\s+([\w:]+)", re.MULTILINE),
@@ -613,14 +579,10 @@ class SourceCodeParser(BaseParser):
                     break
         return imports
 
-    def _regex_extract_classes(
-        self, content: str, rel: str, lang: str
-    ) -> List[CodeClass]:
+    def _regex_extract_classes(self, content: str, rel: str, lang: str) -> List[CodeClass]:
         classes = []  # type: ignore[var-annotated]
         patterns = {
-            "javascript": re.compile(
-                r"class\s+(\w+)(?:\s+extends\s+(\w+))?", re.MULTILINE
-            ),
+            "javascript": re.compile(r"class\s+(\w+)(?:\s+extends\s+(\w+))?", re.MULTILINE),
             "typescript": re.compile(r"(?:export\s+)?class\s+(\w+)", re.MULTILINE),
             "java": re.compile(
                 r"(?:public|private|protected)?\s*(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?",
@@ -690,8 +652,8 @@ class SourceCodeParser(BaseParser):
                 data = json.loads(content)
                 if isinstance(data, dict):
                     return list(data.keys())[:30]
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                logger.debug("Failed to parse config file as JSON for imports: %s", e)
         return []
 
     # ---------- Dependencies (T031) ----------
@@ -722,10 +684,7 @@ class SourceCodeParser(BaseParser):
                 for base in cls.bases:
                     for other in modules:
                         for other_cls in other.classes:
-                            if (
-                                other_cls.name == base
-                                and other.file_path != mod.file_path
-                            ):
+                            if other_cls.name == base and other.file_path != mod.file_path:
                                 key = (mod.file_path, other.file_path, "inheritance")
                                 if key not in seen:
                                     seen.add(key)

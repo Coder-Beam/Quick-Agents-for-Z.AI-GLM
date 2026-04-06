@@ -428,7 +428,8 @@ def _count_mypy_errors(output: str) -> int:
         if line.startswith("Found ") and " error" in line:
             try:
                 return int(line.split()[1])
-            except (IndexError, ValueError):
+            except (IndexError, ValueError) as e:
+                logger.debug("Failed to parse mypy error count from line: %s (%s)", line, e)
                 pass
     return sum(1 for line in output.splitlines() if ": error:" in line)
 

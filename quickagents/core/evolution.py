@@ -13,6 +13,7 @@ SkillEvolution - 统一的Skills自我进化系统
 """
 
 import json
+import logging
 import os
 import subprocess
 from pathlib import Path
@@ -22,6 +23,8 @@ from enum import Enum
 
 from .unified_db import UnifiedDB, FeedbackType
 from ..utils.encoding import write_file_utf8
+
+logger = logging.getLogger(__name__)
 
 
 class EvolutionTrigger(Enum):
@@ -848,7 +851,7 @@ class SkillEvolution:
                     if suggestion:
                         return suggestion
         except Exception as e:
-            pass
+            logger.debug("Failed to query error suggestions: %s", e)
 
         # 2. 通用映射（fallback）
         suggestions = {

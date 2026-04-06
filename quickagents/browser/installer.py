@@ -22,8 +22,11 @@ import sys
 import subprocess
 import shutil
 import platform
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 class BrowserInstaller:
@@ -37,9 +40,7 @@ class BrowserInstaller:
     """
 
     # Lightpanda下载地址
-    LIGHTPANDA_DOWNLOAD_URL = (
-        "https://github.com/lightpanda-io/browser/releases/latest/download"
-    )
+    LIGHTPANDA_DOWNLOAD_URL = "https://github.com/lightpanda-io/browser/releases/latest/download"
 
     def __init__(self):
         self.system = platform.system().lower()
@@ -56,7 +57,8 @@ class BrowserInstaller:
             import playwright  # noqa: F401
 
             return True
-        except ImportError:
+        except ImportError as e:
+            logger.debug("Playwright not available: %s", e)
             return False
 
     def check_chromium_installed(self) -> bool:
@@ -69,7 +71,8 @@ class BrowserInstaller:
                 browser = p.chromium.launch(headless=True)
                 browser.close()
                 return True
-        except Exception:
+        except Exception as e:
+            logger.debug("Chromium not available or failed to launch: %s", e)
             return False
 
     def install_playwright(self) -> Dict:

@@ -44,8 +44,7 @@ class PDFParser(BaseParser):
         """Parse a PDF file and return DocumentResult"""
         if not self._deps_available:
             raise ImportError(
-                "PDF parsing requires [document] dependencies. "
-                "Install with: pip install quickagents[document]"
+                "PDF parsing requires [document] dependencies. Install with: pip install quickagents[document]"
             )
 
         file_path = Path(file_path)
@@ -222,18 +221,14 @@ class PDFParser(BaseParser):
                     idx = text.find(sec.title)
                     if idx >= 0:
                         after = text[idx + len(sec.title) :].strip()
-                        next_heading_pos = self._find_next_heading(
-                            after, sections, page_num + 1
-                        )
+                        next_heading_pos = self._find_next_heading(after, sections, page_num + 1)
                         if next_heading_pos > 0:
                             after = after[:next_heading_pos].strip()
                         if len(after) > 500:
                             after = after[:500]
                         sec.content = after
 
-    def _find_next_heading(
-        self, text: str, sections: List[DocumentSection], page: int
-    ) -> int:
+    def _find_next_heading(self, text: str, sections: List[DocumentSection], page: int) -> int:
         """Find position of next heading in text"""
         for sec in sections:
             if sec.page_number >= page:
@@ -331,8 +326,8 @@ class PDFParser(BaseParser):
                     base_image = doc.extract_image(xref)
                     img_ext = base_image.get("ext", "unknown")
                     img_type = img_ext
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Failed to extract image xref %s: %s", xref, e)
 
                 width = img_info[2] if len(img_info) > 2 else 0
                 height = img_info[3] if len(img_info) > 3 else 0

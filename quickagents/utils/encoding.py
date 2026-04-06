@@ -25,6 +25,9 @@ from typing import Optional
 import sys
 import os
 import locale
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 统一编码配置
 DEFAULT_ENCODING = "utf-8"
@@ -50,10 +53,8 @@ def configure_utf8():
                 kernel32 = ctypes.windll.kernel32
                 kernel32.SetConsoleOutputCP(65001)  # UTF-8 code page
                 kernel32.SetConsoleCP(65001)
-            except Exception:
-                pass
-
-            # 设置环境变量
+            except Exception as e:
+                logger.debug("Failed to set Windows console to UTF-8 code page: %s", e)
             os.environ["PYTHONIOENCODING"] = "utf-8"
             os.environ["PYTHONUTF8"] = "1"
 
@@ -62,15 +63,14 @@ def configure_utf8():
         try:
             sys.stdout.reconfigure(encoding="utf-8", errors=ERRORS_HANDLER)
             sys.stderr.reconfigure(encoding="utf-8", errors=ERRORS_HANDLER)
-        except AttributeError:
-            # Python < 3.7
-            pass
+        except AttributeError as e:
+            logger.debug("sys.stdout.reconfigure not available (Python < 3.7): %s", e)
 
     # 3. 设置locale
     try:
         locale.setlocale(locale.LC_ALL, "")
     except locale.Error:
-        pass
+        logger.debug("Failed to set locale")
 
 
 def safe_decode(content: bytes, encoding: Optional[str] = None) -> str:
@@ -87,14 +87,14 @@ def safe_decode(content: bytes, encoding: Optional[str] = None) -> str:
     if encoding:
         try:
             return content.decode(encoding, errors=ERRORS_HANDLER)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to decode with encoding '%s': %s", encoding, e)
 
     # 优先尝试UTF-8
     try:
         return content.decode("utf-8", errors=ERRORS_HANDLER)
-    except UnicodeDecodeError:
-        pass
+    except UnicodeDecodeError as e:
+        logger.debug("Failed to decode as UTF-8, trying fallback encodings: %s", e)
 
     # 尝试常见编码
     for enc in ["utf-8-sig", "gb18030", "gbk", "gb2312", "latin-1"]:
@@ -176,8 +176,8 @@ def get_terminal_encoding() -> str:
         loc = locale.getpreferredencoding()
         if loc:
             return loc
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Failed to get preferred encoding from locale: %s", e)
 
     # 默认UTF-8
     return "utf-8"

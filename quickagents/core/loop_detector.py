@@ -14,11 +14,14 @@ LoopDetector V3 - 基于失败检测的循环检测器
 
 import hashlib
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Any
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -150,9 +153,7 @@ class LoopDetectorConfig:
                     # 处理阈值策略
                     if "threshold_strategy" in loop_config:
                         try:
-                            loop_config["threshold_strategy"] = ThresholdStrategy(
-                                loop_config["threshold_strategy"]
-                            )
+                            loop_config["threshold_strategy"] = ThresholdStrategy(loop_config["threshold_strategy"])
                         except ValueError:
                             # 无效的策略值，使用默认值
                             loop_config["threshold_strategy"] = ThresholdStrategy.NORMAL
@@ -177,16 +178,10 @@ class LoopDetectorConfig:
             ThresholdStrategy.AGGRESSIVE: (3, 3),
         }
 
-        default_same, default_consecutive = strategy_thresholds.get(
-            self.threshold_strategy, (3, 5)
-        )
+        default_same, default_consecutive = strategy_thresholds.get(self.threshold_strategy, (3, 5))
 
         # 允许手动覆盖
-        same = (
-            self.same_failure_threshold
-            if self.same_failure_threshold is not None
-            else default_same
-        )
+        same = self.same_failure_threshold if self.same_failure_threshold is not None else default_same
         consecutive = (
             self.consecutive_failure_threshold
             if self.consecutive_failure_threshold is not None
@@ -307,9 +302,7 @@ class LoopDetector:
                 self._record_failure(tool_name, tool_args, fingerprint, failure_info)
 
                 # 检查失败阈值
-                failure_exceeded, failure_pattern = self._check_failure_threshold(
-                    fingerprint
-                )
+                failure_exceeded, failure_pattern = self._check_failure_threshold(fingerprint)
 
                 if failure_exceeded:
                     self.state = AgentState.STUCK
@@ -354,9 +347,7 @@ class LoopDetector:
         if attempt < 1:
             return 0
 
-        delay = self.config.backoff_base_ms * (
-            self.config.backoff_multiplier ** (attempt - 1)
-        )
+        delay = self.config.backoff_base_ms * (self.config.backoff_multiplier ** (attempt - 1))
         return min(delay, self.config.max_backoff_ms)
 
     # ========================================================================
@@ -456,9 +447,7 @@ class LoopDetector:
         sanitized = {}
 
         for key, value in args.items():
-            if key.lower() in sensitive_keys or any(
-                s in key.lower() for s in sensitive_keys
-            ):
+            if key.lower() in sensitive_keys or any(s in key.lower() for s in sensitive_keys):
                 sanitized[key] = "***REDACTED***"
             else:
                 sanitized[key] = value
@@ -498,9 +487,7 @@ class LoopDetector:
     ):
         """记录失败"""
         self.consecutive_failures += 1
-        self._fingerprint_cache[fingerprint] = (
-            self._fingerprint_cache.get(fingerprint, 0) + 1
-        )
+        self._fingerprint_cache[fingerprint] = self._fingerprint_cache.get(fingerprint, 0) + 1
 
         record = FailureRecord(
             tool_name=tool_name,
@@ -526,6 +513,16 @@ class LoopDetector:
             self.state = AgentState.RETRY
         # STUCK 状态由检测到循环时设置
 
+    def reset(self):
+        """重置检测器状态（清空历史和计数）"""
+        self.total_calls = 0
+        self.consecutive_failures = 0
+        self.call_history.clear()
+        self.failure_history.clear()
+        self._fingerprint_cache.clear()
+        self.state = AgentState.IDLE
+        logger.debug("LoopDetector reset")
+
     # ========================================================================
     # 持久化方法
     # ========================================================================
@@ -537,7 +534,8 @@ class LoopDetector:
 
             self._db = get_unified_db()
             # 暂时不实现历史状态加载，每次会话重新开始
-        except Exception:
+        except Exception as e:
+            logger.debug("UnifiedDB not available, using in-memory state: %s", e)
             pass  # UnifiedDB 不可用，使用内存状态
 
     def _save_to_db(self):
@@ -548,22 +546,12 @@ class LoopDetector:
 
                 self._db = get_unified_db()
             # 暂时不实现持久化，每次会话重新开始
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to save LoopDetector state to UnifiedDB: %s", e)
 
     # ========================================================================
     # 公共方法
     # ========================================================================
-
-    def reset(self):
-        """重置检测器状态"""
-        self.state = AgentState.IDLE
-        self.failure_history.clear()
-        self.call_history.clear()
-        self.consecutive_failures = 0
-        self.total_calls = 0
-        self._fingerprint_cache.clear()
-        self.session_start_time = time.time()
 
     def get_status(self) -> Dict[str, Any]:
         """获取检测器状态"""

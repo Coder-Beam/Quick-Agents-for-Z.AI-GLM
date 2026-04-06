@@ -156,9 +156,7 @@ class ConnectionManager:
             self._pool_config = pool_config
         else:
             # 向后兼容：pool_size 同时设置 min 和 max
-            self._pool_config = PoolConfig(
-                min_size=pool_size, max_size=pool_size, acquire_timeout=timeout
-            )
+            self._pool_config = PoolConfig(min_size=pool_size, max_size=pool_size, acquire_timeout=timeout)
 
         # 向后兼容属性
         self.pool_size = self._pool_config.max_size
@@ -209,9 +207,7 @@ class ConnectionManager:
         Returns:
             sqlite3.Connection: 新的数据库连接
         """
-        conn = sqlite3.connect(
-            str(self.db_path), timeout=self.timeout, check_same_thread=False
-        )
+        conn = sqlite3.connect(str(self.db_path), timeout=self.timeout, check_same_thread=False)
 
         # === PRAGMA 配置（v2.7.5 增强）===
 
@@ -316,9 +312,7 @@ class ConnectionManager:
             try:
                 # 使用独立临时连接，避免操作池中连接
                 try:
-                    checkpoint_conn = sqlite3.connect(
-                        str(self.db_path), timeout=5.0, check_same_thread=False
-                    )
+                    checkpoint_conn = sqlite3.connect(str(self.db_path), timeout=5.0, check_same_thread=False)
                     try:
                         checkpoint_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
                         logger.debug("WAL checkpoint completed (TRUNCATE)")
@@ -360,7 +354,8 @@ class ConnectionManager:
             # 操作完成后检查 WAL checkpoint
             try:
                 self._maybe_checkpoint_wal()
-            except Exception:
+            except Exception as e:
+                logger.debug("WAL checkpoint failed: %s", e)
                 pass  # checkpoint 失败不影响业务
 
     def acquire(self) -> sqlite3.Connection:
@@ -423,8 +418,8 @@ class ConnectionManager:
                             # 连接已死，关闭并创建新的
                             try:
                                 pooled.conn.close()
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug("Failed to close dead connection during pre_ping: %s", e)
                             self._metrics.pre_ping_failures += 1
                             pooled = _PooledConnection(conn=self._create_connection())
                             self._metrics.created_count += 1
@@ -435,8 +430,8 @@ class ConnectionManager:
                         if pooled.age > self._pool_config.max_lifetime:
                             try:
                                 pooled.conn.close()
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug("Failed to close expired connection: %s", e)
                             pooled = _PooledConnection(conn=self._create_connection())
                             self._metrics.created_count += 1
                         else:
@@ -465,9 +460,7 @@ class ConnectionManager:
                     return conn
 
                 # 达到上限，等待连接释放
-                remaining = self._pool_config.acquire_timeout - (
-                    time.time() - start_time
-                )
+                remaining = self._pool_config.acquire_timeout - (time.time() - start_time)
                 if remaining <= 0:
                     self._metrics.error_count += 1
                     raise sqlite3.Error(
@@ -498,8 +491,8 @@ class ConnectionManager:
                     else:
                         try:
                             conn.close()
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug("Failed to close invalid connection on return: %s", e)
                 else:
                     # 连接池已满，关闭连接
                     try:
@@ -539,8 +532,8 @@ class ConnectionManager:
         """退出时清理资源"""
         try:
             self.close_all()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to close all connections during cleanup: %s", e)
 
     def health_check(self) -> bool:
         """
@@ -636,5 +629,5 @@ class ConnectionManager:
         """垃圾回收时自动关闭连接"""
         try:
             self.close_all()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to close all connections during __del__: %s", e)

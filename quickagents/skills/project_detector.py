@@ -14,9 +14,12 @@ ProjectDetector - 本地项目类型检测
 
 import os
 import json
+import logging
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -287,7 +290,8 @@ class ProjectDetector:
                 if "typescript" not in info.languages:
                     info.languages.append("typescript")
 
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError) as e:
+            logger.debug("Failed to parse package.json for project detection: %s", e)
             pass
 
         return info
@@ -300,7 +304,8 @@ class ProjectDetector:
                 if dep_marker in content.lower():
                     if fw_name not in info.frameworks:
                         info.frameworks.append(fw_name)
-        except OSError:
+        except OSError as e:
+            logger.debug("Could not read pyproject.toml for framework detection: %s", e)
             pass
 
         return info
@@ -313,7 +318,8 @@ class ProjectDetector:
                 if dep_marker in content:
                     if fw_name not in info.frameworks:
                         info.frameworks.append(fw_name)
-        except OSError:
+        except OSError as e:
+            logger.debug("Could not read requirements.txt for framework detection: %s", e)
             pass
 
         return info

@@ -17,11 +17,14 @@ MarkdownSync - Markdown同步器
 
 import re
 import json
+import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .unified_db import UnifiedDB, MemoryType, TaskStatus, FeedbackType, get_unified_db
+
+logger = logging.getLogger(__name__)
 
 
 def _get_attr(obj, key, default=None):
@@ -235,8 +238,8 @@ class MarkdownSync:
                 parsed = json.loads(value)
                 if isinstance(parsed, (dict, list)):
                     value = json.dumps(parsed, ensure_ascii=False, indent=2)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to parse JSON value for key '%s': %s", key, e)
             lines.append(f"- **{key}**: {value}")
 
         lines.extend(["", "---", "", "## Experiential Memory (经验记忆)", ""])
