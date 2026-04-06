@@ -19,19 +19,31 @@ ExperienceCompiler - 经验编译器（Karpathy LLM Knowledge Base模式）
 - llm-wiki-compiler (Karpathy模式): 383文件→13文章, 81x压缩, 84% Token节省
 - arXiv:2601.21557 MCE: 批量级优化13.6x效率提升
 - QuickAgents SkillEvolution: 已有进化系统增强
+
+连接管理:
+- 通过 ConnectionManager 管理数据库连接（连接池、线程安全、WAL）
+- 表结构由 MigrationManager 004_experience_tables 迁移创建
+- 支持 db_path（向后兼容）或 ConnectionManager（共享连接池）
 """
 
 import hashlib
 import json
 import logging
 import os
-import sqlite3
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
+
+
+def _get_connection_manager(conn_mgr_or_path: Union[str, "ConnectionManager"]) -> "ConnectionManager":
+    from .connection_manager import ConnectionManager
+
+    if isinstance(conn_mgr_or_path, ConnectionManager):
+        return conn_mgr_or_path
+    return ConnectionManager(str(conn_mgr_or_path))
 
 
 # ============================================================================
@@ -94,7 +106,6 @@ class CompiledArticle:
         self.article_id = article_id or self._generate_id()
 
     def _generate_id(self) -> str:
-        """生成唯一文章ID"""
         import uuid as _uuid
 
         return f"article-{_uuid.uuid4().hex[:12]}"
@@ -151,13 +162,18 @@ class ExperienceCompiler:
     - 增量编译：哈希检测变化
     - 覆盖度标记：告诉LLM何时信任
 
-    枀久化架构:
+    持久化架构:
     - SQLite 为主存储（experience_entries + compiled_articles + FTS5）
+    - 表由 MigrationManager 004 迁移自动创建
+    - 连接由 ConnectionManager 统一管理
     - Markdown 为辅助备份（.quickagents/compiled/）
-    - 查询优先从 SQLite FTS5 读取
 
     使用方式:
-        compiler = ExperienceCompiler()
+        # 共享 ConnectionManager（推荐）
+        compiler = ExperienceCompiler(conn_mgr)
+
+        # 或传入 db_path（向后兼容，内部创建 ConnectionManager）
+        compiler = ExperienceCompiler(db_path='.quickagents/unified.db')
 
         # 积累经验（每次任务完成时调用）
         compiler.accumulate({
@@ -181,120 +197,85 @@ class ExperienceCompiler:
         qka experience query <topic> # 查询编译后的知识
     """
 
-    # 配置
     COMPILE_TASK_THRESHOLD = 10
     COMPILE_DAYS_THRESHOLD = 7
     COMPILED_DIR = ".quickagents/compiled"
     INDEX_FILE = "_index.md"
     SOURCES_FILE = "_sources.md"
 
-    # 覆盖度阈值
     COVERAGE_HIGH_THRESHOLD = 5
     COVERAGE_MEDIUM_THRESHOLD = 2
 
-    def __init__(self, db_path: str = ".quickagents/unified.db"):
-        self._db_path = db_path
+    def __init__(
+        self,
+        db_path: str = ".quickagents/unified.db",
+        conn_mgr: Optional["ConnectionManager"] = None,
+    ):
+        self._conn_mgr = conn_mgr or _get_connection_manager(db_path)
+        self._db_path = str(self._conn_mgr.db_path)
         self._buffer: List[ExperienceEntry] = []
         self._compiled_dir = Path(self.COMPILED_DIR)
         self._ensure_dirs()
-        self._init_db()
-
-    # ====================================================================
-    # 数据库初始化
-    # ====================================================================
+        self._ensure_tables()
 
     def _ensure_dirs(self):
-        """确保目录存在"""
         self._compiled_dir.mkdir(parents=True, exist_ok=True)
         (self._compiled_dir / "patterns").mkdir(exist_ok=True)
 
-    def _init_db(self):
-        """初始化数据库（创建表 + 执行迁移）"""
-        conn = sqlite3.connect(self._db_path)
-        try:
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA synchronous=NORMAL")
-            conn.execute("PRAGMA foreign_keys=ON")
-            self._ensure_tables(conn)
-            conn.commit()
-        finally:
-            conn.close()
+    def _ensure_tables(self):
+        with self._conn_mgr.get_connection() as conn:
+            conn.executescript("""
+                CREATE TABLE IF NOT EXISTS experience_entries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    source_hash TEXT NOT NULL,
+                    is_compiled INTEGER DEFAULT 0,
+                    created_at TEXT DEFAULT (strftime('%s', 'now')),
+                    UNIQUE(source_hash)
+                );
 
-    def _ensure_tables(self, conn: sqlite3.Connection):
-        """确保所有表存在"""
-        conn.executescript("""
-            CREATE TABLE IF NOT EXISTS experience_entries (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                source TEXT NOT NULL,
-                category TEXT NOT NULL,
-                content TEXT NOT NULL,
-                source_hash TEXT NOT NULL,
-                is_compiled INTEGER DEFAULT 0,
-                created_at TEXT DEFAULT (strftime('%s', 'now')),
-                UNIQUE(source_hash)
-            );
+                CREATE INDEX IF NOT EXISTS idx_exp_entry_category ON experience_entries(category);
+                CREATE INDEX IF NOT EXISTS idx_exp_entry_compiled ON experience_entries(is_compiled);
+                CREATE INDEX IF NOT EXISTS idx_exp_entry_time ON experience_entries(created_at);
 
-            CREATE INDEX IF NOT EXISTS idx_exp_entry_category ON experience_entries(category);
-            CREATE INDEX IF NOT EXISTS idx_exp_entry_compiled ON experience_entries(is_compiled);
-            CREATE INDEX IF NOT EXISTS idx_exp_entry_time ON experience_entries(created_at);
+                CREATE TABLE IF NOT EXISTS compiled_articles (
+                    article_id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    summary TEXT NOT NULL,
+                    body TEXT NOT NULL,
+                    tags TEXT DEFAULT '[]',
+                    sources TEXT DEFAULT '[]',
+                    coverage TEXT DEFAULT 'medium',
+                    compiled_from TEXT DEFAULT '[]',
+                    source_hash TEXT,
+                    created_at TEXT DEFAULT (strftime('%s', 'now')),
+                    updated_at TEXT DEFAULT (strftime('%s', 'now'))
+                );
 
-            CREATE TABLE IF NOT EXISTS compiled_articles (
-                article_id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                summary TEXT NOT NULL,
-                body TEXT NOT NULL,
-                tags TEXT DEFAULT '[]',
-                sources TEXT DEFAULT '[]',
-                coverage TEXT DEFAULT 'medium',
-                compiled_from TEXT DEFAULT '[]',
-                source_hash TEXT,
-                created_at TEXT DEFAULT (strftime('%s', 'now')),
-                updated_at TEXT DEFAULT (strftime('%s', 'now'))
-            );
+                CREATE INDEX IF NOT EXISTS idx_compiled_coverage ON compiled_articles(coverage);
+                CREATE INDEX IF NOT EXISTS idx_compiled_updated ON compiled_articles(updated_at);
 
-            CREATE INDEX IF NOT EXISTS idx_compiled_coverage ON compiled_articles(coverage);
-            CREATE INDEX IF NOT EXISTS idx_compiled_updated ON compiled_articles(updated_at);
-
-            CREATE VIRTUAL TABLE IF NOT EXISTS compiled_articles_fts USING fts5(
-                title,
-                summary,
-                body,
-                tags
-            );
-        """)
-
-    def _get_conn(self) -> sqlite3.Connection:
-        """获取数据库连接"""
-        conn = sqlite3.connect(self._db_path)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=NORMAL")
-        return conn
+                CREATE VIRTUAL TABLE IF NOT EXISTS compiled_articles_fts USING fts5(
+                    title,
+                    summary,
+                    body,
+                    tags
+                );
+            """)
 
     # ====================================================================
     # 积累经验 → SQLite 持久化
     # ====================================================================
 
     def accumulate(self, task_result: Dict) -> None:
-        """
-        积累任务经验到 SQLite（持久化，进程崩溃不丢失）
-
-        Args:
-            task_result: 任务结果字典，包含:
-                - task_id: 任务ID
-                - skill: 使用的技能名称
-                - success: 是否成功
-                - duration_ms: 执行耗时
-                - observations: 观察记录
-                - error_type: 错误类型（如果失败）
-                - category: 经验分类（可选）
-        """
         source = task_result.get("task_id", "unknown")
         category = task_result.get("category", self._infer_category(task_result))
         content = self._serialize_experience(task_result)
         source_hash = hashlib.md5(content.encode("utf-8")).hexdigest()[:8]
         full_hash = f"{source}:{source_hash}"
 
-        # 写入内存缓冲
         entry = ExperienceEntry(
             source=source,
             category=category,
@@ -303,17 +284,12 @@ class ExperienceCompiler:
         )
         self._buffer.append(entry)
 
-        # 写入 SQLite（持久化）
         try:
-            conn = self._get_conn()
-            try:
+            with self._conn_mgr.get_connection() as conn:
                 conn.execute(
                     "INSERT OR IGNORE INTO experience_entries (source, category, content, source_hash, is_compiled) VALUES (?, ?, ?, ?, 0)",
                     (source, category, content, full_hash),
                 )
-                conn.commit()
-            finally:
-                conn.close()
         except Exception as e:
             logger.warning("经验写入SQLite失败（仍在缓冲区）: %s", e)
 
@@ -325,7 +301,6 @@ class ExperienceCompiler:
         )
 
     def _infer_category(self, task_result: Dict) -> str:
-        """推断经验分类"""
         skill = task_result.get("skill", "")
         success = task_result.get("success", True)
 
@@ -344,7 +319,6 @@ class ExperienceCompiler:
         return "general-patterns"
 
     def _serialize_experience(self, task_result: Dict) -> str:
-        """序列化经验为文本"""
         parts = []
         for key in ["task_id", "skill", "success", "duration_ms", "observations", "error_type"]:
             val = task_result.get(key)
@@ -357,26 +331,16 @@ class ExperienceCompiler:
     # ====================================================================
 
     def should_compile(self) -> bool:
-        """
-        检查是否需要编译
-
-        优先检查 SQLite 中未编译的经验数量（跨进程安全）
-        """
         try:
-            conn = self._get_conn()
-            try:
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute("SELECT COUNT(*) FROM experience_entries WHERE is_compiled = 0")
                 uncompiled_count = cursor.fetchone()[0]
-            finally:
-                conn.close()
         except Exception:
             uncompiled_count = len(self._buffer)
 
-        # 条件1: 未编译经验达到阈值
         if uncompiled_count >= self.COMPILE_TASK_THRESHOLD:
             return True
 
-        # 条件2: 距上次编译超过阈值天数
         last_compile = self._get_last_compile_time()
         if last_compile is None:
             return uncompiled_count > 0
@@ -385,21 +349,15 @@ class ExperienceCompiler:
         return days_since >= self.COMPILE_DAYS_THRESHOLD and uncompiled_count > 0
 
     def _get_last_compile_time(self) -> Optional[datetime]:
-        """获取上次编译时间（优先从 SQLite）"""
-        # 优先从 SQLite 查询
         try:
-            conn = self._get_conn()
-            try:
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute("SELECT MAX(updated_at) FROM compiled_articles")
                 row = cursor.fetchone()
                 if row and row[0]:
                     return datetime.fromisoformat(row[0])
-            finally:
-                conn.close()
         except Exception:
             pass
 
-        # 回退到文件检查
         index_path = self._compiled_dir / self.INDEX_FILE
         if not index_path.exists():
             return None
@@ -414,29 +372,16 @@ class ExperienceCompiler:
     # ====================================================================
 
     def generate_compile_prompt(self) -> str:
-        """
-        生成编译指令（由宿主LLM执行）
-
-        基于Karpathy模式：
-        1. 读取未编译经验（优先从SQLite）
-        2. 提取模式、实体、关系
-        3. 创建/更新结构化文章
-        4. 维护索引和源映射
-        5. 添加覆盖度标记
-        """
         if not self.should_compile():
             return "[Experience] 无未编译经验"
 
-        # 从 SQLite 读取未编译经验
         entries = self._load_uncompiled_entries()
 
         if not entries:
             return "[Experience] 无未编译经验"
 
-        # 按分类分组
         grouped = self._group_entries(entries)
 
-        # 读取已有文章索引（从 SQLite）
         existing_articles = self._load_compiled_index()
 
         prompt_parts = [
@@ -459,7 +404,6 @@ class ExperienceCompiler:
             prompt_parts.append(f"\n## 分类: {category}")
             prompt_parts.append(f"经验条目数: {len(cat_entries)}")
 
-            # 去重
             seen = set()
             unique = []
             for e in cat_entries:
@@ -474,7 +418,6 @@ class ExperienceCompiler:
                 ts = entry.get("created_at", "")[:10] if entry.get("created_at") else ""
                 prompt_parts.append(f"- [{ts}] {content}")
 
-        # 已有文章信息
         if existing_articles:
             prompt_parts.append("\n## 已有文章索引")
             for title, info in existing_articles.items():
@@ -498,10 +441,8 @@ class ExperienceCompiler:
         return "\n".join(prompt_parts)
 
     def _load_uncompiled_entries(self) -> List[Dict]:
-        """从 SQLite 加载未编译经验"""
         try:
-            conn = self._get_conn()
-            try:
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute(
                     "SELECT id, source, category, content, source_hash, created_at "
                     "FROM experience_entries WHERE is_compiled = 0 "
@@ -509,8 +450,6 @@ class ExperienceCompiler:
                 )
                 columns = [desc[0] for desc in cursor.description]
                 return [dict(zip(columns, row)) for row in cursor.fetchall()]
-            finally:
-                conn.close()
         except Exception as e:
             logger.warning("从SQLite加载未编译经验失败: %s", e)
             return [
@@ -525,7 +464,6 @@ class ExperienceCompiler:
             ]
 
     def _group_entries(self, entries: List[Dict]) -> Dict[str, List[Dict]]:
-        """按分类分组经验"""
         grouped: Dict[str, List[Dict]] = {}
         for entry in entries:
             cat = entry.get("category", "general-patterns")
@@ -539,21 +477,13 @@ class ExperienceCompiler:
     # ====================================================================
 
     def save_compiled_article(self, article: CompiledArticle) -> None:
-        """
-        保存编译后的文章到 SQLite + FTS5
-
-        Args:
-            article: 编译后的文章
-        """
         import uuid as _uuid
 
         article_id = article.article_id or str(_uuid.uuid4())
         now = datetime.now().isoformat()
 
         try:
-            conn = self._get_conn()
-            try:
-                # 检查是否已存在（按标题去重）
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute(
                     "SELECT article_id FROM compiled_articles WHERE title = ?",
                     (article.title,),
@@ -561,7 +491,6 @@ class ExperienceCompiler:
                 existing = cursor.fetchone()
 
                 if existing:
-                    # 更新已有文章
                     conn.execute(
                         """UPDATE compiled_articles
                         SET summary = ?, body = ?, tags = ?, sources = ?,
@@ -577,14 +506,12 @@ class ExperienceCompiler:
                             existing[0],
                         ),
                     )
-                    # 更新 FTS5
                     conn.execute(
                         "INSERT INTO compiled_articles_fts(rowid, title, summary, body, tags) VALUES ((SELECT rowid FROM compiled_articles WHERE article_id = ?), ?, ?, ?, ?)",
                         (existing[0], article.title, article.summary, article.body, json.dumps(article.tags)),
                     )
                     article_id = existing[0]
                 else:
-                    # 新建文章
                     source_hash = hashlib.md5((article.title + article.body).encode("utf-8")).hexdigest()[:8]
                     conn.execute(
                         """INSERT INTO compiled_articles
@@ -603,38 +530,23 @@ class ExperienceCompiler:
                             now,
                         ),
                     )
-                    # 写入 FTS5
                     conn.execute(
                         "INSERT INTO compiled_articles_fts(title, summary, body, tags) VALUES (?, ?, ?, ?)",
                         (article.title, article.summary, article.body, json.dumps(article.tags)),
                     )
 
-                # 标记原始经验为已编译
                 conn.execute(
                     "UPDATE experience_entries SET is_compiled = 1 WHERE category = ? AND is_compiled = 0",
                     (self._infer_category({"skill": article.tags[0] if article.tags else ""}),),
                 )
-                conn.commit()
 
-                # 同步到 Markdown 备份
-                self._sync_article_to_md(article)
+            self._sync_article_to_md(article)
 
-            finally:
-                conn.close()
         except Exception as e:
             logger.error("保存编译文章失败: %s", e)
             raise
 
     def save_compile_result(self, articles: List[CompiledArticle]) -> CompileResult:
-        """
-        批量保存编译结果
-
-        Args:
-            articles: 编译后的文章列表
-
-        Returns:
-            CompileResult: 编译统计
-        """
         result = CompileResult()
         start = time.monotonic()
 
@@ -651,16 +563,6 @@ class ExperienceCompiler:
         return result
 
     def parse_compile_output(self, raw_output: str) -> List[CompiledArticle]:
-        """
-        解析 LLM 编译输出为 CompiledArticle 列表
-
-        期望格式:
-            COMPILE_RESULT
-            ARTICLE_START|title|summary|coverage
-            ARTICLE_BODY|...
-            ARTICLE_END
-            COMPILE_RESULT_END
-        """
         articles = []
         in_result = False
         current_title = None
@@ -681,7 +583,6 @@ class ExperienceCompiler:
                 continue
 
             if stripped.startswith("ARTICLE_START|"):
-                # 保存前一篇
                 if current_title:
                     articles.append(
                         CompiledArticle(
@@ -725,10 +626,8 @@ class ExperienceCompiler:
     # ====================================================================
 
     def _load_compiled_index(self) -> Dict[str, Dict]:
-        """从 SQLite 加载编译索引"""
         try:
-            conn = self._get_conn()
-            try:
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute(
                     "SELECT title, summary, coverage, tags, updated_at FROM compiled_articles ORDER BY updated_at DESC"
                 )
@@ -742,14 +641,11 @@ class ExperienceCompiler:
                         "updated": row[4],
                     }
                 return index
-            finally:
-                conn.close()
         except Exception as e:
             logger.warning("从SQLite加载索引失败: %s", e)
             return self._load_index_from_md()
 
     def _load_index_from_md(self) -> Dict[str, Dict]:
-        """从 Markdown 文件加载索引（回退方案）"""
         index_path = self._compiled_dir / self.INDEX_FILE
         if not index_path.exists():
             return {}
@@ -775,22 +671,10 @@ class ExperienceCompiler:
     # ====================================================================
 
     def query(self, topic: str) -> Optional[str]:
-        """
-        查询编译后的知识（SQLite FTS5 优先，Markdown 回退）
-
-        Args:
-            topic: 查询主题
-
-        Returns:
-            文章内容（Markdown格式），如果找不到返回None
-        """
         topic_lower = topic.lower()
 
-        # 优先从 SQLite FTS5 搜索
         try:
-            conn = self._get_conn()
-            try:
-                # FTS5 全文搜索
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute(
                     """SELECT ca.title, ca.summary, ca.body, ca.tags, ca.coverage, ca.sources
                     FROM compiled_articles_fts fts
@@ -802,7 +686,6 @@ class ExperienceCompiler:
                 )
                 rows = cursor.fetchall()
                 if rows:
-                    # 拼接结果为 Markdown
                     parts = []
                     for row in rows:
                         title, summary, body, tags_json, coverage, sources_json = row
@@ -814,26 +697,20 @@ class ExperienceCompiler:
                         parts.append(body)
                         parts.append("\n---\n")
                     return "\n".join(parts)
-            finally:
-                conn.close()
         except Exception as e:
             logger.warning("SQLite FTS5查询失败，回退到文件: %s", e)
 
-        # 回退: 从 Markdown 文件读取
         return self._query_from_md(topic_lower)
 
     def _query_from_md(self, topic_lower: str) -> Optional[str]:
-        """从 Markdown 文件查询（回退方案）"""
         index = self._load_index_from_md()
 
-        # 精确匹配
         for title, info in index.items():
             if topic_lower in title.lower():
                 article_path = self._compiled_dir / "patterns" / f"{self._title_to_filename(title)}.md"
                 if article_path.exists():
                     return article_path.read_text(encoding="utf-8")
 
-        # 模糊匹配
         for title, info in index.items():
             summary = info.get("summary", "").lower()
             if topic_lower in summary:
@@ -851,7 +728,6 @@ class ExperienceCompiler:
     # ====================================================================
 
     def _sync_article_to_md(self, article: CompiledArticle) -> None:
-        """将编译后的文章同步到 Markdown 文件（辅助备份）"""
         patterns_dir = self._compiled_dir / "patterns"
         patterns_dir.mkdir(exist_ok=True)
 
@@ -878,20 +754,15 @@ class ExperienceCompiler:
 """
         md_path.write_text(md_content, encoding="utf-8")
 
-        # 更新索引文件
         self._sync_md_index()
 
     def _sync_md_index(self) -> None:
-        """同步 Markdown 索引文件"""
         try:
-            conn = self._get_conn()
-            try:
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute(
                     "SELECT title, summary, coverage, updated_at FROM compiled_articles ORDER BY title"
                 )
                 rows = cursor.fetchall()
-            finally:
-                conn.close()
         except Exception:
             return
 
@@ -913,31 +784,25 @@ class ExperienceCompiler:
     # ====================================================================
 
     def lint(self) -> List[str]:
-        """知识库健康检查"""
         issues = []
 
         try:
-            conn = self._get_conn()
-            try:
-                # 检查未编译经验数
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute("SELECT COUNT(*) FROM experience_entries WHERE is_compiled = 0")
                 uncompiled = cursor.fetchone()[0]
                 if uncompiled > 0:
                     issues.append(f"[INFO] {uncompiled} 条未编译经验")
 
-                # 检查低覆盖度文章
                 cursor = conn.execute("SELECT title FROM compiled_articles WHERE coverage = 'low'")
                 for row in cursor.fetchall():
                     issues.append(f"[SUGGEST] 低覆盖度文章需要补充: {row[0]}")
 
-                # 检查 SQLite 与 Markdown 一致性
                 cursor = conn.execute("SELECT COUNT(*) FROM compiled_articles")
                 db_count = cursor.fetchone()[0]
                 md_count = len(list((self._compiled_dir / "patterns").glob("*.md")))
                 if db_count != md_count:
                     issues.append(f"[WARN] SQLite({db_count}) 与 Markdown({md_count}) 文章数不一致")
 
-                # 检查 FTS5 完整性
                 cursor = conn.execute("SELECT COUNT(*) FROM compiled_articles_fts")
                 fts_count = cursor.fetchone()[0]
                 if fts_count != db_count:
@@ -945,8 +810,6 @@ class ExperienceCompiler:
 
                 if not issues:
                     issues.append("[OK] 知识库健康检查通过")
-            finally:
-                conn.close()
         except Exception as e:
             issues.append(f"[ERROR] 健康检查失败: {e}")
 
@@ -957,18 +820,14 @@ class ExperienceCompiler:
     # ====================================================================
 
     def get_stats(self) -> Dict:
-        """获取编译器统计"""
         try:
-            conn = self._get_conn()
-            try:
+            with self._conn_mgr.get_connection() as conn:
                 cursor = conn.execute("SELECT COUNT(*) FROM experience_entries")
                 total_entries = cursor.fetchone()[0]
                 cursor = conn.execute("SELECT COUNT(*) FROM experience_entries WHERE is_compiled = 0")
                 uncompiled = cursor.fetchone()[0]
                 cursor = conn.execute("SELECT COUNT(*) FROM compiled_articles")
                 compiled_count = cursor.fetchone()[0]
-            finally:
-                conn.close()
         except Exception:
             total_entries = len(self._buffer)
             uncompiled = len(self._buffer)
@@ -986,9 +845,7 @@ class ExperienceCompiler:
         }
 
     def clear_buffer(self):
-        """清空缓冲区（编译成功后调用）"""
         self._buffer.clear()
 
     def reset(self):
-        """完全重置编译器"""
         self._buffer.clear()

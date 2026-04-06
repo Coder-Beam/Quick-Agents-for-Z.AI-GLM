@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from quickagents.core.migration_manager import MigrationManager, Migration, MigrationResult
@@ -22,6 +23,7 @@ from quickagents.core.connection_manager import ConnectionManager
 
 
 # ==================== Fixtures ====================
+
 
 @pytest.fixture
 def temp_dir():
@@ -53,6 +55,7 @@ def mm(conn_mgr):
 
 # ==================== MigrationResult 测试 ====================
 
+
 class TestMigrationResult:
     """MigrationResult dataclass 测试"""
 
@@ -78,6 +81,7 @@ class TestMigrationResult:
 
 # ==================== 外部迁移文件加载 ====================
 
+
 class TestExternalMigrations:
     """外部迁移文件加载测试"""
 
@@ -91,74 +95,75 @@ class TestExternalMigrations:
 
     def test_load_single_migration(self, mm, temp_dir):
         mig_file = Path(temp_dir) / "003_add_notes_table.sql"
-        mig_file.write_text("CREATE TABLE IF NOT EXISTS notes (id TEXT PRIMARY KEY, title TEXT);", encoding='utf-8')
-        
+        mig_file.write_text("CREATE TABLE IF NOT EXISTS notes (id TEXT PRIMARY KEY, title TEXT);", encoding="utf-8")
+
         count = mm.load_external_migrations(temp_dir)
         assert count == 1
-        
+
         mig = next(m for m in mm.migrations if m.version == "003")
         assert mig.name == "add_notes_table"
         assert mig.source == "external"
         assert mig.down_sql == ""
 
     def test_load_with_rollback(self, mm, temp_dir):
-        up_file = Path(temp_dir) / "004_add_tags.sql"
-        up_file.write_text("CREATE TABLE IF NOT EXISTS tags (id TEXT PRIMARY KEY);", encoding='utf-8')
-        down_file = Path(temp_dir) / "004_add_tags_rollback.sql"
-        down_file.write_text("DROP TABLE IF EXISTS tags;", encoding='utf-8')
-        
+        up_file = Path(temp_dir) / "006_add_tags.sql"
+        up_file.write_text("CREATE TABLE IF NOT EXISTS tags (id TEXT PRIMARY KEY);", encoding="utf-8")
+        down_file = Path(temp_dir) / "006_add_tags_rollback.sql"
+        down_file.write_text("DROP TABLE IF EXISTS tags;", encoding="utf-8")
+
         count = mm.load_external_migrations(temp_dir)
         assert count == 1
-        
-        mig = next(m for m in mm.migrations if m.version == "004")
+
+        mig = next(m for m in mm.migrations if m.version == "006")
         assert mig.down_sql == "DROP TABLE IF EXISTS tags;"
 
     def test_load_multiple_migrations(self, mm, temp_dir):
-        for i in range(3, 7):
+        for i in range(6, 10):
             f = Path(temp_dir) / f"00{i}_feature_{i}.sql"
-            f.write_text(f"CREATE TABLE t{i} (id TEXT);", encoding='utf-8')
-        
+            f.write_text(f"CREATE TABLE t{i} (id TEXT);", encoding="utf-8")
+
         count = mm.load_external_migrations(temp_dir)
         assert count == 4
-        
+
         versions = [m.version for m in mm.migrations]
         assert versions == sorted(versions)
 
     def test_skip_duplicate_version(self, mm, temp_dir):
         f = Path(temp_dir) / "001_duplicate.sql"
-        f.write_text("SELECT 1;", encoding='utf-8')
-        
+        f.write_text("SELECT 1;", encoding="utf-8")
+
         count = mm.load_external_migrations(temp_dir)
         assert count == 0
 
     def test_skip_invalid_filename(self, mm, temp_dir):
         f = Path(temp_dir) / "invalid.sql"
-        f.write_text("SELECT 1;", encoding='utf-8')
-        
+        f.write_text("SELECT 1;", encoding="utf-8")
+
         count = mm.load_external_migrations(temp_dir)
         assert count == 0
 
     def test_skip_rollback_only_files(self, mm, temp_dir):
         f = Path(temp_dir) / "005_test_rollback.sql"
-        f.write_text("DROP TABLE t;", encoding='utf-8')
-        
+        f.write_text("DROP TABLE t;", encoding="utf-8")
+
         count = mm.load_external_migrations(temp_dir)
         assert count == 0
 
     def test_external_migration_executes(self, conn_mgr, mm, temp_dir):
         mig_file = Path(temp_dir) / "003_ext_table.sql"
-        mig_file.write_text("CREATE TABLE IF NOT EXISTS ext_table (id TEXT PRIMARY KEY, value TEXT);", encoding='utf-8')
-        
+        mig_file.write_text("CREATE TABLE IF NOT EXISTS ext_table (id TEXT PRIMARY KEY, value TEXT);", encoding="utf-8")
+
         mm.load_external_migrations(temp_dir)
         count = mm.migrate()
         assert count >= 1
-        
+
         with conn_mgr.get_connection() as conn:
             cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ext_table'")
             assert cursor.fetchone() is not None
 
 
 # ==================== 增强迁移日志 ====================
+
 
 class TestMigrationLogging:
     """增强迁移日志测试"""
@@ -169,10 +174,10 @@ class TestMigrationLogging:
 
     def test_get_last_results_after_migrate(self, mm):
         mm.migrate()
-        
+
         results = mm.get_last_results()
         assert len(results) >= 2
-        
+
         for r in results:
             assert isinstance(r, MigrationResult)
             assert r.success is True
@@ -180,7 +185,7 @@ class TestMigrationLogging:
 
     def test_results_contain_version_info(self, mm):
         mm.migrate()
-        
+
         results = mm.get_last_results()
         versions = [r.version for r in results]
         assert "001" in versions
@@ -188,18 +193,18 @@ class TestMigrationLogging:
 
     def test_results_have_duration(self, mm):
         mm.migrate()
-        
+
         results = mm.get_last_results()
         for r in results:
             assert r.duration_ms >= 0
 
     def test_status_includes_last_results(self, mm):
         mm.migrate()
-        
+
         status = mm.get_migration_status()
         assert "last_results" in status
         assert len(status["last_results"]) >= 2
-        
+
         for item in status["last_results"]:
             assert "version" in item
             assert "name" in item
@@ -209,10 +214,10 @@ class TestMigrationLogging:
     def test_failed_migration_in_results(self, mm):
         bad_migration = Migration(version="999", name="will_fail", up_sql="INVALID SQL;", down_sql="")
         mm.register_migration(bad_migration)
-        
+
         with pytest.raises(RuntimeError):
             mm.migrate()
-        
+
         results = mm.get_last_results()
         failed = [r for r in results if r.version == "999"]
         assert len(failed) == 1
@@ -221,15 +226,16 @@ class TestMigrationLogging:
 
     def test_idempotent_migrate_retains_results(self, mm):
         mm.migrate()
-        
+
         count = mm.migrate()
         assert count == 0
-        
+
         results = mm.get_last_results()
         assert len(results) >= 2
 
 
 # ==================== Migration source 测试 ====================
+
 
 class TestMigrationSource:
     """迁移来源标记测试"""
@@ -241,22 +247,23 @@ class TestMigrationSource:
 
     def test_external_source(self, mm, temp_dir):
         f = Path(temp_dir) / "003_source_test.sql"
-        f.write_text("SELECT 1;", encoding='utf-8')
-        
+        f.write_text("SELECT 1;", encoding="utf-8")
+
         mm.load_external_migrations(temp_dir)
-        
+
         mig = next(m for m in mm.migrations if m.version == "003")
         assert mig.source == "external"
 
     def test_registered_source(self, mm):
         m = Migration(version="099", name="registered_test", up_sql="SELECT 1;", down_sql="")
         mm.register_migration(m)
-        
+
         registered = next(m for m in mm.migrations if m.version == "099")
         assert registered.source == "registered"
 
 
 # ==================== 向后兼容性 ====================
+
 
 class TestBackwardCompat:
     """向后兼容性测试"""
