@@ -105,6 +105,7 @@ from ..skills.feedback_collector import FeedbackCollector
 from ..skills.tdd_workflow import TDDWorkflow
 from ..skills.git_commit import GitCommit
 from ..utils.encoding import read_file_utf8, write_file_utf8
+from .init_cmd import cmd_init
 
 
 def cmd_read(args):
@@ -2744,6 +2745,17 @@ def main():
     p_export.set_defaults(func=cmd_export)
 
     # ==================== 愚公循环命令 ====================
+
+    # init 命令
+    p_init = subparsers.add_parser("init", help="初始化QuickAgents到当前项目")
+    p_init.add_argument("project_dir", nargs="?", help="项目目录（默认当前目录）")
+    p_init.add_argument("--force", "-f", action="store_true", help="覆盖现有文件")
+    p_init.add_argument("--dry-run", "-d", action="store_true", help="预览模式，不执行实际操作")
+    p_init.add_argument("--minimal", "-m", action="store_true", help="最小安装（仅核心文件）")
+    p_init.add_argument("--with-ui-ux", action="store_true", help="包含ui-ux-pro-max技能（~410KB）")
+    p_init.add_argument("--with-browser", action="store_true", help="包含browser-devtools技能")
+    p_init.add_argument("--update-config", action="store_true", help="仅更新配置文件")
+    p_init.set_defaults(func=cmd_init)
 
     # yugong 命令
     p_yugong = subparsers.add_parser("yugong", help="愚公循环 - 自主开发循环")

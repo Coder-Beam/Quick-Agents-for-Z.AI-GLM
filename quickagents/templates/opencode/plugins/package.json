@@ -1,0 +1,56 @@
+{
+  "name": "@coder-beam/quickagents",
+  "version": "2.7.0",
+  "description": "QuickAgents Unified Plugin - Maximize local processing, minimize token consumption",
+  "main": "quickagents.ts",
+  "author": "Coder-Beam",
+  "license": "MIT",
+  "keywords": [
+    "opencode",
+    "plugin",
+    "quickagents",
+    "token-saving",
+    "local-executor",
+    "cache",
+    "loop-detector",
+    "pattern-based"
+  ],
+  "opencode": {
+    "displayName": "QuickAgents",
+    "hooks": [
+      "tool.execute.before",
+      "tool.execute.after",
+      "file.watcher.updated",
+      "session.status",
+      "session.error",
+      "session.deleted",
+      "command.executed"
+    ],
+    "features": [
+      "FileManager Cache (60-100% token savings)",
+      "Pattern-based LoopDetector - Stuck & Oscillation detection",
+      "LocalExecutor - qa/grep/glob interception",
+      "Reminder - event-driven alerts",
+      "SkillEvolution - automatic skill evolution",
+      "FeedbackCollector - experience collection"
+    ],
+    "config": {
+      "fileManagerCache": true,
+      "loopDetector": true,
+      "localExecutor": true,
+      "reminder": true,
+      "skillEvolution": true,
+      "feedbackCollector": true
+    }
+  },
+  "engines": {
+    "opencode": ">=1.0.0"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM"
+  }
+}

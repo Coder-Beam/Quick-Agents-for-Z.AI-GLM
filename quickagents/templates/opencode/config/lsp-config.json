@@ -1,0 +1,487 @@
+{
+  "$schema": "https://quickagents.ai/schemas/lsp-config.json",
+  "version": "1.1.0",
+  "description": "QuickAgents LSP集成配置 - 与AST-Grep深度整合",
+  
+  "servers": {
+    "typescript": {
+      "command": "typescript-language-server",
+      "args": ["--stdio"],
+      "file_patterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+      "enabled": true,
+      "priority": 1,
+      "initialization_options": {
+        "preferences": {
+          "disableSuggestions": false,
+          "quotePreference": "single",
+          "importModuleSpecifierEnding": "minimal",
+          "includeCompletionsForImportStatements": true
+        },
+        "typescript": {
+          "suggest": {
+            "completeFunctionCalls": true,
+            "includeAutomaticOptionalChainCompletions": true
+          }
+        }
+      },
+      "settings": {
+        "typescript": {
+          "inlayHints": {
+            "includeInlayParameterNameHints": "all",
+            "includeInlayFunctionParameterTypeHints": true,
+            "includeInlayVariableTypeHints": true
+          }
+        }
+      }
+    },
+    
+    "python": {
+      "command": "pylsp",
+      "args": [],
+      "file_patterns": ["**/*.py"],
+      "enabled": true,
+      "priority": 2,
+      "initialization_options": {
+        "plugins": {
+          "pycodestyle": { "enabled": true, "maxLineLength": 120 },
+          "pyflakes": { "enabled": true },
+          "mccabe": { "enabled": true, "threshold": 15 },
+          "rope_completion": { "enabled": true },
+          "pylint": { "enabled": false },
+          "mypy": { "enabled": true, "live_mode": true }
+        }
+      }
+    },
+    
+    "golang": {
+      "command": "gopls",
+      "args": ["serve"],
+      "file_patterns": ["**/*.go"],
+      "enabled": true,
+      "priority": 3,
+      "initialization_options": {
+        "usePlaceholders": true,
+        "staticcheck": true,
+        "analyses": {
+          "unusedparams": true,
+          "shadow": true,
+          "fieldalignment": false,
+          "nilness": true
+        },
+        "hints": {
+          "assignVariableTypes": true,
+          "compositeLiteralFields": true,
+          "constantValues": true,
+          "functionTypeParameters": true,
+          "parameterNames": true,
+          "rangeVariableTypes": true
+        }
+      }
+    },
+    
+    "rust": {
+      "command": "rust-analyzer",
+      "args": [],
+      "file_patterns": ["**/*.rs"],
+      "enabled": true,
+      "priority": 4,
+      "initialization_options": {
+        "checkOnSave": {
+          "command": "clippy"
+        },
+        "cargo": {
+          "loadOutDirsFromCheck": true,
+          "features": "all"
+        },
+        "procMacro": {
+          "enable": true
+        },
+        "inlayHints": {
+          "enable": true,
+          "maxLength": 25
+        }
+      }
+    },
+    
+    "java": {
+      "command": "jdtls",
+      "args": [],
+      "file_patterns": ["**/*.java"],
+      "enabled": true,
+      "priority": 5,
+      "initialization_options": {
+        "settings": {
+          "java": {
+            "format": {
+              "enabled": true
+            },
+            "saveActions": {
+              "organizeImports": true
+            }
+          }
+        }
+      }
+    },
+    
+    "csharp": {
+      "command": "omnisharp",
+      "args": ["-lsp"],
+      "file_patterns": ["**/*.cs"],
+      "enabled": true,
+      "priority": 6,
+      "initialization_options": {
+        "RoslynExtensionsOptions": {
+          "enableAnalyzersSupport": true,
+          "enableImportCompletion": true
+        }
+      }
+    },
+    
+    "vue": {
+      "command": "vue-language-server",
+      "args": ["--stdio"],
+      "file_patterns": ["**/*.vue"],
+      "enabled": true,
+      "priority": 7,
+      "initialization_options": {
+        "typescript": {
+          "serverPath": "typescript-language-server"
+        }
+      }
+    },
+    
+    "svelte": {
+      "command": "svelteserver",
+      "args": ["--stdio"],
+      "file_patterns": ["**/*.svelte"],
+      "enabled": true,
+      "priority": 8
+    },
+    
+    "json": {
+      "command": "vscode-json-languageserver",
+      "args": ["--stdio"],
+      "file_patterns": ["**/*.json", "**/*.jsonc"],
+      "enabled": true,
+      "priority": 9
+    },
+    
+    "yaml": {
+      "command": "yaml-language-server",
+      "args": ["--stdio"],
+      "file_patterns": ["**/*.yaml", "**/*.yml"],
+      "enabled": true,
+      "priority": 10,
+      "initialization_options": {
+        "yaml": {
+          "validate": true,
+          "hover": true,
+          "completion": true,
+          "customTags": [
+            "!include scalar",
+            "!reference sequence"
+          ]
+        }
+      }
+    },
+    
+    "markdown": {
+      "command": "marksman",
+      "args": ["server"],
+      "file_patterns": ["**/*.md"],
+      "enabled": true,
+      "priority": 11
+    }
+  },
+  
+  "features": {
+    "diagnostics": {
+      "enabled": true,
+      "auto_refresh": true,
+      "severity_filter": ["error", "warning", "information"],
+      "max_diagnostic_count": 100
+    },
+    
+    "completion": {
+      "enabled": true,
+      "trigger_characters": [".", ">", ":", "\"", "'", "/", "@"],
+      "max_items": 50,
+      "resolve_detail": true
+    },
+    
+    "hover": {
+      "enabled": true,
+      "delay_ms": 300,
+      "max_length": 1000
+    },
+    
+    "definition": {
+      "enabled": true,
+      "cross_file": true,
+      "max_results": 10
+    },
+    
+    "references": {
+      "enabled": true,
+      "include_declaration": true,
+      "max_results": 100
+    },
+    
+    "rename": {
+      "enabled": true,
+      "prepare_support": true,
+      "cross_file": true
+    },
+    
+    "formatting": {
+      "enabled": true,
+      "format_on_save": false,
+      "tab_size": 2,
+      "insert_spaces": true,
+      "language_overrides": {
+        "python": { "tab_size": 4 },
+        "go": { "tab_size": 4, "insert_spaces": false },
+        "rust": { "tab_size": 4 }
+      }
+    },
+    
+    "code_action": {
+      "enabled": true,
+      "kinds": [
+        "quickfix",
+        "refactor",
+        "refactor.extract",
+        "refactor.inline",
+        "refactor.rewrite",
+        "source",
+        "source.organizeImports",
+        "source.fixAll"
+      ],
+      "max_actions": 20
+    },
+    
+    "signature_help": {
+      "enabled": true,
+      "trigger_characters": ["(", ","]
+    },
+    
+    "document_symbol": {
+      "enabled": true,
+      "hierarchical_support": true
+    },
+    
+    "workspace_symbol": {
+      "enabled": true,
+      "max_results": 50
+    }
+  },
+  
+  "ast_grep": {
+    "enabled": true,
+    "languages": [
+      "typescript",
+      "javascript",
+      "tsx",
+      "jsx",
+      "python",
+      "go",
+      "rust",
+      "java",
+      "c",
+      "cpp",
+      "csharp",
+      "ruby",
+      "swift",
+      "kotlin",
+      "scala",
+      "lua",
+      "dart",
+      "json",
+      "html",
+      "css",
+      "yaml",
+      "markdown",
+      "vue",
+      "svelte"
+    ],
+    
+    "rules_dir": ".quickagents/ast-rules",
+    
+    "default_rules": {
+      "no-console-log": {
+        "language": "typescript",
+        "pattern": "console.log($MSG)",
+        "message": "Avoid using console.log in production code",
+        "severity": "warning",
+        "note": "Use logger.info() instead"
+      },
+      
+      "no-any-type": {
+        "language": "typescript",
+        "pattern": ": any",
+        "message": "Avoid using 'any' type",
+        "severity": "warning",
+        "note": "Use 'unknown' or specific types"
+      },
+      
+      "no-var": {
+        "language": "javascript",
+        "pattern": "var $VAR",
+        "message": "Use 'let' or 'const' instead of 'var'",
+        "severity": "error"
+      },
+      
+      "prefer-const": {
+        "language": "typescript",
+        "pattern": "let $VAR = $VALUE",
+        "message": "Use 'const' for variables that are never reassigned",
+        "severity": "info"
+      },
+      
+      "no-empty-catch": {
+        "language": "typescript",
+        "pattern": "catch ($ERR) { }",
+        "message": "Empty catch block - at least log the error",
+        "severity": "warning"
+      },
+      
+      "no-debugger": {
+        "language": "typescript",
+        "pattern": "debugger",
+        "message": "Remove debugger statement before production",
+        "severity": "error"
+      },
+      
+      "prefer-optional-chain": {
+        "language": "typescript",
+        "pattern": "$OBJ && $OBJ.$PROP",
+        "message": "Use optional chaining (?.) instead",
+        "severity": "info"
+      },
+      
+      "no-unused-vars": {
+        "language": "python",
+        "pattern": "$VAR = $_",
+        "message": "Variable may be unused",
+        "severity": "warning"
+      }
+    },
+    
+    "rewrite_rules": {
+      "console-log-to-logger": {
+        "language": "typescript",
+        "pattern": "console.log($MSG)",
+        "replacement": "logger.info($MSG)",
+        "description": "Replace console.log with logger.info"
+      },
+      
+      "var-to-const": {
+        "language": "javascript",
+        "pattern": "var $VAR = $VALUE",
+        "replacement": "const $VAR = $VALUE",
+        "description": "Replace var with const"
+      },
+      
+      "callback-to-async": {
+        "language": "typescript",
+        "pattern": "$FUNC($ARGS, function($CB_ARGS) { $BODY })",
+        "replacement": "$FUNC($ARGS).then(($CB_ARGS) => { $BODY })",
+        "description": "Convert callback to Promise"
+      },
+      
+      "null-check-to-optional": {
+        "language": "typescript",
+        "pattern": "$OBJ !== null && $OBJ !== undefined && $OBJ.$PROP",
+        "replacement": "$OBJ?.$PROP",
+        "description": "Use optional chaining for null checks"
+      },
+      
+      "string-concat-to-template": {
+        "language": "typescript",
+        "pattern": "$STR1 + $STR2",
+        "replacement": "`${$STR1}${$STR2}`",
+        "description": "Convert string concatenation to template literal"
+      }
+    },
+    
+    "search_patterns": {
+      "find-function-definitions": {
+        "language": "typescript",
+        "pattern": "function $NAME($PARAMS) { $BODY }",
+        "description": "Find all function definitions"
+      },
+      
+      "find-class-methods": {
+        "language": "typescript",
+        "pattern": "class $CLASS { $METHODS }",
+        "description": "Find all class definitions"
+      },
+      
+      "find-api-routes": {
+        "language": "typescript",
+        "pattern": "app.$METHOD($PATH, $HANDLER)",
+        "description": "Find all API route definitions"
+      },
+      
+      "find-test-cases": {
+        "language": "typescript",
+        "pattern": "test($NAME, () => { $BODY })",
+        "description": "Find all test cases"
+      }
+    }
+  },
+  
+  "integration": {
+    "with_code_review": {
+      "enabled": true,
+      "use_lsp_diagnostics": true,
+      "use_ast_patterns": true,
+      "max_diagnostics": 50
+    },
+    
+    "with_refactor": {
+      "enabled": true,
+      "use_lsp_rename": true,
+      "use_ast_rewrite": true,
+      "preview_changes": true
+    },
+    
+    "with_test_runner": {
+      "enabled": true,
+      "use_lsp_definitions": true,
+      "use_ast_test_detection": true,
+      "auto_detect_test_framework": true
+    },
+    
+    "with_debugger": {
+      "enabled": true,
+      "use_lsp_definitions": true,
+      "jump_to_definition": true
+    },
+    
+    "with_doc_writer": {
+      "enabled": true,
+      "use_lsp_hover": true,
+      "use_lsp_signatures": true,
+      "auto_generate_docstrings": true
+    }
+  },
+  
+  "performance": {
+    "lsp_timeout_ms": 5000,
+    "ast_search_timeout_ms": 3000,
+    "max_file_size_kb": 1024,
+    "cache_enabled": true,
+    "cache_ttl_seconds": 300,
+    "max_concurrent_requests": 10,
+    "debounce_ms": 150
+  },
+  
+  "server_management": {
+    "auto_start": true,
+    "restart_on_crash": true,
+    "max_restart_attempts": 3,
+    "idle_timeout_seconds": 300,
+    "log_level": "info"
+  }
+}

@@ -1,6 +1,6 @@
 ﻿# QuickAgents Installation Guide
 
-> Version: 2.7.0 | Updated: 2026-03-30 | Author: Coder-Beam
+> Version: 2.11.0 | Updated: 2026-04-06 | Author: Coder-Beam
 
 [中文](#quickagents-安装指南) | [English](#quickagents-installation-guide)
 
@@ -15,7 +15,103 @@ QuickAgents consists of two parts:
 | Component | Description | Installation |
 |-----------|-------------|--------------|
 | **Python Package** | Core functionality (UnifiedDB, KnowledgeGraph, CLI, etc.) | `pip install quickagents` |
-| **OpenCode Config** | Agents, Skills, Plugin, Config files | Download from GitHub |
+| **OpenCode Config** | Agents, Skills, Plugin, Config files | `qka init` |
+
+## 🚀 One-Line Installation (Recommended)
+
+### macOS/Linux
+```bash
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.sh | bash
+```
+
+### Windows PowerShell
+```powershell
+iwr -useb https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.ps1 | iex
+```
+
+### Options
+- `--with-ui-ux` - Include ui-ux-pro-max skill (~410KB, for web/mobile projects)
+- `--minimal` - Minimal installation (core files only)
+- `--check` - Only check prerequisites, don't install
+- `--uninstall` - Remove QuickAgents from current project
+
+## 🤖 AI Agent Quick Install (Most Recommended)
+
+**This is the easiest way to install QuickAgents.** Just tell your AI assistant:
+
+```
+请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装QuickAgents
+```
+
+Or for English:
+
+```
+Please install QuickAgents following the instructions at: https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md
+```
+
+**The AI agent will automatically:**
+1. ✅ Check Python environment (install if needed)
+2. ✅ Run `pip install quickagents`
+3. ✅ Run `qka init` to configure the project
+4. ✅ Verify installation
+5. ✅ Report success
+
+**After installation, start using QuickAgents:**
+```
+启动QuickAgent
+```
+
+### Alternative AI Prompt
+
+If you prefer step-by-step verification:
+
+```
+Please install QuickAgents by executing these steps:
+
+Step 1 - Install Python package:
+pip install quickagents
+
+Step 2 - Initialize project:
+qka init
+
+Step 3 - Verify installation:
+- python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
+- qka --help
+- Check that .opencode/plugins/quickagents.ts exists
+
+Report success or any errors encountered.
+```
+
+## 📋 Manual Installation (2 Steps)
+
+### Step 1: Install Python Package
+```bash
+pip install quickagents
+```
+
+### Step 2: Initialize Project
+```bash
+qka init
+```
+
+### Step 3: Verify Installation
+```bash
+# Check Python package
+python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
+
+# Check CLI
+qka --help
+
+# Check OpenCode config
+ls .opencode/plugins/quickagents.ts
+```
+
+**Done!** Now start using QuickAgents:
+```
+启动QuickAgent
+```
+
+---
 
 ## Prerequisites
 
@@ -460,9 +556,71 @@ QuickAgents 由两部分组成：
 | 组件 | 描述 | 安装方式 |
 |------|------|----------|
 | **Python包** | 核心功能（UnifiedDB、KnowledgeGraph、CLI等） | `pip install quickagents` |
-| **OpenCode配置** | 代理、技能、插件、配置文件 | 从GitHub下载 |
+| **OpenCode配置** | 代理、技能、插件、配置文件 | `qka init` |
 
-## 前置要求
+## 🚀 一行命令安装（推荐）
+
+### macOS/Linux
+```bash
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.sh | bash
+```
+
+### Windows PowerShell
+```powershell
+iwr -useb https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.ps1 | iex
+```
+
+### 可选参数
+- `--with-ui-ux` - 包含ui-ux-pro-max技能（~410KB，用于Web/Mobile项目）
+- `--minimal` - 最小安装（仅核心文件）
+- `--check` - 仅检查前置条件，不安装
+- `--uninstall` - 从当前项目移除QuickAgents
+
+## 🤖 AI代理自动安装（最推荐）
+
+**这是最简单的安装方式。** 只需告诉你的AI代理：
+
+```
+请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装QuickAgents
+```
+
+AI代理会自动：
+1. 读取安装指南
+2. 执行所有安装步骤
+3. 验证安装结果
+
+**零手动操作，最省心的安装方式。**
+
+## 📋 手动安装（2步）
+
+### 第1步：安装Python包
+```bash
+pip install quickagents
+```
+
+### 第2步：初始化项目
+```bash
+qka init
+```
+
+### 第3步：验证安装
+```bash
+# 检查Python包
+python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
+
+# 检查CLI
+qka --help
+
+# 检查OpenCode配置
+ls .opencode/plugins/quickagents.ts
+```
+
+**完成！** 现在可以开始使用QuickAgents：
+```
+启动QuickAgent
+```
+
+---
 
 | 要求 | 最低版本 | 推荐版本 | 检查命令 |
 |------|----------|----------|----------|

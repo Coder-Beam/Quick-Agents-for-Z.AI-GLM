@@ -1,0 +1,70 @@
+{
+  "version": "2.11.0",
+  "description": "QuickAgents Installation Manifest",
+  "generated": "{{GENERATED_DATE}}",
+  "files": {
+    "root": {
+        "AGENTS.md": {
+          "required": true,
+          "description": "AI Agent Instructions"
+        },
+        "opencode.json": {
+          "required": true,
+          "description": "OpenCode Configuration"
+        }
+      },
+    "opencode": {
+        "agents": {
+          "required": true,
+          "count": 15,
+          "description": "Agent Configurations"
+        },
+        "skills": {
+          "required": true,
+          "default": [
+            "doom-loop-skill",
+            "event-reminder-skill",
+            "feedback-collector-skill",
+            "project-memory-skill",
+            "version-alignment-skill",
+            "glm-version-sync-skill",
+            "yugong-loop-skill"
+          ],
+          "optional": [
+            "ui-ux-pro-max",
+            "browser-devtools-skill"
+          ]
+        },
+        "commands": {
+          "required": true,
+          "count": 5
+        },
+        "hooks": {
+          "required": true,
+          "description": "Git and Session Hooks"
+        },
+        "config": {
+          "required": true,
+          "files": ["models.json", "categories.json", "quickagents.json", "lsp-config.json"]
+        },
+        "plugins": {
+          "required": true,
+          "files": ["quickagents.ts", "package.json"]
+        },
+        "memory": {
+          "required": true,
+          "description": "Project Memory Templates"
+        }
+      },
+    "docs": {
+      "MEMORY.md": {"required": true},
+      "TASKS.md": {"required": true},
+      "DESIGN.md": {"required": true},
+      "INDEX.md": {"required": true}
+      }
+  },
+  "deprecated_files": [
+    ".opencode/agents/old-agent.md",
+    ".opencode/skills/deprecated-skill/"
+  ]
+}

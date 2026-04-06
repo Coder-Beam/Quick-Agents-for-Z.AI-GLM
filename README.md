@@ -1,8 +1,8 @@
 ﻿# QuickAgents
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/Version-2.10.0-green.svg)](https://pypi.org/project/quickagents/2.10.0/)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![Version](https://img.shields.io/badge/Version-2.11.0-green.svg)](https://pypi.org/project/quickagents/)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
 
 **AI Agent Enhancement Toolkit with Self-Evolution** | **AI代理增强工具包，支持自我进化**
@@ -171,23 +171,56 @@ browser.close()
 
 ## 🚀 安装
 
-### 一句话安装（推荐）
+### 方式一：一行命令安装（推荐）
 
-直接告诉你的LLM代理工具（如OpenCode、Claude等）：
+**macOS/Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.sh | bash
+```
+
+**Windows PowerShell:**
+```powershell
+iwr -useb https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.ps1 | iex
+```
+
+### 方式二：两步安装
+
+```bash
+# Step 1: Install Python package
+pip install quickagents
+
+# Step 2: Initialize project
+qka init
+```
+
+### 方式三：让AI代理自动安装（最省心）
+
+直接复制这句话发送给你的AI代理（如OpenCode、Claude、ChatGPT等）：
 
 ```
 请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装QuickAgents
 ```
 
-代理会自动完成所有安装步骤。
+AI代理会自动：
+1. 读取安装指南
+2. 检测你的环境（Python版本等）
+3. 执行 `pip install quickagents`
+4. 执行 `qka init` 初始化项目
+5. 验证安装结果
 
-### 手动安装
+**这是最推荐的安装方式**，无需手动操作任何命令。
+
+### 可选参数
 
 ```bash
-pip install quickagents
+qka init --with-ui-ux      # 包含ui-ux-pro-max技能（~410KB，用于Web/Mobile项目）
+qka init --with-browser    # 包含browser-devtools技能
+qka init --minimal         # 最小安装（仅核心文件）
+qka init --force           # 覆盖现有文件
+qka init --dry-run         # 预览将安装的文件
 ```
 
-### 完整安装（包含Windows功能）
+### 完整安装（包含所有可选依赖）
 
 ```bash
 pip install quickagents[full]
@@ -555,23 +588,49 @@ browser.close()
 
 ## 🚀 Installation
 
-### One-Line Install (Recommended)
+### Option 1: One-Line Install (Recommended)
 
-Tell your LLM agent tool (e.g., OpenCode, Claude):
-
+**macOS/Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.sh | bash
 ```
-Follow the instructions at https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md to install QuickAgents
+
+**Windows PowerShell:**
+```powershell
+iwr -useb https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.ps1 | iex
 ```
 
-The agent will automatically complete all installation steps.
-
-### Manual Installation
+### Option 2: Two-Step Install
 
 ```bash
 pip install quickagents
+qka init
 ```
 
-### Full Installation (with Windows features)
+### Option 3: AI-Assisted Install (Recommended)
+
+Tell your AI assistant:
+
+```
+请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装QuickAgents
+```
+
+The AI agent will automatically:
+1. Read the installation guide
+2. Execute all installation steps
+3. Verify the installation
+
+**This is the most recommended method** - zero manual commands required.
+
+### Optional Flags
+
+```bash
+qka init --with-ui-ux      # Include ui-ux-pro-max skill (~410KB, for web/mobile projects)
+qka init --with-browser    # Include browser-devtools skill
+qka init --minimal         # Minimal installation (core files only)
+```
+
+### Full Installation (with all optional features)
 
 ```bash
 pip install quickagents[full]
@@ -779,9 +838,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Stats
 
-- **Version**: 2.8.3
+- **Version**: 2.11.0
 - **Python Support**: 3.9+
-- **Test Coverage**: 580 tests passing
 - **License**: MIT
 - **Author**: Coder-Beam
 

@@ -1,0 +1,236 @@
+{
+  "$schema": "https://quickagents.ai/schemas/quickagents-config.json",
+  "$meta": {
+    "version": "2.0.0",
+    "description": "QuickAgents 统一配置 - 模型路由 + 代理协调",
+    "lastUpdated": "2026-03-26T00:00:00Z",
+    "migratedFrom": ["coordination.json", "models.json"]
+  },
+  
+  "logging": {
+    "level": "info",
+    "file": ".opencode/logs/quickagents.log",
+    "requests": true,
+    "retentionDays": 30
+  },
+  "metrics": {
+    "enabled": true,
+    "file": ".opencode/metrics/quickagents.json",
+    "trackLatency": true,
+    "trackCosts": true,
+    "trackErrors": true,
+    "retentionDays": 30
+  },
+  "timeouts": {
+    "api": { "connectionMs": 5000, "requestMs": 60000, "streamMs": 120000 },
+    "workflow": { "defaultMs": 300000, "maxMs": 1800000 }
+  },
+  "retry": {
+    "api": { "maxAttempts": 3, "backoffMultiplier": 2, "initialDelayMs": 1000, "maxDelayMs": 10000 },
+    "workflow": { "defaultMaxRetries": 2, "defaultBackoffMs": 1000 },
+    "circuitBreaker": { "enabled": true, "failureThreshold": 5, "resetTimeoutMs": 60000 }
+  },
+  
+  "providers": {
+    "zhipu": {
+      "name": "智谱AI",
+      "apiBase": "https://open.bigmodel.cn/api/paas/v4",
+      "priority": 1,
+      "enabled": true,
+      "rateLimit": { "requestsPerMinute": 60, "tokensPerMinute": 100000 },
+      "models": [
+        { "id": "glm-5", "name": "GLM-5", "contextWindow": 128000, "maxOutput": 4096, "capabilities": ["chat", "coding", "reasoning"], "costPer1kTokens": { "input": 0.001, "output": 0.001 } },
+        { "id": "glm-4-plus", "name": "GLM-4 Plus", "contextWindow": 128000, "maxOutput": 4096, "capabilities": ["chat", "coding"], "costPer1kTokens": { "input": 0.0005, "output": 0.0005 } },
+        { "id": "glm-4-flash", "name": "GLM-4 Flash", "contextWindow": 128000, "maxOutput": 4096, "capabilities": ["chat", "fast"], "costPer1kTokens": { "input": 0.0001, "output": 0.0001 } }
+      ]
+    },
+    "google": {
+      "name": "Google AI",
+      "apiBase": "https://generativelanguage.googleapis.com/v1beta",
+      "priority": 2,
+      "enabled": true,
+      "rateLimit": { "requestsPerMinute": 60, "tokensPerMinute": 100000 },
+      "models": [
+        { "id": "gemini-2.0-flash-exp", "name": "Gemini 2.0 Flash", "contextWindow": 1000000, "maxOutput": 8192, "capabilities": ["chat", "vision", "creative", "multimodal"], "costPer1kTokens": { "input": 0.0, "output": 0.0 } },
+        { "id": "gemini-1.5-pro", "name": "Gemini 1.5 Pro", "contextWindow": 2000000, "maxOutput": 8192, "capabilities": ["chat", "vision", "reasoning"], "costPer1kTokens": { "input": 0.00125, "output": 0.005 } },
+        { "id": "gemini-1.5-flash", "name": "Gemini 1.5 Flash", "contextWindow": 1000000, "maxOutput": 8192, "capabilities": ["chat", "fast"], "costPer1kTokens": { "input": 0.000075, "output": 0.0003 } }
+      ]
+    },
+    "openai": {
+      "name": "OpenAI",
+      "apiBase": "https://api.openai.com/v1",
+      "priority": 3,
+      "enabled": true,
+      "rateLimit": { "requestsPerMinute": 500, "tokensPerMinute": 150000 },
+      "models": [
+        { "id": "gpt-4o", "name": "GPT-4o", "contextWindow": 128000, "maxOutput": 4096, "capabilities": ["chat", "vision", "reasoning"], "costPer1kTokens": { "input": 0.005, "output": 0.015 } },
+        { "id": "gpt-4-turbo", "name": "GPT-4 Turbo", "contextWindow": 128000, "maxOutput": 4096, "capabilities": ["chat", "reasoning"], "costPer1kTokens": { "input": 0.01, "output": 0.03 } },
+        { "id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "contextWindow": 16000, "maxOutput": 4096, "capabilities": ["chat", "fast"], "costPer1kTokens": { "input": 0.0005, "output": 0.0015 } }
+      ]
+    },
+    "anthropic": {
+      "name": "Anthropic",
+      "apiBase": "https://api.anthropic.com/v1",
+      "priority": 4,
+      "enabled": true,
+      "rateLimit": { "requestsPerMinute": 60, "tokensPerMinute": 100000 },
+      "models": [
+        { "id": "claude-3-opus", "name": "Claude 3 Opus", "contextWindow": 200000, "maxOutput": 4096, "capabilities": ["chat", "reasoning", "creative"], "costPer1kTokens": { "input": 0.015, "output": 0.075 } },
+        { "id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "contextWindow": 200000, "maxOutput": 4096, "capabilities": ["chat", "balanced"], "costPer1kTokens": { "input": 0.003, "output": 0.015 } },
+        { "id": "claude-3-haiku", "name": "Claude 3 Haiku", "contextWindow": 200000, "maxOutput": 4096, "capabilities": ["chat", "fast"], "costPer1kTokens": { "input": 0.00025, "output": 0.00125 } }
+      ]
+    },
+    "deepseek": {
+      "name": "DeepSeek",
+      "apiBase": "https://api.deepseek.com/v1",
+      "priority": 5,
+      "enabled": true,
+      "rateLimit": { "requestsPerMinute": 60, "tokensPerMinute": 50000 },
+      "models": [
+        { "id": "deepseek-reasoner", "name": "DeepSeek Reasoner", "contextWindow": 64000, "maxOutput": 8192, "capabilities": ["chat", "reasoning", "coding"], "costPer1kTokens": { "input": 0.00055, "output": 0.00219 } },
+        { "id": "deepseek-chat", "name": "DeepSeek Chat", "contextWindow": 64000, "maxOutput": 4096, "config": ["chat", "coding"], "costPer1kTokens": { "input": 0.00014, "output": 0.00028 } }
+      ]
+    }
+  },
+  
+  "model_profiles": {
+    "primary": { "model": "glm-5", "provider": "zhipu", "temperature": 0.1, "maxTokens": 4096, "useCase": ["general", "coding", "planning", "testing", "debugging"] },
+    "reasoning": { "model": "glm-5", "provider": "zhipu", "temperature": 0.1, "maxTokens": 8192, "useCase": ["deep-reasoning", "architecture", "ultrabrain", "review"] },
+    "creative": { "model": "gemini-2.0-flash-exp", "provider": "google", "temperature": 0.9, "maxTokens": 4096, "useCase": ["documentation", "ui-design", "brainstorming", "artistry", "writing"] },
+    "visual": { "model": "gemini-2.0-flash-exp", "provider": "google", "temperature": 0.7, "maxTokens": 4096, "useCase": ["visual-engineering", "frontend", "ui-ux", "image-analysis"] },
+    "fast": { "model": "glm-4-flash", "provider": "zhipu", "temperature": 0.3, "maxTokens": 2048, "useCase": ["quick-tasks", "formatting", "simple-queries", "quick"] },
+    "deep": { "model": "glm-5", "provider": "zhipu", "temperature": 0.2, "maxTokens": 8192, "useCase": ["deep-analysis", "refactoring", "legacy-understanding", "complex-debugging"] }
+  },
+  
+  "routing": {
+    "taskTypeMapping": {
+      "code-generation": "primary",
+      "code-review": "reasoning",
+      "refactoring": "deep",
+      "documentation": "creative",
+      "planning": "reasoning",
+      "analysis": "deep",
+      "ui-design": "visual",
+      "frontend": "visual",
+      "image-analysis": "visual",
+      "quick-fix": "fast",
+      "testing": "primary",
+      "debugging": "primary"
+    },
+    "categoryMapping": {
+      "ultrabrain": "reasoning",
+      "visual-engineering": "visual",
+      "quick": "fast",
+      "standard": "primary",
+      "deep": "deep",
+      "artistry": "creative",
+      "writing": "creative",
+      "testing": "primary",
+      "debugging": "primary",
+      "unspecified-low": "fast",
+      "unspecified-high": "reasoning"
+    },
+    "complexityMapping": {
+      "simple": "fast",
+      "medium": "primary",
+      "complex": "reasoning"
+    },
+    "fallbackChain": {
+      "default": ["primary", "reasoning", "fast"],
+      "critical": ["reasoning", "primary", "creative"],
+      "fastPath": ["fast", "primary"],
+      "visualPath": ["visual", "creative", "primary"],
+      "reasoningPath": ["reasoning", "deep", "primary"],
+      "creativePath": ["creative", "primary", "fast"]
+    },
+    "loadBalancing": {
+      "strategy": "priority_weighted",
+      "weights": { "zhipu": 50, "google": 30, "openai": 10, "anthropic": 5, "deepseek": 5 },
+      "healthCheck": { "intervalSeconds": 60, "timeoutSeconds": 10, "failureThreshold": 3, "recoveryThreshold": 2 }
+    },
+    "costOptimization": {
+      "enabled": true,
+      "maxCostPerTask": 1.00,
+      "preferCheaper": true,
+      "costLimits": { "primary": 0.01, "reasoning": 0.10, "creative": 0.05, "fast": 0.005, "visual": 0.05, "deep": 0.08 }
+    }
+  },
+  
+  "coordination": {
+    "enabled": false,
+    "defaultModelProfile": "primary",
+    "maxParallelAgents": 3,
+    "teams": {
+      "review-team": {
+        "name": "代码审查团队",
+        "description": "并行代码审查，提高审查效率",
+        "enabled": true,
+        "members": [
+          { "agent": "jianming-review", "role": "lead", "focus": "代码质量、最佳实践" },
+          { "agent": "mengzhang-security", "role": "specialist", "focus": "安全漏洞、权限检查" },
+          { "agent": "hengge-perf", "role": "specialist", "focus": "性能优化、资源使用" }
+        ],
+        "coordination": "parallel",
+        "aggregation": "merge-with-priority",
+        "timeoutMs": 300000
+      },
+      "debug-team": {
+        "name": "调试诊断团队",
+        "description": "假设驱动的并行调试",
+        "enabled": true,
+        "members": [
+          { "agent": "kuafu-debug", "role": "lead", "focus": "问题定位、根因分析" },
+          { "agent": "hengge-perf", "role": "specialist", "focus": "性能瓶颈检测" },
+          { "agent": "mengzhang-security", "role": "specialist", "focus": "安全相关问题" }
+        ],
+        "coordination": "hypothesis-driven",
+        "aggregation": "best-solution",
+        "timeoutMs": 600000
+      },
+      "feature-team": {
+        "name": "全栈功能团队",
+        "description": "端到端功能开发",
+        "enabled": true,
+        "members": [
+          { "agent": "yinglong-init", "role": "lead", "focus": "整体架构、协调" },
+          { "agent": "cangjie-doc", "role": "specialist", "focus": "文档编写" },
+          { "agent": "lishou-test", "role": "specialist", "focus": "测试用例、质量保证" },
+          { "agent": "huodi-skill", "role": "specialist", "config": { "strategy": "parallel", "waitForAll": true } },
+          { "id": "aggregate", "action": "aggregate-results", "config": { "strategy": "merge-with-priority", "priorityOrder": ["security", "quality", "performance"] } },
+          { "id": "report", "action": "generate-report", "config": { "format": "markdown", "includeMetrics": true } }
+        ],
+        "onFailure": "partial-result",
+        "retryPolicy": { "maxRetries": 2, "backoffMs": 1000 }
+      },
+      "hypothesis-debug": {
+        "name": "假设驱动调试",
+        "description": "同时验证多个假设，选择最佳解决方案",
+        "team": "debug-team",
+        "trigger": "manual",
+        "steps": [
+          { "id": "generate-hypotheses", "action": "generate-hypotheses", "config": { "maxHypotheses": 5 } },
+          { "id": "test-hypotheses", "action": "test-in-parallel", "config": { "strategy": "hypothesis-driven", "stopOnFirst": false } },
+          { "id": "select-solution", "action": "select-best-solution", "config": { "criteria": ["correctness", "efficiency", "safety"] } }
+        ],
+        "onFailure": "report-findings",
+        "retryPolicy": { "maxRetries": 1, "backoffMs": 2000 }
+      },
+      "full-stack-feature": {
+        "name": "全栈功能开发",
+        "description": "从需求到交付的完整流程",
+        "team": "feature-team",
+        "trigger": "manual",
+        "steps": [
+          { "id": "requirements", "agent": "yinglong-init", "action": "clarify-requirements", "config": { "rounds": 12, "outputFormat": "structured" } },
+          { "id": "design", "agent": "chisongzi-advise", "action": "create-design", "dependsOn": ["requirements"], "config": { "includeAPI": true, "includeDataModel": true } },
+          { "id": "implementation", "agent": "yinglong-init", "action": "implement", "dependsOn": ["design"], "config": { "followTDD": true } },
+          { "id": "testing", "agent": "lishou-test", "action": "create-tests", "dependsOn": ["implementation"], "config": { "coverage": 100, "includeE2E": true } },
+          { "id": "documentation", "agent": "cangjie-doc", "action": "write-docs", "dependsOn": ["implementation"], "config": { "includeAPI": true, "includeExamples": true } },
+          { "id": "review", "team": "review-team", "action": "review-all", "dependsOn": ["testing", "documentation"], "config": { "autoFix": true } }
+        ],
+        "onFailure": "rollback-and-report",
+        "retryPolicy": { "maxRetries": 0, "backoffMs": 0 }
+      }
+    }
+  }
+}
