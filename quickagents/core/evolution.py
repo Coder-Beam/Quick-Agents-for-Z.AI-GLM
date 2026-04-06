@@ -208,6 +208,21 @@ class SkillEvolution:
         except Exception as e:
             logger.debug("经验编译器积累失败（非致命）: %s", e)
 
+        # 7. 检查是否需要自动编译经验
+        compile_result = None
+        try:
+            from .experience_compiler import ExperienceCompiler
+
+            compiler = ExperienceCompiler(str(self.db.db_path))
+            if compiler.should_compile():
+                result["experience_compile_due"] = True
+                compile_result = {
+                    "uncompiled_count": compiler.get_stats().get("uncompiled_entries", 0),
+                    "status": "ready",
+                }
+        except Exception as e:
+            logger.debug("经验编译检查失败: %s", e)
+
         return result
 
     def on_git_commit(self, commit_info: Optional[Dict] = None) -> Dict:
@@ -408,6 +423,27 @@ class SkillEvolution:
 
         # 4. 重置任务计数
         self._reset_task_count()
+
+        # 自动编译经验（如果达到阈值）
+        try:
+            from .experience_compiler import ExperienceCompiler
+
+            compiler = ExperienceCompiler(str(self.db.db_path))
+            if compiler.should_compile():
+                prompt = compiler.generate_compile_prompt()
+                if prompt and not prompt.startswith("[Experience]"):
+                    stats = compiler.get_stats()
+                    uncompiled = stats.get("uncompiled_entries", 0)
+                    if uncompiled > 0:
+                        self._auto_compile_experiences(compiler)
+                        self._add_evolution_record(
+                            skill_name="experience_compiler",
+                            trigger_type=EvolutionTrigger.PERIODIC.value,
+                            change_type="auto_compile",
+                            description=f"自动编译 {uncompiled} 条经验",
+                        )
+        except Exception as e:
+            logger.debug("自动编译失败: %s", e)
 
         return result
 
@@ -1089,11 +1125,23 @@ class SkillEvolution:
         基于项目历史经验的修复建议
 
         检索链路:
-        1. 从 feedback 表搜索同类型错误的修复记录 (category='fix')
-        2. 有匹配 → 返回历史解决方案
-        3. 无匹配 → 返回通用建议
+        1. 从 experience_compiler 查询编译后的经验文章
+        2. 从 feedback 表搜索同类型错误的修复记录 (category='fix')
+        3. 有匹配 → 返回历史解决方案
+        4. 无匹配 → 返回通用建议
         """
         error_type = error_info.get("error_type", "")
+
+        # 0. 查询经验编译器的编译文章
+        try:
+            from .experience_compiler import ExperienceCompiler
+
+            compiler = ExperienceCompiler(str(self.db.db_path))
+            compiled = compiler.query(error_type)
+            if compiled:
+                return compiled[:500]
+        except Exception:
+            pass
 
         # 1. 从项目历史经验中检索
         try:
@@ -1286,7 +1334,139 @@ class SkillEvolution:
         """获取所有Skills统计"""
         return self.get_all_skills_stats()
 
+    def modify_skill(self, skill_name: str, modifications: Dict) -> bool:
+        """自动修改 Skill 文件"""
+        skill_path = os.path.join(".opencode", "skills", skill_name, "SKILL.md")
+        if not os.path.exists(skill_path):
+            skill_path = os.path.join("skills", skill_name, "SKILL.md")
+        if not os.path.exists(skill_path):
+            return False
+
+        try:
+            with open(skill_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            for key, value in modifications.items():
+                if key == "add_guideline":
+                    content += f"\n- {value}\n"
+                elif key == "update_threshold":
+                    import re
+
+                    content = re.sub(rf"({value['param']}:\s*)\d+", rf"\g<1>{value['new_value']}", content)
+
+            backup_path = skill_path + ".bak"
+            with open(backup_path, "w", encoding="utf-8") as f:
+                pass
+
+            with open(skill_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            self._add_evolution_record(
+                skill_name=skill_name,
+                trigger_type=EvolutionTrigger.PERIODIC.value,
+                change_type="skill_modified",
+                description=f"自动修改: {list(modifications.keys())}",
+            )
+            return True
+        except Exception as e:
+            logger.warning("修改Skill失败 %s: %s", skill_name, e)
+            return False
+
+    def inject_context(self, context_type: str, data: Dict) -> None:
+        """将进化洞察注入到项目上下文"""
+        try:
+            ctx_dir = os.path.join(".quickagents", "context")
+            os.makedirs(ctx_dir, exist_ok=True)
+
+            ctx_file = os.path.join(ctx_dir, f"{context_type}_insights.json")
+            with open(ctx_file, "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "type": context_type,
+                        "data": data,
+                        "injected_at": datetime.now().isoformat(),
+                    },
+                    f,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+
+            self._add_evolution_record(
+                skill_name="context_injector",
+                trigger_type=EvolutionTrigger.PERIODIC.value,
+                change_type="context_injected",
+                description=f"注入 {context_type} 上下文",
+            )
+        except Exception as e:
+            logger.debug("上下文注入失败: %s", e)
+
+    def verify_evolution(self, skill_name: str) -> Dict:
+        """验证进化效果"""
+        stats = self.get_skill_stats(skill_name)
+
+        with self.db._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT success FROM skill_usage 
+                WHERE skill_name = ? ORDER BY created_at DESC LIMIT 20
+            """,
+                (skill_name,),
+            )
+            recent = [row[0] for row in cursor.fetchall()]
+
+        if len(recent) < 5:
+            return {"verdict": "insufficient_data", "samples": len(recent)}
+
+        recent_rate = sum(recent[:10]) / min(len(recent[:10]), 10) if recent[:10] else 0
+        older_rate = sum(recent[10:]) / min(len(recent[10:]), 10) if recent[10:] else recent_rate
+
+        improved = recent_rate >= older_rate
+
+        result = {
+            "skill": skill_name,
+            "recent_success_rate": recent_rate,
+            "baseline_success_rate": older_rate,
+            "improved": improved,
+            "verdict": "positive" if improved else "negative",
+        }
+
+        if not improved:
+            result["rollback_recommended"] = True
+            self._add_evolution_record(
+                skill_name=skill_name,
+                trigger_type=EvolutionTrigger.PERIODIC.value,
+                change_type="rollback_recommended",
+                description=f"成功率下降: {recent_rate:.1%} < {older_rate:.1%}",
+            )
+
+        return result
+
     # ==================== 同步到Markdown ====================
+
+    def _auto_compile_experiences(self, compiler) -> None:
+        """基于规则的即时编译（不需要LLM）"""
+        try:
+            from .experience_compiler import CompiledArticle
+
+            stats = compiler.get_stats()
+            categories = stats.get("categories", [])
+
+            for category in categories:
+                results = compiler.query(category)
+                if not results:
+                    continue
+
+                article = CompiledArticle(
+                    title=f"经验总结: {category}",
+                    summary=f"基于 {category} 类别经验的自动编译",
+                    body=f"## {category} 经验总结\n\n{results[:2000]}",
+                    tags=["auto-compiled", category],
+                    sources=[],
+                    coverage="auto",
+                )
+                compiler.save_compiled_article(article)
+        except Exception as e:
+            logger.debug("规则编译失败: %s", e)
 
     def sync_to_markdown(self, output_dir: Optional[str] = None) -> Dict:
         """
@@ -1344,7 +1524,7 @@ class SkillEvolution:
             "",
             "## 统计信息",
             "",
-            f"- 总使用次数: {stats.get('total_usage', 0)}",
+            f"- 总使用次数: {stats.get('usage_count', 0)}",
             f"- 成功次数: {stats.get('success_count', 0)}",
             f"- 失败次数: {stats.get('failure_count', 0)}",
             f"- 成功率: {success_rate:.1%}",

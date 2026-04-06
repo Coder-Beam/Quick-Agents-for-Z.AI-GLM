@@ -192,7 +192,28 @@ class AuditGuard:
                 self.accountability.record_issue(issue)
 
             # 提取学习经验
-            self.accountability.extract_lessons(issues)
+            lessons = self.accountability.extract_lessons(issues)
+
+            # 将审计教训流入进化系统
+            try:
+                from ..core.unified_db import UnifiedDB
+                from ..core.evolution import SkillEvolution
+
+                db = UnifiedDB()
+                evolution = SkillEvolution(db)
+                if lessons:
+                    for lesson in lessons:
+                        lesson_title = lesson.title if hasattr(lesson, "title") else "lesson"
+                        lesson_desc = lesson.description if hasattr(lesson, "description") else str(lesson)
+                        lesson_sev = str(lesson.severity) if hasattr(lesson, "severity") else ""
+                        evolution.db.add_feedback(
+                            "improvement",
+                            title=f"审计教训: {lesson_title}",
+                            description=lesson_desc,
+                            metadata={"source": "audit_guard", "severity": lesson_sev},
+                        )
+            except Exception:
+                pass
         else:
             # 自动解决该 task 的所有 OPEN 问题
             open_issues = self.accountability.get_issues(

@@ -149,15 +149,20 @@ class DocumentPipeline:
             try:
                 from ..knowledge_graph import KnowledgeGraph
                 from .storage.knowledge_saver import KnowledgeSaver
+                from .models import DocumentResult, SourceCodeResult, CrossReferenceResult
 
                 kg = KnowledgeGraph()
                 saver = KnowledgeSaver(kg)
-                if hasattr(result, "document_id"):
+                if isinstance(result, DocumentResult):
                     saver.save_document(result)
-                elif hasattr(result, "source_id"):
+                elif isinstance(result, SourceCodeResult):
                     saver.save_source(result)
-            except Exception:
-                pass  # KG 可选，失败不影响主流程
+                elif isinstance(result, CrossReferenceResult):
+                    saver.save_traces(result, [], [])
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).debug("KG同步失败（非致命）: %s", e)
 
     def import_all(
         self,

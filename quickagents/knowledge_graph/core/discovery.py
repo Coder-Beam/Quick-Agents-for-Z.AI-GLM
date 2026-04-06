@@ -80,8 +80,7 @@ class RelationDiscovery:
                     discovered.append(edge)
 
         if node.tags:
-            all_nodes = self._storage.query_nodes({}, limit=1000)
-            for other in all_nodes:
+            for other in self._storage.query_nodes_by_tags(node.tags, limit=500):
                 if other.id == node_id:
                     continue
                 if other.tags:
@@ -92,8 +91,7 @@ class RelationDiscovery:
                             source_node_id=node_id,
                             target_node_id=other.id,
                             edge_type=EdgeType.RELATED_TO,
-                            weight=len(shared_tags)
-                            / max(len(node.tags), len(other.tags)),
+                            weight=len(shared_tags) / max(len(node.tags), len(other.tags)),
                             metadata={
                                 "discovery_method": "shared_tags",
                                 "shared_tags": list(shared_tags),
@@ -103,13 +101,12 @@ class RelationDiscovery:
 
         return discovered
 
-    def discover_semantic_relations(
-        self, node_id: str, threshold: float = 0.7
-    ) -> List[KnowledgeEdge]:
+    def discover_semantic_relations(self, node_id: str, threshold: float = 0.7) -> List[KnowledgeEdge]:
         """
         Discover semantic relations by content similarity.
 
-        Uses Jaccard similarity on word sets for comparison.
+        Uses FTS5 search to find candidate nodes, then computes Jaccard
+        similarity to filter below threshold.
 
         Args:
             node_id: Node ID to discover relations for
@@ -130,9 +127,23 @@ class RelationDiscovery:
             return []
 
         discovered = []
-        all_nodes = self._storage.query_nodes({}, limit=1000)
 
-        for other in all_nodes:
+        source_text = (node.title + " " + node.content)[:200]
+        content_tokens = list(set(self._tokenize(source_text)))
+
+        search_results = []
+        for keyword in content_tokens[:6]:
+            try:
+                hits = self._storage.search_fts(keyword, limit=20)
+                seen = {n.id for n in search_results}
+                for n in hits:
+                    if n.id not in seen:
+                        search_results.append(n)
+                        seen.add(n.id)
+            except Exception:
+                continue
+
+        for other in search_results:
             if other.id == node_id:
                 continue
 
@@ -162,6 +173,8 @@ class RelationDiscovery:
         """
         Discover structural relations (same feature/project, temporal proximity).
 
+        Uses targeted SQL queries instead of loading all nodes.
+
         Args:
             node_id: Node ID to discover relations for
 
@@ -173,63 +186,61 @@ class RelationDiscovery:
             return []
 
         discovered = []
-        all_nodes = self._storage.query_nodes({}, limit=1000)
+        seen_ids = set()
 
-        for other in all_nodes:
-            if other.id == node_id:
-                continue
-
-            is_related = False
-            weight = 0.0
-            reason = None
-
-            if (
-                node.feature_id
-                and other.feature_id
-                and node.feature_id == other.feature_id
-            ):
-                is_related = True
-                weight = 0.9
-                reason = "same_feature"
-            elif (
-                node.project_name
-                and other.project_name
-                and node.project_name == other.project_name
-            ):
-                is_related = True
-                weight = 0.7
-                reason = "same_project"
-            elif node.created_at and other.created_at:
-                if (
-                    not node.project_name
-                    and not other.project_name
-                    and not node.feature_id
-                    and not other.feature_id
-                ):
-                    time_diff = abs(
-                        (node.created_at - other.created_at).total_seconds()
+        if node.feature_id:
+            for other in self._storage.query_nodes({"feature_id": node.feature_id}, limit=100):
+                if other.id != node_id and other.id not in seen_ids:
+                    seen_ids.add(other.id)
+                    discovered.append(
+                        KnowledgeEdge(
+                            id=f"ke_rel_{node_id}_{other.id}",
+                            source_node_id=node_id,
+                            target_node_id=other.id,
+                            edge_type=EdgeType.RELATED_TO,
+                            weight=0.9,
+                            metadata={"discovery_method": "structural", "reason": "same_feature"},
+                        )
                     )
-                    if time_diff < 3600:
-                        is_related = True
-                        weight = 0.5
-                        reason = "temporal_proximity"
 
-            if is_related:
-                edge = KnowledgeEdge(
-                    id=f"ke_rel_{node_id}_{other.id}",
-                    source_node_id=node_id,
-                    target_node_id=other.id,
-                    edge_type=EdgeType.RELATED_TO,
-                    weight=weight,
-                    metadata={"discovery_method": "structural", "reason": reason},
-                )
-                discovered.append(edge)
+        if node.project_name:
+            for other in self._storage.query_nodes({"project_name": node.project_name}, limit=100):
+                if other.id != node_id and other.id not in seen_ids:
+                    seen_ids.add(other.id)
+                    discovered.append(
+                        KnowledgeEdge(
+                            id=f"ke_rel_{node_id}_{other.id}",
+                            source_node_id=node_id,
+                            target_node_id=other.id,
+                            edge_type=EdgeType.RELATED_TO,
+                            weight=0.7,
+                            metadata={"discovery_method": "structural", "reason": "same_project"},
+                        )
+                    )
+
+        if node.created_at and not node.project_name and not node.feature_id:
+            time_bound = 3600
+            for other in self._storage.query_nodes({}, limit=200):
+                if other.id == node_id or other.id in seen_ids:
+                    continue
+                if other.created_at and not other.project_name and not other.feature_id:
+                    time_diff = abs((node.created_at - other.created_at).total_seconds())
+                    if time_diff < time_bound:
+                        seen_ids.add(other.id)
+                        discovered.append(
+                            KnowledgeEdge(
+                                id=f"ke_rel_{node_id}_{other.id}",
+                                source_node_id=node_id,
+                                target_node_id=other.id,
+                                edge_type=EdgeType.RELATED_TO,
+                                weight=0.5,
+                                metadata={"discovery_method": "structural", "reason": "temporal_proximity"},
+                            )
+                        )
 
         return discovered
 
-    def discover_transitive_relations(
-        self, node_id: str, max_depth: int = 3
-    ) -> List[KnowledgeEdge]:
+    def discover_transitive_relations(self, node_id: str, max_depth: int = 3) -> List[KnowledgeEdge]:
         """
         Discover transitive relations (A→B, B→C implies A→C).
 
@@ -286,9 +297,7 @@ class RelationDiscovery:
 
         return discovered
 
-    def find_path(
-        self, from_node: str, to_node: str, max_depth: int = 5
-    ) -> Optional[List[str]]:
+    def find_path(self, from_node: str, to_node: str, max_depth: int = 5) -> Optional[List[str]]:
         """
         Find shortest path between nodes using BFS.
 
@@ -386,9 +395,7 @@ class RelationDiscovery:
                             }
                         )
 
-                    related.append(
-                        {"node_id": target_id, "relation": edge.edge_type.value}
-                    )
+                    related.append({"node_id": target_id, "relation": edge.edge_type.value})
 
                     trace(target_id, new_path, depth + 1)
 

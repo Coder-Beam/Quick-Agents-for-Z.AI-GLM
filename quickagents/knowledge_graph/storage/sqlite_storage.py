@@ -243,10 +243,47 @@ class SQLiteGraphStorage(GraphStorageInterface):
                 END
             """)
 
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS knowledge_node_tags (
+                    node_id TEXT NOT NULL,
+                    tag TEXT NOT NULL,
+                    PRIMARY KEY (node_id, tag)
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_node_tags_tag ON knowledge_node_tags(tag)")
+
             conn.commit()
 
         self._initialized = True
         return True
+
+    def sync_node_tags(self, node_id: str, tags: list) -> None:
+        """Sync tags for a node in the junction table."""
+        with self._get_connection() as conn:
+            conn.execute("DELETE FROM knowledge_node_tags WHERE node_id = ?", (node_id,))
+            conn.executemany(
+                "INSERT OR IGNORE INTO knowledge_node_tags (node_id, tag) VALUES (?, ?)",
+                [(node_id, tag.lower()) for tag in tags],
+            )
+
+    def query_nodes_by_tags(self, tags: list, limit: int = 100) -> List[KnowledgeNode]:
+        """Query nodes by tags using SQL JOIN."""
+        if not tags:
+            return []
+        tags_lower = [t.lower() for t in tags]
+        placeholders = ",".join("?" * len(tags_lower))
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                f"""
+                SELECT DISTINCT n.* FROM knowledge_nodes n
+                INNER JOIN knowledge_node_tags t ON n.id = t.node_id
+                WHERE t.tag IN ({placeholders})
+                ORDER BY n.importance DESC
+                LIMIT ?
+            """,
+                tags_lower + [limit],
+            )
+            return [self._row_to_node(row) for row in cursor.fetchall()]
 
     def create_node(self, node: KnowledgeNode) -> KnowledgeNode:
         """Create a new knowledge node."""
@@ -284,6 +321,9 @@ class SQLiteGraphStorage(GraphStorageInterface):
                 ),
             )
             conn.commit()
+
+        if node.tags:
+            self.sync_node_tags(node.id, node.tags)
 
         result = self.get_node(node.id)
         assert result is not None, f"Node {node.id} not found after creation"
@@ -362,6 +402,10 @@ class SQLiteGraphStorage(GraphStorageInterface):
 
             if cursor.rowcount == 0:
                 raise NodeNotFoundError(node_id)
+
+        if "tags" in filtered_updates:
+            tags_val = filtered_updates["tags"]
+            self.sync_node_tags(node_id, tags_val if tags_val else [])
 
         result = self.get_node(node_id)
         assert result is not None

@@ -268,6 +268,25 @@ class YuGongLoop:
             except Exception as e:
                 logger.warning("最终DB持久化失败: %s", e)
 
+        # 触发自我进化
+        try:
+            from ..core.unified_db import UnifiedDB
+            from ..core.evolution import SkillEvolution
+
+            db = UnifiedDB()
+            evolution = SkillEvolution(db)
+            evolution.on_task_complete(
+                {
+                    "task_id": "yugong-loop",
+                    "task_name": f"愚公循环: {outcome.total_stories} stories",
+                    "skills_used": ["yugong-loop"],
+                    "success": outcome.success,
+                    "duration_ms": int(outcome.duration_seconds * 1000),
+                }
+            )
+        except Exception as e:
+            logger.debug("愚公循环进化触发失败: %s", e)
+
         return outcome
 
     def _execute_iteration(self, iteration: int, story: UserStory) -> LoopResult:

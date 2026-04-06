@@ -94,7 +94,6 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 from ..core.file_manager import FileManager
-from ..core.memory import MemoryManager
 from ..core.reminder import Reminder
 from ..core.cache_db import CacheDB
 from ..core.unified_db import UnifiedDB

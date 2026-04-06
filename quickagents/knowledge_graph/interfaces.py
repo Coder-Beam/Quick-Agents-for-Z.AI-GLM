@@ -59,31 +59,21 @@ class GraphStorageInterface(ABC):
         pass
 
     @abstractmethod
-    def query_nodes(
-        self, filters: Dict[str, Any], limit: int = 100, offset: int = 0
-    ) -> List[KnowledgeNode]:
+    def query_nodes(self, filters: Dict[str, Any], limit: int = 100, offset: int = 0) -> List[KnowledgeNode]:
         """Query nodes with filters."""
         pass
 
     @abstractmethod
-    def query_edges(
-        self, filters: Dict[str, Any], limit: int = 100
-    ) -> List[KnowledgeEdge]:
+    def query_edges(self, filters: Dict[str, Any], limit: int = 100) -> List[KnowledgeEdge]:
         """Query edges with filters."""
         pass
 
-    def query_edges_batch(
-        self, node_ids: List[str], limit_per_node: int = 100
-    ) -> List[KnowledgeEdge]:
+    def query_edges_batch(self, node_ids: List[str], limit_per_node: int = 100) -> List[KnowledgeEdge]:
         """Batch query edges for multiple nodes. Default: fall back to per-node queries."""
         all_edges = []
         for nid in node_ids:
-            all_edges.extend(
-                self.query_edges({"source_node_id": nid}, limit=limit_per_node)
-            )
-            all_edges.extend(
-                self.query_edges({"target_node_id": nid}, limit=limit_per_node)
-            )
+            all_edges.extend(self.query_edges({"source_node_id": nid}, limit=limit_per_node))
+            all_edges.extend(self.query_edges({"target_node_id": nid}, limit=limit_per_node))
         return all_edges
 
     def get_nodes_batch(self, node_ids: List[str]) -> List["KnowledgeNode"]:
@@ -105,6 +95,16 @@ class GraphStorageInterface(ABC):
         """Full-text search. Default: fall back to query_nodes + Python filter."""
         return self.query_nodes({}, limit=limit, offset=offset)
 
+    def query_nodes_by_tags(self, tags: list, limit: int = 100) -> List["KnowledgeNode"]:
+        """Query nodes by tags using SQL JOIN. Default: fall back to Python-side filtering."""
+        all_nodes = self.query_nodes({}, limit=1000)
+        tags_lower = {t.lower() for t in tags}
+        return [n for n in all_nodes if tags_lower & {t.lower() for t in n.tags}][:limit]
+
+    def sync_node_tags(self, node_id: str, tags: list) -> None:
+        """Sync tags for a node in a junction table. Default: no-op."""
+        pass
+
     def count_fts(
         self,
         query: str,
@@ -114,9 +114,7 @@ class GraphStorageInterface(ABC):
         return len(self.search_fts(query, node_type=node_type, limit=10000))
 
     @abstractmethod
-    def find_path(
-        self, from_node: str, to_node: str, max_depth: int = 5
-    ) -> Optional[List[str]]:
+    def find_path(self, from_node: str, to_node: str, max_depth: int = 5) -> Optional[List[str]]:
         """Find path between two nodes."""
         pass
 
@@ -151,9 +149,7 @@ class VectorSearchInterface(ABC):
         pass
 
     @abstractmethod
-    def search(
-        self, query: str, top_k: int = 20, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Tuple[str, float]]:
+    def search(self, query: str, top_k: int = 20, filters: Optional[Dict[str, Any]] = None) -> List[Tuple[str, float]]:
         """
         Search for nodes.
 

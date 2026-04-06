@@ -68,11 +68,7 @@ class KnowledgeSearcher:
             # columns on the node, not inside metadata)
             for key in ["project_name", "feature_id"]:
                 if key in filters:
-                    matched_nodes = [
-                        n
-                        for n in matched_nodes
-                        if getattr(n, key, None) == filters[key]
-                    ]
+                    matched_nodes = [n for n in matched_nodes if getattr(n, key, None) == filters[key]]
 
             # Get total count from FTS (without pagination)
             total = self._storage.count_fts(
@@ -80,9 +76,7 @@ class KnowledgeSearcher:
                 node_type=node_type_val,
             )
         except Exception:
-            matched_nodes = self._fallback_search(
-                query, node_types, filters, limit, offset
-            )
+            matched_nodes = self._fallback_search(query, node_types, filters, limit, offset)
             total = len(matched_nodes)
 
         if sort_by == "importance":
@@ -106,7 +100,7 @@ class KnowledgeSearcher:
 
     def search_by_tags(self, tags: List[str], limit: int = 100) -> List[KnowledgeNode]:
         """
-        Search by tags.
+        Search by tags using SQL JOIN for efficiency.
 
         Args:
             tags: List of tags to search for
@@ -115,17 +109,7 @@ class KnowledgeSearcher:
         Returns:
             List of matching KnowledgeNode objects
         """
-        all_nodes = self._storage.query_nodes({}, limit=1000, offset=0)
-
-        tags_lower = [t.lower() for t in tags]
-        matched_nodes = []
-
-        for node in all_nodes:
-            node_tags_lower = [t.lower() for t in node.tags]
-            if any(tag in node_tags_lower for tag in tags_lower):
-                matched_nodes.append(node)
-
-        return matched_nodes[:limit]
+        return self._storage.query_nodes_by_tags(tags, limit=limit)
 
     def search_by_date_range(
         self, start_date: str, end_date: str, node_type: Optional[NodeType] = None
@@ -149,16 +133,12 @@ class KnowledgeSearcher:
         try:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
         except (ValueError, TypeError) as e:
-            raise ValueError(
-                f"Invalid start_date format: {start_date}. Expected YYYY-MM-DD"
-            ) from e
+            raise ValueError(f"Invalid start_date format: {start_date}. Expected YYYY-MM-DD") from e
 
         try:
             end_dt = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
         except (ValueError, TypeError) as e:
-            raise ValueError(
-                f"Invalid end_date format: {end_date}. Expected YYYY-MM-DD"
-            ) from e
+            raise ValueError(f"Invalid end_date format: {end_date}. Expected YYYY-MM-DD") from e
 
         db_filters = {}
         if node_type:
@@ -215,9 +195,7 @@ class KnowledgeSearcher:
                 matched.append(node)
         return matched[offset : offset + limit]
 
-    def _expand_relations(
-        self, nodes: List[KnowledgeNode], depth: int
-    ) -> List[KnowledgeNode]:
+    def _expand_relations(self, nodes: List[KnowledgeNode], depth: int) -> List[KnowledgeNode]:
         """
         Expand relations for given nodes.
 

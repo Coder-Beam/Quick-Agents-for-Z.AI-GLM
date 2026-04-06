@@ -127,18 +127,24 @@ class KnowledgeGraph:
         persisted = []
         for edge in discovered:
             try:
-                # 跳过已存在的边（按 source+target+type 去重）
-                existing = self.edges.get_outgoing_edges(edge.source_id)
+                existing = self.edges.get_outgoing_edges(edge.source_node_id)
                 already_exists = (
-                    any(e.target_id == edge.target_id and str(e.edge_type) == str(edge.edge_type) for e in existing)
+                    any(e.target_node_id == edge.target_node_id and e.edge_type == edge.edge_type for e in existing)
                     if existing
                     else False
                 )
                 if not already_exists:
-                    self.edges.create_edge(edge)
-                    persisted.append(edge)
+                    self.edges.create_edge(
+                        edge.source_node_id,
+                        edge.target_node_id,
+                        edge.edge_type,
+                        weight=edge.weight,
+                        evidence=edge.evidence,
+                        confidence=edge.confidence,
+                    )
+                persisted.append(edge)
             except Exception:
-                persisted.append(edge)  # 保留未持久化的
+                persisted.append(edge)
 
         return persisted if persisted else discovered
 

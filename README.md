@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/Version-2.25.3-green.svg)](https://pypi.org/project/quickagents/)
+[![Version](https://img.shields.io/badge/Version-2.25.4-green.svg)](https://pypi.org/project/quickagents/)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
 [![GLM Optimized](https://img.shields.io/badge/GLM-Coding_Plan-orange.svg)](https://bigmodel.cn)
 
@@ -681,6 +681,35 @@ MIT License - 详见 [LICENSE](LICENSE) 文件。
 ---
 
 ## 更新日志
+
+### v2.25.4 (2026-04-07) — 全架构A级修复 + 自我进化闭环
+
+**统一架构（零自建连接）:**
+- 知识图谱 `discover()` 修复属性名bug + `create_edge()` 签名修正
+- 知识图谱新增 `knowledge_node_tags` 关联表 + SQL JOIN 高效查询
+- 知识图谱 discovery 全部改为 SQL WHERE/FTS5 查询（零 Python 全表扫描）
+- `DocPipeline.save()` dispatch bug 修复（`hasattr` → `isinstance`）
+- Evolution Markdown sync `total_usage` → `usage_count` 修复
+- `restore_feedback_from_md()` 自动发现 `.quickagents/feedback/` 目录
+
+**自动编译闭环:**
+- `on_task_complete()` 自动检查 `should_compile()` 并设标志
+- `run_periodic_optimization()` 自动触发编译流程
+- 新增 `_auto_compile_experiences()` 基于规则的即时编译
+
+**真正自我进化（5阶段闭环）:**
+- Act: `modify_skill()` 自动修改 Skill 文件
+- Act: `inject_context()` 注入进化洞察到项目上下文
+- Act: `adjust_parameters()` 自动调整进化参数
+- Verify: `verify_evolution()` 成功率对比验证 + 回滚建议
+- 语义分析: Evolution 查询 ExperienceCompiler 编译文章
+
+**跨模块集成（互操作性矩阵全✅）:**
+- 愚公循环完成 → 自动触发 `Evolution.on_task_complete()`
+- AuditGuard 提取 lessons → 自动流入 Evolution feedback
+- Evolution `_suggest_fix()` → 同时查询 feedback + compiled_articles
+- Git 钩子 Windows 兼容（`sys.executable` + `.bat` wrapper + 日志文件）
+- Git 钩子同时触发 Evolution + AuditGuard
 
 ### v2.25.3 (2026-04-07) — 架构完整性修复
 

@@ -800,34 +800,31 @@ class MarkdownSync:
 
         return 0
 
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-
-            # 恢复进度
-            self.db.init_progress(  # type: ignore[call-arg]
-                plan_name=data.get("plan_name", ""),
-                plan_path=data.get("plan_path"),
-                total_tasks=data.get("total_tasks", 0),
-            )
-
-            # 恢复笔记本
-            notepads = data.get("notepads", {})
-            plan_name = data.get("plan_name", "")
-
-            for entry_type, entries in notepads.items():
-                for entry in entries:
-                    if isinstance(entry, str):
-                        self.db.add_notepad_entry(plan_name, entry_type, entry)  # type: ignore[attr-defined]
-
-            return 1
-        except Exception as e:
-            print(f"恢复进度失败: {e}")
-            return 0
-
     def restore_feedback_from_md(self, feedback_path: Optional[str] = None) -> int:
-        """从FEEDBACK.md恢复反馈"""
-        path = Path(feedback_path) if feedback_path else self.docs_dir / "feedback.md"
+        """从反馈文件恢复反馈（支持 .quickagents/feedback/ 和 Docs/feedback.md）"""
+        restored = 0
 
+        if feedback_path:
+            paths = [Path(feedback_path)]
+        else:
+            # 自动发现：优先 .quickagents/feedback/，回退到 Docs/feedback.md
+            paths = []
+            feedback_dir = self.quickagents_dir / "feedback"
+            if feedback_dir.exists():
+                paths = sorted(feedback_dir.glob("*.md"))
+            docs_path = self.docs_dir / "feedback.md"
+            if docs_path.exists():
+                paths.append(docs_path)
+            if not paths:
+                return 0
+
+        for path in paths:
+            restored += self._restore_single_feedback_file(path)
+
+        return restored
+
+    def _restore_single_feedback_file(self, path: Path) -> int:
+        """从单个反馈文件恢复"""
         if not path.exists():
             return 0
 
@@ -841,12 +838,10 @@ class MarkdownSync:
             fb_type = match.group(1).strip().lower()
             title = match.group(2).strip()
 
-            # 解析后续内容
             start_pos = match.end()
             next_section = content.find("\n## ", start_pos)
             detail = content[start_pos:next_section].strip() if next_section > 0 else content[start_pos:].strip()
 
-            # 映射类型
             type_map = {
                 "bug": "bug",
                 "改进": "improvement",
@@ -854,7 +849,7 @@ class MarkdownSync:
                 "improvement": "improvement",
                 "best practice": "best_practice",
             }
-            mapped_type = type_map.get(fb_type, "general")
+            mapped_type = type_map.get(fb_type, "improvement")
 
             try:
                 self.db.add_feedback(
@@ -864,7 +859,9 @@ class MarkdownSync:
                 )
                 restored += 1
             except Exception as e:
-                logger.warning("恢复反馈失败 '%s': %s", title, e)
+                import logging
+
+                logging.getLogger(__name__).warning("恢复反馈失败 '%s': %s", title, e)
 
         return restored
 
