@@ -1,16 +1,39 @@
 {
-  "version": "1.0.1",
-  "lastUpdated": "2026-03-25T22:30:00Z",
+  "version": "2.0.0",
+  "lastUpdated": "2026-04-06T00:00:00Z",
   "core": [
     {
-      "name": "inquiry-skill",
+      "name": "doom-loop-skill",
       "version": "1.0.0",
-      "category": "requirements",
+      "category": "safety",
       "priority": "critical",
       "source": "builtin",
-      "installDate": "2026-03-25",
-      "path": ".opencode/skills/inquiry-skill",
-      "description": "7层递进式需求澄清"
+      "localizable": true,
+      "installDate": "2026-03-29",
+      "path": ".opencode/skills/doom-loop-skill",
+      "description": "Doom-Loop检测机制 - 检测重复工具调用循环，防止无限循环"
+    },
+    {
+      "name": "event-reminder-skill",
+      "version": "1.0.0",
+      "category": "monitoring",
+      "priority": "critical",
+      "source": "builtin",
+      "localizable": true,
+      "installDate": "2026-03-29",
+      "path": ".opencode/skills/event-reminder-skill",
+      "description": "事件驱动提醒机制 - 对抗指令遗忘，保持长期目标一致性"
+    },
+    {
+      "name": "feedback-collector-skill",
+      "version": "1.0.0",
+      "category": "feedback",
+      "priority": "high",
+      "source": "builtin",
+      "localizable": true,
+      "installDate": "2026-03-28",
+      "path": ".opencode/skills/feedback-collector-skill",
+      "description": "经验收集系统 - 收集Bug、改进建议、最佳实践"
     },
     {
       "name": "project-memory-skill",
@@ -18,71 +41,68 @@
       "category": "memory",
       "priority": "critical",
       "source": "builtin",
+      "localizable": true,
       "installDate": "2026-03-25",
       "path": ".opencode/skills/project-memory-skill",
-      "description": "三维记忆系统"
+      "description": "三维记忆系统 - Factual/Experiential/Working记忆管理"
     },
     {
-      "name": "tdd-workflow-skill",
+      "name": "browser-devtools-skill",
       "version": "1.0.0",
-      "category": "development",
+      "category": "automation",
+      "priority": "high",
+      "source": "builtin",
+      "localizable": false,
+      "installDate": "2026-03-29",
+      "path": ".opencode/skills/browser-devtools-skill",
+      "description": "浏览器自动化与DevTools集成 - 控制台日志、网络请求、性能指标、截图"
+    },
+    {
+      "name": "glm-version-sync-skill",
+      "version": "1.0.0",
+      "category": "compatibility",
+      "priority": "medium",
+      "source": "builtin",
+      "localizable": false,
+      "installDate": "2026-03-30",
+      "path": ".opencode/skills/glm-version-sync-skill",
+      "description": "GLM模型版本同步 - 自动检测ZhipuAI新模型版本"
+    },
+    {
+      "name": "version-alignment-skill",
+      "version": "1.0.0",
+      "category": "compatibility",
+      "priority": "medium",
+      "source": "builtin",
+      "localizable": false,
+      "installDate": "2026-03-29",
+      "path": ".opencode/skills/version-alignment-skill",
+      "description": "版本对齐检查 - 确保所有Agent和Skill与当前版本功能对齐"
+    },
+    {
+      "name": "yugong-loop-skill",
+      "version": "1.0.0",
+      "category": "agent-loop",
       "priority": "critical",
       "source": "builtin",
-      "installDate": "2026-03-25",
-      "path": ".opencode/skills/tdd-workflow-skill",
-      "description": "TDD工作流程"
-    },
-    {
-      "name": "git-commit-skill",
-      "version": "1.0.0",
-      "category": "version-control",
-      "priority": "high",
-      "source": "builtin",
-      "installDate": "2026-03-25",
-      "path": ".opencode/skills/git-commit-skill",
-      "description": "Git提交规范"
-    },
-    {
-      "name": "code-review-skill",
-      "version": "1.0.0",
-      "category": "quality",
-      "priority": "high",
-      "source": "builtin",
-      "installDate": "2026-03-25",
-      "path": ".opencode/skills/code-review-skill",
-      "description": "代码审查方法论"
-    },
-    {
-      "name": "skill-integration-skill",
-      "version": "1.0.0",
-      "category": "system",
-      "priority": "high",
-      "source": "builtin",
-      "installDate": "2026-03-25",
-      "path": ".opencode/skills/skill-integration-skill",
-      "description": "Skill整合能力"
-    },
-    {
-      "name": "project-detector-skill",
-      "version": "1.0.0",
-      "category": "analysis",
-      "priority": "critical",
-      "source": "builtin",
-      "installDate": "2026-03-25",
-      "path": ".opencode/skills/project-detector-skill",
-      "description": "项目检测与分析"
+      "localizable": false,
+      "installDate": "2026-03-30",
+      "path": ".opencode/skills/yugong-loop-skill",
+      "description": "YuGong自主开发循环 - 需求到交付的完整自动化开发周期"
     }
   ],
-  "extensions": [],
-  "recommended": [
+  "extensions": [
     {
       "name": "ui-ux-pro-max",
       "version": "2.0.0",
       "category": "ui-ux",
       "priority": "recommended",
       "source": "github:nextlevelbuilder/ui-ux-pro-max-skill",
+      "localizable": false,
+      "installDate": "2026-03-25",
+      "path": ".opencode/skills/ui-ux-pro-max",
       "installCommand": "npm install -g uipro-cli && uipro init --ai opencode",
-      "description": "UI/UX设计智能助手",
+      "description": "UI/UX设计智能助手 - 67种专业UI样式、96种颜色板、57种字体配对",
       "features": [
         "67种专业UI样式",
         "96种行业颜色板",
@@ -94,13 +114,15 @@
       "dependencies": ["Python 3.x"]
     }
   ],
+  "recommended": [],
   "conflicts": [],
   "mergeHistory": [],
   "statistics": {
-    "totalSkills": 7,
-    "coreSkills": 7,
-    "extensions": 0,
+    "totalSkills": 9,
+    "coreSkills": 8,
+    "extensions": 1,
+    "localizable": 4,
     "lastInstall": null,
-    "lastUpdate": "2026-03-25T22:30:00Z"
+    "lastUpdate": "2026-04-06T00:00:00Z"
   }
 }
