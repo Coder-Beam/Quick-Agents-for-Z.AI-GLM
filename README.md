@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/Version-2.25.4-green.svg)](https://pypi.org/project/quickagents/)
+[![Version](https://img.shields.io/badge/Version-2.25.5-green.svg)](https://pypi.org/project/quickagents/)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
 [![GLM Optimized](https://img.shields.io/badge/GLM-Coding_Plan-orange.svg)](https://bigmodel.cn)
 
@@ -681,6 +681,23 @@ MIT License - 详见 [LICENSE](LICENSE) 文件。
 ---
 
 ## 更新日志
+
+### v2.25.5 (2026-04-07) — 全架构验证通过 + 测试修复
+
+**ConnectionManager 统一验证：**
+- 确认所有 3 个模块（ExperienceCompiler / YuGongDB / SQLiteGraphStorage）100% 使用 ConnectionManager
+- 生产代码中零 `sqlite3.connect` 调用（仅 `:memory:` 路径保留）
+- 所有模块共享连接池、线程安全、WAL 模式
+
+**测试修复（6 个 → 0 个失败）：**
+- CLI memory 测试：改为 mock `UnifiedDB`（`MemoryManager` 已移除）
+- KG memory_sync 测试：UTF-8 编码 + 匹配实际输出格式
+- Migration 测试：避免与内置 migration_004 版本冲突
+
+**最终验证：**
+- **991 tests passed, 0 failures**
+- All imports OK
+- Version 2.25.5
 
 ### v2.25.4 (2026-04-07) — 全架构A级修复 + 自我进化闭环
 
