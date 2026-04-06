@@ -4,20 +4,87 @@ MemoryRepository - 记忆仓储
 核心功能:
 - CRUD 操作
 - 按 key/type/category 查询
-- 搜索（文本匹配）
+- 搜索（文本匹配 + CJK感知）
 - 带评分的检索（RIF 公式）
 - 访问统计
 """
 
+import re
 import time
 import json
 import logging
+import unicodedata
 from typing import List, Optional, Dict, Any
 
 from .base import BaseRepository
 from .models import Memory, MemoryType, SearchResult, RetrievalConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _is_cjk_char(ch: str) -> bool:
+    """判断字符是否为CJK字符"""
+    cp = ord(ch)
+    # CJK Unified Ideographs
+    if 0x4E00 <= cp <= 0x9FFF:
+        return True
+    # CJK Extension A
+    if 0x3400 <= cp <= 0x4DBF:
+        return True
+    # CJK Compatibility Ideographs
+    if 0xF900 <= cp <= 0xFAFF:
+        return True
+    # Hiragana + Katakana
+    if 0x3040 <= cp <= 0x30FF:
+        return True
+    # Hangul Syllables
+    if 0xAC00 <= cp <= 0xD7AF:
+        return True
+    return False
+
+
+def _has_cjk(text: str) -> bool:
+    """判断文本是否包含CJK字符"""
+    return any(_is_cjk_char(ch) for ch in text)
+
+
+def _cjk_tokenize(text: str) -> List[str]:
+    """
+    CJK感知的简单分词
+
+    对于CJK文本: 按字符bigram拆分
+    对于非CJK文本: 按空格拆分
+    混合文本: 分别处理后合并
+    """
+    tokens = []
+    cjk_buffer = ""
+
+    for ch in text:
+        if _is_cjk_char(ch):
+            cjk_buffer += ch
+        else:
+            if cjk_buffer:
+                # 生成bigram
+                for i in range(len(cjk_buffer)):
+                    tokens.append(cjk_buffer[i])  # unigram
+                    if i + 1 < len(cjk_buffer):
+                        tokens.append(cjk_buffer[i : i + 2])  # bigram
+                cjk_buffer = ""
+            if ch.strip():
+                tokens.append(ch.lower())
+
+    # 处理末尾CJK缓冲区
+    if cjk_buffer:
+        for i in range(len(cjk_buffer)):
+            tokens.append(cjk_buffer[i])
+            if i + 1 < len(cjk_buffer):
+                tokens.append(cjk_buffer[i : i + 2])
+
+    # 对非CJK部分也按空格分词
+    words = re.findall(r"[a-zA-Z0-9]+", text)
+    tokens.extend([w.lower() for w in words])
+
+    return tokens
 
 
 class MemoryRepository(BaseRepository[Memory]):
@@ -166,9 +233,7 @@ class MemoryRepository(BaseRepository[Memory]):
             )
             return [self._row_to_entity(row) for row in cursor.fetchall()]
 
-    def get_recent(
-        self, limit: int = 10, memory_type: Optional[MemoryType] = None
-    ) -> List[Memory]:
+    def get_recent(self, limit: int = 10, memory_type: Optional[MemoryType] = None) -> List[Memory]:
         """
         获取最近访问的记忆
 
@@ -205,9 +270,7 @@ class MemoryRepository(BaseRepository[Memory]):
 
     # ==================== 搜索方法 ====================
 
-    def search(
-        self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10
-    ) -> List[Memory]:
+    def search(self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10) -> List[Memory]:
         """
         搜索记忆（简单文本匹配）
 
@@ -235,6 +298,70 @@ class MemoryRepository(BaseRepository[Memory]):
         with self.conn_mgr.get_connection() as conn:
             cursor = conn.execute(sql, params)
             return [self._row_to_entity(row) for row in cursor.fetchall()]
+
+    def search_cjk(self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10) -> List[Memory]:
+        """
+        CJK感知的搜索（v2.11.0）
+
+        对CJK文本使用unigram/bigram分词匹配，提升中文搜索准确率。
+        同时兼容英文搜索。
+
+        Args:
+            query: 搜索关键词（支持中/英/日/韩）
+            memory_type: 记忆类型（可选）
+            limit: 返回数量限制
+
+        Returns:
+            List[Memory]: 按相关性排序的记忆列表
+        """
+        # 先尝试标准LIKE搜索
+        base_results = self.search(query, memory_type, limit=limit * 3)
+
+        if not _has_cjk(query):
+            return base_results[:limit]
+
+        # CJK分词匹配：对未通过LIKE匹配的结果进行补充
+        query_tokens = set(_cjk_tokenize(query))
+        if not query_tokens:
+            return base_results[:limit]
+
+        scored = []  # type: List[tuple]
+        seen_ids = set()  # type: set
+
+        for memory in base_results:
+            value_tokens = set(_cjk_tokenize(memory.value.lower()))
+            common = query_tokens & value_tokens
+            if common:
+                score = len(common) / max(len(query_tokens), 1)
+                scored.append((score, memory))
+                seen_ids.add(memory.id)
+
+        # 补充搜索：获取更多候选
+        remaining = limit - len(scored)
+        if remaining > 0:
+            with self.conn_mgr.get_connection() as conn:
+                sql = f"SELECT * FROM {self.table_name}"
+                params = []  # type: list
+                if memory_type:
+                    sql += " WHERE memory_type = ?"
+                    params.append(memory_type.value)
+                sql += " ORDER BY importance_score DESC LIMIT ?"
+                params.append(limit * 5)
+
+                cursor = conn.execute(sql, params)
+                for row in cursor.fetchall():
+                    mem = self._row_to_entity(row)
+                    if mem.id not in seen_ids:
+                        value_tokens = set(_cjk_tokenize(mem.value.lower()))
+                        common = query_tokens & value_tokens
+                        if common:
+                            score = len(common) / max(len(query_tokens), 1)
+                            scored.append((score, mem))
+                            seen_ids.add(mem.id)
+
+        # 按分数排序
+        scored.sort(key=lambda x: -x[0])
+        return [mem for _, mem in scored[:limit]]
 
     def search_with_scoring(
         self, query: str, config: Optional[RetrievalConfig] = None, memory_type: Optional[MemoryType] = None
@@ -305,7 +432,7 @@ class MemoryRepository(BaseRepository[Memory]):
 
     def _calculate_relevance(self, query: str, memory: Memory) -> float:
         """
-        计算相关性分数
+        计算相关性分数（CJK感知）
 
         Args:
             query: 搜索词
@@ -324,13 +451,20 @@ class MemoryRepository(BaseRepository[Memory]):
 
         # 包含匹配
         if query_lower in value_lower or query_lower in key_lower:
-            # 根据匹配位置计算分数
             pos = value_lower.find(query_lower)
             if pos >= 0:
                 return 0.8 - (pos / max(len(value_lower), 1)) * 0.3
             return 0.6
 
-        # 单词匹配
+        # CJK感知分词匹配
+        if _has_cjk(query):
+            query_tokens = set(_cjk_tokenize(query))
+            value_tokens = set(_cjk_tokenize(value_lower))
+            common = query_tokens & value_tokens
+            if common:
+                return min(0.7, len(common) / max(len(query_tokens), 1))
+
+        # 单词匹配（非CJK）
         query_words = set(query_lower.split())
         value_words = set(value_lower.split())
         common = query_words & value_words

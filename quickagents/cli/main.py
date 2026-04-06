@@ -2521,6 +2521,144 @@ def cmd_yugong(args):
         print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
 
 
+def cmd_skill(args):
+    """Skill描述质量审计命令"""
+    from ..core.skill_auditor import SkillAuditor
+
+    auditor = SkillAuditor()
+
+    try:
+        if args.action == "audit":
+            path = args.path
+            if not os.path.exists(path):
+                print(f"[FAIL] 路径不存在: {path}")
+                return
+
+            if os.path.isdir(path):
+                print(f"[SkillAuditor] 审计目录: {path}")
+                results = auditor.audit_directory(path)
+                print(auditor.format_summary_table(results))
+            else:
+                print(f"[SkillAuditor] 审计文件: {path}")
+                result = auditor.audit_file(path)
+                print(auditor.format_report(result))
+
+        elif args.action == "lint":
+            content = args.content
+            if not content:
+                print("[FAIL] 请提供 --content 参数")
+                return
+            result = auditor.audit_content(content)
+            print(auditor.format_report(result))
+
+        else:
+            print(f"[FAIL] 未知操作: {args.action}")
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+
+
+def cmd_experience(args):
+    """经验编译器命令"""
+    from ..core.experience_compiler import ExperienceCompiler
+
+    compiler = ExperienceCompiler()
+
+    try:
+        if args.action == "stats":
+            stats = compiler.get_stats()
+            print("[ExperienceCompiler] 编译器统计")
+            print("=" * 40)
+            print(f"  缓冲区条目: {stats.get('buffer_entries', 0)}")
+            print(f"  缓冲区大小: {stats.get('buffer_size', '0B')}")
+            print(f"  已编译文章: {stats.get('compiled_articles', 0)}")
+            print(f"  输出目录: {stats.get('compiled_dir', 'N/A')}")
+
+        elif args.action == "compile":
+            source = args.source
+            if not source or not os.path.exists(source):
+                print(f"[FAIL] 路径不存在: {source}")
+                return
+            compiler.accumulate(source)
+            if compiler.should_compile():
+                prompt = compiler.generate_compile_prompt()
+                print("[ExperienceCompiler] 编译提示已生成:")
+                print(f"  缓冲区条目: {compiler.get_stats().get('buffer_entries', 0)}")
+                print("\n--- Compile Prompt ---")
+                print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
+            else:
+                print(f"[INFO] 缓冲区不足，当前: {compiler.get_stats().get('buffer_entries', 0)}")
+
+        elif args.action == "lint":
+            issues = compiler.lint()
+            if issues:
+                print(f"[ExperienceCompiler] 发现 {len(issues)} 个问题:")
+                for issue in issues:
+                    print(f"  - {issue}")
+            else:
+                print("[OK] 无问题")
+
+        elif args.action == "query":
+            keyword = args.keyword or ""
+            results = compiler.query(keyword)
+            if results:
+                print(f"[ExperienceCompiler] 查询结果 ({len(results)} 条):")
+                for r in results:
+                    print(f"  - {r}")
+            else:
+                print("[INFO] 无匹配结果")
+
+        elif args.action == "clear":
+            compiler.clear_buffer()
+            print("[OK] 缓冲区已清空")
+
+        else:
+            print(f"[FAIL] 未知操作: {args.action}")
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+
+
+def cmd_compress(args):
+    """上下文压缩命令"""
+    from ..core.context_compressor import ContextCompressor
+
+    compressor = ContextCompressor()
+
+    try:
+        if args.action == "stats":
+            stats = compressor.get_stats()
+            print("[ContextCompressor] 压缩器统计")
+            print("=" * 40)
+            print(f"  记录输出数: {stats.get('total_outputs', 0)}")
+            print(f"  总Token数: {stats.get('total_tokens', 0)}")
+            print(f"  关键文件数: {stats.get('key_file_count', 0)}")
+            counts = stats.get("tool_counts", {})
+            if counts:
+                print("  工具调用分布:")
+                for tool, count in counts.items():
+                    print(f"    {tool}: {count}")
+
+        elif args.action == "check":
+            usage = args.usage or 70
+            result = compressor.check_and_compress(usage)
+            if result:
+                print(f"[Compress] 压缩层级: {result.tier.value}")
+                print(f"  节省比例: {result.savings_pct:.1f}%")
+            else:
+                print("[OK] 无需压缩")
+
+        elif args.action == "reset":
+            compressor.reset()
+            print("[OK] 压缩器已重置")
+
+        else:
+            print(f"[FAIL] 未知操作: {args.action}")
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="QuickAgents CLI")
     subparsers = parser.add_subparsers(dest="command", help="命令")
@@ -2626,6 +2764,32 @@ def main():
     p_hooks = subparsers.add_parser("hooks", help="Git钩子管理")
     p_hooks.add_argument("action", choices=["install", "uninstall", "status"], help="操作")
     p_hooks.set_defaults(func=cmd_hooks)
+
+    # ==================== v2.11.0 新增命令 ====================
+
+    # skill 命令
+    p_skill = subparsers.add_parser("skill", help="Skill描述质量审计")
+    p_skill.add_argument("action", choices=["audit", "lint"], help="操作: audit=审计文件/目录, lint=检查内容")
+    p_skill.add_argument("path", nargs="?", help="文件或目录路径 (audit时使用)")
+    p_skill.add_argument("--content", "-c", help="直接检查的内容 (lint时使用)")
+    p_skill.set_defaults(func=cmd_skill)
+
+    # experience 命令
+    p_experience = subparsers.add_parser("experience", help="经验编译器")
+    p_experience.add_argument(
+        "action",
+        choices=["stats", "compile", "lint", "query", "clear"],
+        help="操作",
+    )
+    p_experience.add_argument("source", nargs="?", help="编译源路径 (compile时使用)")
+    p_experience.add_argument("--keyword", "-k", help="查询关键词 (query时使用)")
+    p_experience.set_defaults(func=cmd_experience)
+
+    # compress 命令
+    p_compress = subparsers.add_parser("compress", help="上下文压缩管理")
+    p_compress.add_argument("action", choices=["stats", "check", "reset"], help="操作")
+    p_compress.add_argument("--usage", "-u", type=float, help="当前上下文使用率%% (check时使用, 默认70)")
+    p_compress.set_defaults(func=cmd_compress)
 
     # ==================== 审计问责命令 ====================
 

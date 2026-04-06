@@ -283,6 +283,23 @@ class UnifiedDB:
         """
         return self._memory_repo.search(query, memory_type, limit)
 
+    def search_memory_cjk(self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10) -> List[Memory]:
+        """
+        CJK感知的搜索记忆（v2.11.0）
+
+        对中文/日文/韩文文本使用unigram/bigram分词匹配。
+        对英文文本回退到标准搜索。
+
+        Args:
+            query: 搜索关键词（支持中/英/日/韩）
+            memory_type: 记忆类型（可选）
+            limit: 返回数量限制
+
+        Returns:
+            List[Memory]: 按相关性排序的记忆列表
+        """
+        return self._memory_repo.search_cjk(query, memory_type, limit)
+
     def search_memory_with_scoring(
         self, query: str, config: Optional[RetrievalConfig] = None, memory_type: Optional[MemoryType] = None
     ) -> List[SearchResult]:

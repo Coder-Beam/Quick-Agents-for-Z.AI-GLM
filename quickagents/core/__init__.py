@@ -57,6 +57,14 @@ from .markdown_sync import MarkdownSync
 from .reminder import Reminder
 from .evolution import SkillEvolution
 
+# v2.11.0 新增模块
+from .skill_auditor import SkillAuditor, AuditResult, ComponentScore, Component, SmellType
+from .context_compressor import ContextCompressor, CompressionTier
+from .experience_compiler import ExperienceCompiler, CompileResult
+from .parallel_executor import ParallelExecutor, TaskResult, ParallelStats
+from .mcp_bridge import MCPBridge, MCPToolInfo, MCPStatus
+from .mcp_bridge import MCPBridge, MCPToolInfo, MCPStatus
+
 __all__ = [
     # V2 核心组件
     "ConnectionManager",
@@ -100,4 +108,20 @@ __all__ = [
     "MarkdownSync",
     "Reminder",
     "SkillEvolution",
+    # v2.11.0 新增
+    "SkillAuditor",
+    "AuditResult",
+    "ComponentScore",
+    "Component",
+    "SmellType",
+    "ContextCompressor",
+    "CompressionTier",
+    "ExperienceCompiler",
+    "CompileResult",
+    "ParallelExecutor",
+    "TaskResult",
+    "ParallelStats",
+    "MCPBridge",
+    "MCPToolInfo",
+    "MCPStatus",
 ]

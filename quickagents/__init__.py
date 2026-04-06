@@ -59,7 +59,7 @@ CLI Usage:
     qka progress              # 当前进度
 """
 
-__version__ = "2.10.0"
+__version__ = "2.11.0"
 __author__ = "Coder-Beam"
 
 from .core.unified_db import (
@@ -77,6 +77,13 @@ from .core.memory import MemoryManager
 from .core.loop_detector import LoopDetector
 from .core.reminder import Reminder
 from .core.cache_db import CacheDB
+
+# v2.11.0 新增模块
+from .core.skill_auditor import SkillAuditor, AuditResult, ComponentScore, Component, SmellType
+from .core.context_compressor import ContextCompressor, CompressionTier
+from .core.experience_compiler import ExperienceCompiler, CompileResult
+from .core.parallel_executor import ParallelExecutor, TaskResult, ParallelStats
+from .core.mcp_bridge import MCPBridge, MCPToolInfo, MCPStatus
 from .utils.hash_cache import HashCache
 from .skills import (
     FeedbackCollector,
@@ -206,6 +213,22 @@ __all__ = [
     # AuditGuard (v2.9.0+)
     "AuditGuard",
     "AuditConfig",
+    # v2.11.0 新增
+    "SkillAuditor",
+    "AuditResult",
+    "ComponentScore",
+    "Component",
+    "SmellType",
+    "ContextCompressor",
+    "CompressionTier",
+    "ExperienceCompiler",
+    "CompileResult",
+    "ParallelExecutor",
+    "TaskResult",
+    "ParallelStats",
+    "MCPBridge",
+    "MCPToolInfo",
+    "MCPStatus",
     # Version
     "__version__",
 ]
