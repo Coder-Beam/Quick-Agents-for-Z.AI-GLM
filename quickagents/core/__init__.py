@@ -62,6 +62,8 @@ from .skill_auditor import SkillAuditor, AuditResult, ComponentScore, Component,
 from .context_compressor import ContextCompressor, CompressionTier
 from .experience_compiler import ExperienceCompiler, CompileResult
 from .parallel_executor import ParallelExecutor, TaskResult, ParallelStats
+from .mcp_bridge import MCPBridge, MCPToolInfo, MCPStatus
+from .mcp_bridge import MCPBridge, MCPToolInfo, MCPStatus
 
 __all__ = [
     # V2 核心组件
@@ -119,4 +121,7 @@ __all__ = [
     "ParallelExecutor",
     "TaskResult",
     "ParallelStats",
+    "MCPBridge",
+    "MCPToolInfo",
+    "MCPStatus",
 ]

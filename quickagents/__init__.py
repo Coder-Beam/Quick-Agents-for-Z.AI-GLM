@@ -83,6 +83,7 @@ from .core.skill_auditor import SkillAuditor, AuditResult, ComponentScore, Compo
 from .core.context_compressor import ContextCompressor, CompressionTier
 from .core.experience_compiler import ExperienceCompiler, CompileResult
 from .core.parallel_executor import ParallelExecutor, TaskResult, ParallelStats
+from .core.mcp_bridge import MCPBridge, MCPToolInfo, MCPStatus
 from .utils.hash_cache import HashCache
 from .skills import (
     FeedbackCollector,
@@ -225,6 +226,9 @@ __all__ = [
     "ParallelExecutor",
     "TaskResult",
     "ParallelStats",
+    "MCPBridge",
+    "MCPToolInfo",
+    "MCPStatus",
     # Version
     "__version__",
 ]
