@@ -2559,7 +2559,7 @@ def cmd_skill(args):
 
 
 def cmd_experience(args):
-    """经验编译器命令"""
+    """经验编译器命令（Karpathy LLM Knowledge Base 模式）"""
     from ..core.experience_compiler import ExperienceCompiler
 
     compiler = ExperienceCompiler()
@@ -2569,25 +2569,45 @@ def cmd_experience(args):
             stats = compiler.get_stats()
             print("[ExperienceCompiler] 编译器统计")
             print("=" * 40)
-            print(f"  缓冲区条目: {stats.get('buffer_entries', 0)}")
-            print(f"  缓冲区大小: {stats.get('buffer_size', '0B')}")
+            print(f"  内存缓冲区: {stats.get('buffer_size', 0)} 条")
+            print(f"  SQLite总条目: {stats.get('total_entries', 0)}")
+            print(f"  未编译条目: {stats.get('uncompiled_entries', 0)}")
             print(f"  已编译文章: {stats.get('compiled_articles', 0)}")
+            print(f"  需要编译: {stats.get('should_compile', False)}")
+            print(f"  上次编译: {stats.get('last_compile', 'N/A')}")
+            print(f"  分类: {', '.join(stats.get('categories', []))}")
             print(f"  输出目录: {stats.get('compiled_dir', 'N/A')}")
 
         elif args.action == "compile":
+            # 从文件或 stdin 读取经验 JSON
             source = args.source
-            if not source or not os.path.exists(source):
-                print(f"[FAIL] 路径不存在: {source}")
-                return
-            compiler.accumulate(source)
+            if source:
+                if not os.path.exists(source):
+                    print(f"[FAIL] 路径不存在: {source}")
+                    return
+                import json
+
+                with open(source, "r", encoding="utf-8") as f:
+                    task_results = json.load(f)
+                if isinstance(task_results, list):
+                    for tr in task_results:
+                        compiler.accumulate(tr)
+                else:
+                    compiler.accumulate(task_results)
+            else:
+                # 无源文件时，尝试从 SQLite 积累的经验触发编译
+                pass
+
             if compiler.should_compile():
                 prompt = compiler.generate_compile_prompt()
+                stats = compiler.get_stats()
                 print("[ExperienceCompiler] 编译提示已生成:")
-                print(f"  缓冲区条目: {compiler.get_stats().get('buffer_entries', 0)}")
+                print(f"  未编译条目: {stats.get('uncompiled_entries', 0)}")
                 print("\n--- Compile Prompt ---")
                 print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
             else:
-                print(f"[INFO] 缓冲区不足，当前: {compiler.get_stats().get('buffer_entries', 0)}")
+                stats = compiler.get_stats()
+                print(f"[INFO] 未达编译阈值，当前未编译: {stats.get('uncompiled_entries', 0)}")
 
         elif args.action == "lint":
             issues = compiler.lint()
@@ -2600,11 +2620,13 @@ def cmd_experience(args):
 
         elif args.action == "query":
             keyword = args.keyword or ""
-            results = compiler.query(keyword)
-            if results:
-                print(f"[ExperienceCompiler] 查询结果 ({len(results)} 条):")
-                for r in results:
-                    print(f"  - {r}")
+            if not keyword:
+                print("[FAIL] 请使用 --keyword 指定查询关键词")
+                return
+            result = compiler.query(keyword)
+            if result:
+                print(f"[ExperienceCompiler] 查询结果:")
+                print(result)
             else:
                 print("[INFO] 无匹配结果")
 

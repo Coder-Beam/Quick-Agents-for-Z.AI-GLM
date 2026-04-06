@@ -96,11 +96,13 @@ class MigrationManager:
     内置迁移:
         - 001: 初始 Schema
         - 002: 添加 memory.content_hash 字段
+        - 004: 经验编译器表 (experience_entries + compiled_articles + FTS5)
 
     外部迁移:
         从 migrations/ 目录加载 .sql 文件，格式:
         - 003_feature_name.sql          (升级 SQL)
         - 003_feature_name_rollback.sql (降级 SQL，可选)
+    注意: 003 版本保留给 audit_tables 外部注册使用
     """
 
     BUILTIN_MIGRATIONS: List[Migration] = []
@@ -228,7 +230,63 @@ class MigrationManager:
         )
         migration_002.__post_init__()
 
-        self.migrations = [migration_001, migration_002]
+        migration_004_exp = Migration(
+            version="004",
+            name="experience_tables",
+            up_sql="""
+                -- ==================== 经验条目表（原始经验） ====================
+                CREATE TABLE IF NOT EXISTS experience_entries (
+                    id TEXT PRIMARY KEY,
+                    source TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    source_hash TEXT NOT NULL,
+                    is_compiled INTEGER DEFAULT 0,
+                    created_at REAL DEFAULT (strftime('%s', 'now')),
+                    metadata TEXT
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_exp_category ON experience_entries(category);
+                CREATE INDEX IF NOT EXISTS idx_exp_compiled ON experience_entries(is_compiled);
+                CREATE INDEX IF NOT EXISTS idx_exp_hash ON experience_entries(source_hash);
+                CREATE INDEX IF NOT EXISTS idx_exp_created ON experience_entries(created_at);
+
+                -- ==================== 编译文章表 ====================
+                CREATE TABLE IF NOT EXISTS compiled_articles (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL UNIQUE,
+                    summary TEXT,
+                    body TEXT NOT NULL,
+                    tags TEXT,
+                    sources TEXT,
+                    source_count INTEGER DEFAULT 0,
+                    coverage TEXT DEFAULT 'low',
+                    file_path TEXT,
+                    created_at REAL DEFAULT (strftime('%s', 'now')),
+                    updated_at REAL DEFAULT (strftime('%s', 'now'))
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_article_title ON compiled_articles(title);
+                CREATE INDEX IF NOT EXISTS idx_article_coverage ON compiled_articles(coverage);
+                CREATE INDEX IF NOT EXISTS idx_article_updated ON compiled_articles(updated_at);
+
+                -- ==================== FTS5 全文搜索 ====================
+                CREATE VIRTUAL TABLE IF NOT EXISTS compiled_articles_fts USING fts5(
+                    title,
+                    summary,
+                    body,
+                    tags
+                );
+            """,
+            down_sql="""
+                DROP TABLE IF EXISTS compiled_articles_fts;
+                DROP TABLE IF EXISTS compiled_articles;
+                DROP TABLE IF EXISTS experience_entries;
+            """,
+        )
+        migration_004_exp.__post_init__()
+
+        self.migrations = [migration_001, migration_002, migration_004_exp]
 
     # ==================== 外部迁移文件 ====================
 
@@ -308,15 +366,11 @@ class MigrationManager:
         """获取已应用的迁移版本列表"""
         try:
             with self.conn_mgr.get_connection() as conn:
-                cursor = conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='migration_history'"
-                )
+                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='migration_history'")
                 if cursor.fetchone() is None:
                     return []
 
-                cursor = conn.execute(
-                    "SELECT version FROM migration_history ORDER BY version"
-                )
+                cursor = conn.execute("SELECT version FROM migration_history ORDER BY version")
                 return [row[0] for row in cursor.fetchall()]
         except Exception as e:
             logger.error(f"Failed to get applied migrations: {e}")
@@ -349,9 +403,7 @@ class MigrationManager:
 
         for migration in pending:
             start_time = time.time()
-            logger.info(
-                f"Applying migration: {migration.version} - {migration.name} (source: {migration.source})"
-            )
+            logger.info(f"Applying migration: {migration.version} - {migration.name} (source: {migration.source})")
 
             try:
                 with self.conn_mgr.get_connection() as conn:
@@ -378,10 +430,7 @@ class MigrationManager:
                         )
                     )
 
-                    logger.info(
-                        f"Migration applied: {migration.version} - {migration.name} "
-                        f"({duration_ms:.1f}ms)"
-                    )
+                    logger.info(f"Migration applied: {migration.version} - {migration.name} ({duration_ms:.1f}ms)")
 
             except Exception as e:
                 duration_ms = (time.time() - start_time) * 1000
@@ -398,8 +447,7 @@ class MigrationManager:
                 )
 
                 logger.error(
-                    f"Migration failed: {migration.version} - {migration.name} "
-                    f"({duration_ms:.1f}ms): {error_msg}"
+                    f"Migration failed: {migration.version} - {migration.name} ({duration_ms:.1f}ms): {error_msg}"
                 )
                 raise RuntimeError(f"Migration {migration.version} failed: {e}") from e
 
@@ -425,9 +473,7 @@ class MigrationManager:
         try:
             with self.conn_mgr.get_connection() as conn:
                 conn.executescript(migration.down_sql)
-                conn.execute(
-                    "DELETE FROM migration_history WHERE version = ?", (version,)
-                )
+                conn.execute("DELETE FROM migration_history WHERE version = ?", (version,))
                 conn.commit()
                 duration_ms = (time.time() - start_time) * 1000
                 logger.info(f"Migration rolled back: {version} ({duration_ms:.1f}ms)")

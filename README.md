@@ -1,179 +1,20 @@
-﻿# QuickAgents
+# QuickAgents
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/Version-2.11.0-green.svg)](https://pypi.org/project/quickagents/)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
+[![GLM Optimized](https://img.shields.io/badge/GLM-Coding_Plan-orange.svg)](https://bigmodel.cn)
 
-**AI Agent Enhancement Toolkit with Self-Evolution** | **AI代理增强工具包，支持自我进化**
-
-[中文文档](#quickagents-中文) | [English](#quickagents-english)
+专为 **OpenCode** 和 **智谱 GLM 大模型 (Coding Plan)** 深度优化的 AI Agent 增强工具包。通过本地处理最大化效率，Token 消耗节省 60-100%。
 
 ---
 
-# QuickAgents (中文)
-
-## 📖 项目简介
-
-QuickAgents是一个强大的AI代理增强工具包，通过本地处理最大化效率，最小化Token消耗。支持自我进化、记忆管理、知识图谱、TDD工作流等核心功能。
-
-### 🎯 核心目标
-
-- **最大化本地处理**：减少API调用，节省Token消耗60-100%
-- **自我进化系统**：自动收集经验，持续优化Skills
-- **统一数据管理**：SQLite主存储 + Markdown辅助备份
-- **跨会话记忆**：三维记忆系统，支持项目上下文保持
-
-## ✨ 核心功能
-
-### 1. 统一数据库系统 (UnifiedDB V2)
-
-**V2 架构**：分层设计，模块化，可测试
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    UnifiedDB V2 Architecture                 │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │              UnifiedDB (Facade)                      │   │
-│   │  - set_memory() / get_memory() / search_memory()    │   │
-│   │  - add_task() / update_task_status()                │   │
-│   │  - init_progress() / update_progress()              │   │
-│   │  - add_feedback() / get_feedbacks()                 │   │
-│   └─────────────────────────────────────────────────────┘   │
-│                          │                                  │
-│   ┌──────────────────────┴──────────────────────────┐       │
-│   │              Session Layer (v2.8.3)              │       │
-│   │  query() / transaction() / read_only() / execute()│      │
-│   └─────────────────────────────────────────────────┘       │
-│                          │                                  │
-│   ┌──────────────────────┴──────────────────────────┐       │
-│   │              Repository Layer                    │       │
-│   ├─────────────────────────────────────────────────┤       │
-│   │  MemoryRepo │ TaskRepo │ ProgressRepo │ FeedbackRepo │  │
-│   │              QueryBuilder (Django-style)         │       │
-│   └─────────────────────────────────────────────────┘       │
-│                          │                                  │
-│   ┌──────────────────────┴──────────────────────────┐       │
-│   │              Core Components                     │       │
-│   ├─────────────────────────────────────────────────┤       │
-│   │  ConnectionManager │ TransactionManager │ MigrationManager │
-│   │  (动态连接池/pre_ping/PRAGMA增强/指标)   │              │
-│   └─────────────────────────────────────────────────┘       │
-│                                                             │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │              Knowledge Graph + Document Pipeline      │   │
-│   ├──────────────────────────────────────────────────────┤   │
-│   │  KnowledgeGraph │ FTS5 Search │ DocumentPipeline │    │   │
-│   │  (WAL模式/批量查询/线程本地持久连接)                    │   │
-│   └──────────────────────────────────────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**V2 特性**：
-- **ConnectionManager**: 动态连接池、pre_ping验证、PRAGMA增强(mmap/temp_store)、WAL自动Checkpoint、连接池指标
-- **TransactionManager**: 指数退避重试、线程独立事务、嵌套SAVEPOINT、只读/读写分离
-- **MigrationManager**: 外部迁移文件、迁移结果追踪、增强日志(耗时统计)
-- **Repository层**: QueryBuilder(Django风格链式API)、批量写入优化(5-10x)
-- **Session**: 统一数据库会话接口，隐藏CM/TM实现细节
-- **KnowledgeGraph**: WAL模式持久连接、批量查询消除N+1、FTS5前缀搜索
-- **MarkdownSync**: 并行同步(ThreadPoolExecutor)、批量查询优化
-
-```python
-from quickagents import UnifiedDB, MemoryType, TaskStatus
-
-db = UnifiedDB('.quickagents/unified.db')
-
-# 设置记忆
-db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
-db.set_memory('current.task', '实现认证', MemoryType.WORKING)
-
-# 获取记忆
-name = db.get_memory('project.name')
-
-# 任务管理
-db.add_task('T001', '实现认证', 'P0')
-db.update_task_status('T001', TaskStatus.COMPLETED)
-```
-
-### 2. 自我进化系统 (SkillEvolution)
-
-```python
-from quickagents import get_evolution
-
-evolution = get_evolution()
-
-# 任务完成时自动触发
-evolution.on_task_complete({
-    'task_id': 'T001',
-    'task_name': '实现认证',
-    'skills_used': ['tdd-workflow-skill'],
-    'success': True
-})
-
-# Git提交时自动触发
-evolution.on_git_commit()
-
-# 检查定期优化
-if evolution.check_periodic_trigger():
-    evolution.run_periodic_optimization()
-```
-
-### 3. 知识图谱系统 (KnowledgeGraph)
-
-```python
-from quickagents import KnowledgeGraph, NodeType, EdgeType
-
-kg = KnowledgeGraph()
-
-# 创建节点
-node = kg.create_node(
-    node_type=NodeType.REQUIREMENT,
-    title='用户认证需求',
-    content='实现JWT认证'
-)
-
-# 创建边
-kg.create_edge(
-    source_id=node.id,
-    target_id='T001',
-    edge_type=EdgeType.TRACES_TO
-)
-
-# 搜索
-results = kg.search('认证')
-
-# 需求追踪
-trace = kg.trace_requirement(node.id)
-```
-
-### 4. 浏览器自动化 (Browser)
-
-```python
-from quickagents import Browser
-
-browser = Browser()
-page = browser.new_page()
-
-# 获取控制台日志
-logs = page.get_console_logs()
-
-# 获取网络请求
-requests = page.get_network_requests()
-
-# 执行JavaScript
-result = page.evaluate('document.title')
-
-browser.close()
-```
-
-## 🚀 安装
+## 安装
 
 ### 方式一：一行命令安装（推荐）
 
-**macOS/Linux:**
+**macOS / Linux:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.sh | bash
 ```
@@ -183,44 +24,34 @@ curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GL
 iwr -useb https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.ps1 | iex
 ```
 
-### 方式二：两步安装
+### 方式二：pip 安装 + 项目初始化
 
 ```bash
-# Step 1: Install Python package
 pip install quickagents
-
-# Step 2: Initialize project
 qka init
 ```
 
-### 方式三：让AI代理自动安装（最省心）
+### 方式三：让 AI 代理自动安装（零操作）
 
-直接复制这句话发送给你的AI代理（如OpenCode、Claude、ChatGPT等）：
+把这句话发给你的 AI 代理（OpenCode / Claude Code / ChatGPT）：
 
 ```
-请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装QuickAgents
+请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装 QuickAgents
 ```
 
-AI代理会自动：
-1. 读取安装指南
-2. 检测你的环境（Python版本等）
-3. 执行 `pip install quickagents`
-4. 执行 `qka init` 初始化项目
-5. 验证安装结果
-
-**这是最推荐的安装方式**，无需手动操作任何命令。
-
-### 可选参数
+### 初始化参数
 
 ```bash
-qka init --with-ui-ux      # 包含ui-ux-pro-max技能（~410KB，用于Web/Mobile项目）
-qka init --with-browser    # 包含browser-devtools技能
-qka init --minimal         # 最小安装（仅核心文件）
-qka init --force           # 覆盖现有文件
-qka init --dry-run         # 预览将安装的文件
+qka init                        # 交互式初始化
+qka init --force                # 覆盖现有文件
+qka init --dry-run              # 预览不执行
+qka init --minimal              # 最小安装（仅核心文件）
+qka init --with-ui-ux           # 含 ui-ux-pro-max 技能（Web/Mobile 项目）
+qka init --with-browser         # 含 browser-devtools 技能
+qka init --update-config        # 仅更新配置，保留数据
 ```
 
-### 完整安装（包含所有可选依赖）
+### 完整安装（所有可选依赖）
 
 ```bash
 pip install quickagents[full]
@@ -234,621 +65,628 @@ cd Quick-Agents-for-Z.AI-GLM
 pip install -e .
 ```
 
-## 📋 CLI命令
-
-### 数据库操作
+### 验证安装
 
 ```bash
-qka stats                      # 统计信息
-qka sync                       # 同步SQLite到Markdown
-qka sync memory                # 仅同步记忆
-qka memory get <key>           # 获取记忆值
-qka memory set <key> <value>   # 设置记忆值
-qka memory search <query>      # 搜索记忆
+python -c "from quickagents import __version__; print(f'QuickAgents v{__version__}')"
+qka version
+qka version --check      # 检查所有模块完整性
 ```
-
-### 任务管理
-
-```bash
-qka tasks list                 # 列出所有任务
-qka tasks add <id> <name> --priority P0  # 添加任务
-qka tasks status <id> <status> # 更新任务状态
-qka progress                   # 查看当前进度
-```
-
-### 进化系统
-
-```bash
-qka evolution status           # 查看进化状态
-qka evolution stats [skill]    # Skills使用统计
-qka evolution optimize         # 执行定期优化
-qka evolution history <skill>  # 查看Skill进化历史
-qka evolution sync             # 同步进化数据
-```
-
-### Git集成
-
-```bash
-qka hooks install              # 安装Git钩子
-qka hooks status               # 查看钩子状态
-qka git status                 # Git状态
-qka git check                  # 提交前检查
-qka git commit <type> <scope> <subject>  # 格式化提交
-```
-
-### TDD工作流
-
-```bash
-qka tdd red <test_file>        # RED阶段（测试应失败）
-qka tdd green <test_file>      # GREEN阶段（测试应通过）
-qka tdd refactor <test_file>   # REFACTOR阶段
-qka tdd coverage               # 查看覆盖率
-qka tdd stats                  # TDD统计
-```
-
-### 反馈收集
-
-```bash
-qka feedback bug <desc>        # 记录Bug
-qka feedback improve <desc>    # 记录改进建议
-qka feedback best <desc>       # 记录最佳实践
-qka feedback view [--type <t>] # 查看收集的反馈
-qka feedback stats             # 反馈统计
-```
-
-### 模型配置（ZhipuAI GLM Coding Plan）
-
-```bash
-qka models show                # 查看当前配置
-qka models list                # 列出可用模型
-qka models check-updates       # 检查GLM更新
-qka models upgrade --dry-run   # 预览升级
-qka models upgrade --force     # 执行升级
-qka models strategy coding-plan # 切换到Coding Plan
-qka models lock GLM-5          # 锁定单一模型
-qka models unlock              # 解除锁定
-```
-
-### 其他命令
-
-```bash
-qka cache stats                # 缓存统计
-qka cache clear                # 清空缓存
-qka loop check                 # 检查循环模式
-qka loop stats                 # 循环检测统计
-qka reminder check             # 检查提醒
-qka reminder stats             # 提醒统计
-```
-
-### 版本管理
-
-```bash
-qka version                    # 查看版本信息
-qka version --check            # 检查所有模块完整性
-qka update                     # 从PyPI升级到最新版
-qka update --target 2.7.6      # 升级到指定版本
-qka update --source github     # 从GitHub源码安装
-qka update --dry-run           # 仅预览升级
-```
-
-### 卸载
-
-```bash
-qka uninstall                  # 交互式卸载
-qka uninstall --dry-run        # 预览卸载内容
-qka uninstall --keep-data      # 卸载但保留项目数据
-qka uninstall --keep-config    # 卸载但保留全局配置
-qka uninstall --force          # 跳过确认直接卸载
-```
-
-> 老版本（v2.7.5及更早）没有 `qka uninstall` 命令，请参考 [卸载指导文档](Docs/guides/UNINSTALL_GUIDE.md)
-
-## ⌨️ Slash命令（OpenCode内）
-
-### 工作流命令
-
-| 命令 | 说明 |
-|------|------|
-| `/ultrawork` 或 `/ulw` | "Just do it"模式 — 自动检测任务复杂度，最小化交互 |
-| `/start-work [plan]` | 从计划文件恢复/启动工作，支持 `--status`、`--checkpoint` |
-| `/run-workflow <name>` | 执行多Agent协调工作流（parallel-review等） |
-| `/enable-coordination` | 启用多Agent协调模式 |
-| `/disable-coordination` | 禁用多Agent协调模式 |
-
-### Skill管理
-
-| 命令 | 说明 |
-|------|------|
-| `/add-skill <source>` | 添加Skill（GitHub/本地/NPM） |
-| `/list-skills` | 列出已安装的Skills |
-| `/update-skill <name>` 或 `--all` | 更新Skill |
-| `/remove-skill <name>` | 移除Skill |
-| `/skill-info <name>` | 查看Skill详情 |
-| `/skill-stats <name>` | 查看Skill使用统计 |
-| `/search-skills <query>` | 搜索可用Skills |
-
-### 开发辅助
-
-| 命令 | 说明 |
-|------|------|
-| `/tdd-red <file>` | TDD RED阶段 |
-| `/tdd-green <file>` | TDD GREEN阶段 |
-| `/tdd-refactor <file>` | TDD REFACTOR阶段 |
-| `/test-coverage` | 查看测试覆盖率 |
-| `/debug <error>` | 触发系统化调试流程 |
-
-### 版本管理
-
-| 命令 | 说明 |
-|------|------|
-| `/qa-update` | 检测并更新QuickAgents |
-| `/qa-update --check` | 仅检测，不更新 |
-| `/qa-update --version` | 显示当前版本 |
-| `/qa-update --rollback` | 回滚到上一版本 |
-| `/qa-check-alignment` | 检查组件版本对齐 |
-| `/qa-auto-align` | 自动修复版本对齐 |
-
-### 反馈
-
-| 命令 | 说明 |
-|------|------|
-| `/feedback bug <desc>` | 记录Bug |
-| `/feedback improve <desc>` | 记录改进建议 |
-| `/feedback best <desc>` | 记录最佳实践 |
-| `/feedback skill <名> <评>` | 评估Skill |
-| `/feedback view [type]` | 查看收集的反馈 |
-
-### 其他
-
-| 命令 | 说明 |
-|------|------|
-| `/handoff` | 生成跨会话交接文档 |
-| `/stop-continuation` | 停止所有继续/执行机制 |
-
-## 🏗️ 架构
-
-```
-.quickagents/
-├── unified.db           # SQLite主存储
-│   ├── memory           # 三维记忆
-│   ├── progress         # 进度追踪
-│   ├── feedback         # 经验收集
-│   ├── tasks            # 任务管理
-│   ├── decisions        # 决策日志
-│   └── knowledge_*      # 知识图谱
-│
-Docs/                    # Markdown辅助备份
-├── MEMORY.md           # 项目记忆
-├── TASKS.md            # 任务管理
-└── DECISIONS.md        # 决策日志
-```
-
-### 三维记忆系统
-
-| 记忆类型 | 用途 | 示例 |
-|---------|------|------|
-| Factual | 静态事实信息 | 项目名称、技术栈、架构决策 |
-| Experiential | 动态经验信息 | 踩坑记录、最佳实践、用户反馈 |
-| Working | 当前工作状态 | 当前任务、进度、阻塞点 |
-
-## 📦 模块说明
-
-| 模块 | 功能 | Token节省 |
-|------|------|-----------|
-| UnifiedDB | 统一数据库管理 | 60%+ |
-| Session | 统一数据库会话接口 | 0 |
-| ConnectionManager | 动态连接池/pre_ping/PRAGMA增强 | 0 |
-| TransactionManager | ACID事务/指数退避重试/线程安全 | 0 |
-| QueryBuilder | Django风格链式查询构建器 | 0 |
-| MarkdownSync | 自动同步到Markdown | 100% |
-| FileManager | 智能文件读写（哈希检测） | 90%+ |
-| LoopDetector | 模式循环检测(stuck/oscillation) | 100% |
-| Reminder | 事件提醒 | 100% |
-| SkillEvolution | Skills自我进化 | 0 |
-| KnowledgeGraph | 知识图谱 | 80%+ |
-| Browser | 浏览器自动化 | 50%+ |
-| Document | 文档解析管道（PDF/Word/Excel/XMind等） | 80%+ |
-| Encoding | 统一UTF-8编码（跨平台） | 0 |
-
-## 🧪 测试
-
-```bash
-# 运行所有测试
-pytest tests/
-
-# 运行特定测试
-pytest tests/knowledge_graph/
-
-# 覆盖率报告
-pytest --cov=quickagents tests/
-```
-
-## 📚 文档
-
-- [API文档](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/api)
-- [架构设计](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs)
-- [使用指南](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/guides)
-
-## 🤝 贡献
-
-欢迎贡献！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详情。
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
 ---
 
-# QuickAgents (English)
+## QuickAgents 是什么？
 
-## 📖 Overview
+QuickAgents 是一个 Python 包，为 AI 编码代理（特别是 OpenCode + 智谱 GLM Coding Plan）提供**本地化的增强能力**。核心理念：**能用本地 Python 处理的，绝不浪费 LLM Token**。
 
-QuickAgents is a powerful AI agent enhancement toolkit that maximizes efficiency through local processing and minimizes token consumption by 60-100%. It features self-evolution, memory management, knowledge graphs, TDD workflows, and more.
+**核心能力一览：**
 
-### 🎯 Core Goals
+| 能力 | 说明 |
+|------|------|
+| 三维记忆系统 | Factual / Experiential / Working 三类记忆，SQLite 存储，跨会话持久化 |
+| 知识图谱 | 需求追踪、实体关系、FTS5 全文搜索 |
+| 愚公循环 (YuGong) | 自主开发循环，需求解析 → LLM 执行 → 质量检查 → 自动提交，循环直到完成 |
+| Karpathy 经验编译器 | 分散经验 → LLM 编译 → 结构化知识文章，81x 压缩，84% Token 节省 |
+| 文档理解管道 | PDF / Word / Excel / XMind / FreeMind / OPML / Markdown / 源码解析 |
+| 自我进化系统 | 自动收集 Skills 使用经验，持续优化 |
+| 审计问责 (AuditGuard) | 代码变更追踪、质量门禁、问题归因、学习经验提取 |
+| 浏览器自动化 | Playwright + Lightpanda/Chromium，控制台日志、网络请求、性能指标 |
+| TDD 工作流 | Red → Green → Refactor 本地化执行 |
+| 循环检测 | Doom-Loop 防护，防止 Agent 陷入重复调用死循环 |
+| 上下文压缩 | 渐进式压缩策略，70%/80%/85%/90%/99% 分级响应 |
+| 并行执行器 | 最多 3 并发的只读任务并行处理 |
+| Git 钩子 | 自动触发进化分析、提交前质量检查 |
 
-- **Maximize Local Processing**: Reduce API calls, save 60-100% tokens
-- **Self-Evolution System**: Automatically collect experiences, continuously optimize skills
-- **Unified Data Management**: SQLite primary storage + Markdown backup
-- **Cross-Session Memory**: Three-dimensional memory system for project context preservation
+---
 
-## ✨ Core Features
+## 与 oh-my-openagent (omo) 的对比
 
-### 1. Unified Database System (UnifiedDB V2)
+| 维度 | **QuickAgents** | **oh-my-openagent (omo)** |
+|------|----------------|--------------------------|
+| **定位** | Python 本地化工具包，Token 节省优先 | OpenCode 插件（TypeScript），多模型编排优先 |
+| **核心语言** | Python（pip install） | TypeScript（OpenCode 插件生态） |
+| **Token 策略** | 本地处理优先，SQLite 缓存，哈希检测，经验编译 | 多模型路由，按任务类别分派模型 |
+| **模型支持** | 深度优化智谱 GLM Coding Plan，也支持 OpenAI | Claude / Kimi / GLM / GPT / Gemini 多模型混编 |
+| **记忆系统** | 三维记忆（Factual/Experiential/Working）+ SQLite + Markdown 双存储 | 依赖 Agent 会话上下文 |
+| **自主循环** | 愚公循环（YuGong）— 需求到完成全自动，熔断器 + 退出检测 + 质量门禁 | Ralph Loop — 不停止直到完成 |
+| **经验编译** | Karpathy 模式，383 文件 → 13 文章，81x 压缩 | 无对应功能 |
+| **知识图谱** | 完整 KnowledgeGraph + FTS5 搜索 + 需求追踪 | 无对应功能 |
+| **文档理解** | PDF/Word/Excel/XMind/FreeMind/OPML/源码三层解析管道 | 无对应功能 |
+| **审计问责** | AuditGuard — 代码变更追踪 + 质量门禁 + 学习提取 | 无对应功能 |
+| **浏览器自动化** | Playwright + Lightpanda（轻量）+ Chromium 回退 | Playwright（内置 MCP） |
+| **安装方式** | `pip install quickagents` + `qka init` | OpenCode 插件，JSON 配置 |
+| **CLI 工具** | `qka` 命令行，30+ 子命令 | 依赖 OpenCode slash 命令 |
+| **运行时依赖** | 极少：仅 psutil + httpx（核心功能零外部依赖） | 需要 Node.js / Bun 运行时 |
 
-**V2 Architecture**: Layered design, modular, testable
+**简单总结：** omo 擅长多模型编排和 Agent 协调；QuickAgents 擅长本地化处理、Token 节省、记忆持久化和知识管理。两者可以互补使用。
+
+---
+
+## 功能模块详解
+
+### 1. 统一数据库 (UnifiedDB V2)
+
+分层架构：Facade → Session → Repository → Core Components，Django 风格 QueryBuilder。
 
 ```python
 from quickagents import UnifiedDB, MemoryType, TaskStatus
 
 db = UnifiedDB('.quickagents/unified.db')
 
-# Set memory
+# 三维记忆
 db.set_memory('project.name', 'MyProject', MemoryType.FACTUAL)
-db.set_memory('current.task', 'Implement Auth', MemoryType.WORKING)
+db.set_memory('current.task', '实现认证', MemoryType.WORKING)
+db.set_memory('lesson.001', '避免过度工程', MemoryType.EXPERIENTIAL, category='pitfalls')
 
-# Get memory
-name = db.get_memory('project.name')
-
-# Task management
-db.add_task('T001', 'Implement Auth', 'P0')
+# 任务管理
+db.add_task('T001', '实现认证', 'P0')
 db.update_task_status('T001', TaskStatus.COMPLETED)
+
+# 进度追踪
+db.init_progress('auth-system', total_tasks=8)
 ```
 
-### 2. Self-Evolution System (SkillEvolution)
+**性能数据：**
+- N+1 查询消除：2N+M → 2（常量）
+- 同步并行化：ThreadPoolExecutor 3 workers
+- mypy 0 errors / ruff 0 errors
+
+### 2. 愚公循环 (YuGong Loop)
+
+全自动开发循环：从需求文件到完整项目。
+
+```
+需求解析 → 15步标准迭代循环：
+  Phase 1: safety_check → get_next_story → build_prompt
+  Phase 2: execute_agent → parse_output
+  Phase 3: quality_checks → extract_learnings → update_story
+  Phase 4: auto_commit → regression → exit_check → persist → sync → metrics
+```
 
 ```python
-from quickagents import get_evolution
+from quickagents.yugong import YuGongLoop, YuGongConfig
 
-evolution = get_evolution()
+# 三种模式：默认 / 保守 / 激进
+config = YuGongConfig.conservative()   # 更严格安全限制
+config = YuGongConfig.aggressive()     # 更高执行效率
 
-# Trigger on task completion
-evolution.on_task_complete({
-    'task_id': 'T001',
-    'task_name': 'Implement Auth',
-    'skills_used': ['tdd-workflow-skill'],
-    'success': True
-})
-
-# Trigger on git commit
-evolution.on_git_commit()
-
-# Check periodic optimization
-if evolution.check_periodic_trigger():
-    evolution.run_periodic_optimization()
+loop = YuGongLoop(config=config, agent_fn=my_agent)
+outcome = loop.start(parsed_requirement)
 ```
 
-### 3. Knowledge Graph System (KnowledgeGraph)
+**安全机制：**
+- 熔断器：连续无进展 / 相同错误次数阈值 + 冷却时间
+- API 5 小时限制预警
+- 退出检测：最少迭代次数 + 完成信号阈值
+- 质量检查：typecheck / lint / tests / coverage / 安全扫描
+
+```bash
+qka yugong start requirement.json              # 启动循环
+qka yugong start req.json --mode conservative   # 保守模式
+qka yugong start req.json --provider openai     # 使用 OpenAI
+qka yugong status                               # 查看状态
+qka yugong resume                               # 从断点恢复
+qka yugong report                               # 生成报告（Markdown + JSON）
+qka yugong parse requirement.json               # 解析需求文件
+qka yugong config default                       # 查看配置
+```
+
+### 3. Karpathy 经验编译器 (ExperienceCompiler)
+
+基于 Andrej Karpathy 的 LLM Knowledge Base 模式：分散经验 → LLM 编译一次 → 结构化知识文章 → 后续直接查询。
+
+```
+任务完成 → accumulate(task_result) → 缓冲区 → 达到阈值 → compile() → 增量编译
+                                                                         ↓
+                                                            .quickagents/compiled/
+                                                              _index.md
+                                                              _sources.md
+                                                              patterns/
+                                                                tdd-patterns.md
+                                                                debugging-tricks.md
+```
+
+**实测数据：** 383 文件 → 13 文章，81x 压缩，84% Token 节省。
+
+```bash
+qka experience stats          # 编译器统计
+qka experience compile <path> # 编译指定路径
+qka experience query <keyword> # 查询编译后的知识
+qka experience lint           # 检查问题
+qka experience clear          # 清空缓冲区
+```
+
+### 4. 知识图谱 (KnowledgeGraph)
 
 ```python
 from quickagents import KnowledgeGraph, NodeType, EdgeType
 
 kg = KnowledgeGraph()
 
-# Create node
-node = kg.create_node(
-    node_type=NodeType.REQUIREMENT,
-    title='User Authentication',
-    content='Implement JWT authentication'
-)
+node = kg.create_node(node_type=NodeType.REQUIREMENT, title='用户认证', content='JWT')
+kg.create_edge(source_id=node.id, target_id='T001', edge_type=EdgeType.MAPS_TO)
 
-# Create edge
-kg.create_edge(
-    source_id=node.id,
-    target_id='T001',
-    edge_type=EdgeType.TRACES_TO
-)
-
-# Search
-results = kg.search('authentication')
-
-# Trace requirement
+results = kg.search('认证')
 trace = kg.trace_requirement(node.id)
+relations = kg.discover_relations(node.id)
 ```
 
-### 4. Browser Automation (Browser)
+### 5. 文档理解管道 (DocumentPipeline)
+
+三层解析架构：
+
+| 层 | 功能 | 说明 |
+|----|------|------|
+| Layer 1 | 本地解析 | PDF / Word / Excel / XMind / FreeMind / OPML / Markdown / 源码 |
+| Layer 1.5 | 联合分析 | 文档 ↔ 源码追踪匹配引擎 |
+| Layer 2 | 交叉验证 | 检查文档与源码一致性 |
+| Layer 3 | 深度分析 | LLM 知识提取（需求 / 决策 / 事实） |
+
+```bash
+qka import PALs/                          # 导入文档目录
+qka import PALs/ --with-source            # 同时导入源码
+qka import PALs/ --dry-run                # 预览
+qka import PALs/ --output Docs/PALs       # 指定输出目录
+```
+
+**支持的格式：**
+- 文档：PDF (PyMuPDF + pdfplumber)、Word (python-docx)、Excel (openpyxl)、XMind
+- 脑图：FreeMind (.mm)、OPML
+- 源码：Python / JavaScript / TypeScript / Java / Go / Rust / C / C++ (tree-sitter)
+
+### 6. 审计问责 (AuditGuard)
+
+全自动代码质量保障：
+
+| 组件 | 功能 |
+|------|------|
+| CodeAuditTracker | 实时文件变更追踪 |
+| QualityGate | 原子级 / 全量级分层质量门禁 |
+| AccountabilityEngine | 问题归因、修复闭环、学习经验提取 |
+| AuditReporter | Markdown / JSON 报告生成 |
+
+```bash
+qka audit status                         # 审计系统状态
+qka audit run --type atomic              # 原子级检查（每次提交）
+qka audit run --type full                # 全量级检查（任务完成时）
+qka audit log                            # 查看审计日志
+qka audit issues --status OPEN           # 查看问题
+qka audit lessons --category security    # 查看学习经验
+qka audit report --format md             # 生成报告
+qka audit init                           # 初始化配置
+```
+
+### 7. 浏览器自动化 (Browser)
 
 ```python
 from quickagents import Browser
 
-browser = Browser()
-page = browser.new_page()
+browser = Browser()                # 默认 Lightpanda（轻量）
+browser = Browser(fallback_to_chromium=True)  # 回退到 Chromium
 
-# Get console logs
+page = browser.open('https://example.com')
 logs = page.get_console_logs()
-
-# Get network requests
 requests = page.get_network_requests()
-
-# Execute JavaScript
-result = page.evaluate('document.title')
-
+metrics = page.get_performance_metrics()
+title = page.evaluate('document.title')
 browser.close()
 ```
 
-## 🚀 Installation
+安装：`pip install quickagents[browser]` → `playwright install chromium`
 
-### Option 1: One-Line Install (Recommended)
+### 8. 其他核心模块
 
-**macOS/Linux:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.sh | bash
-```
-
-**Windows PowerShell:**
-```powershell
-iwr -useb https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/scripts/install.ps1 | iex
-```
-
-### Option 2: Two-Step Install
-
-```bash
-pip install quickagents
-qka init
-```
-
-### Option 3: AI-Assisted Install (Recommended)
-
-Tell your AI assistant:
-
-```
-请按照 https://raw.githubusercontent.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/main/Docs/guide/installation.md 中的指引安装QuickAgents
-```
-
-The AI agent will automatically:
-1. Read the installation guide
-2. Execute all installation steps
-3. Verify the installation
-
-**This is the most recommended method** - zero manual commands required.
-
-### Optional Flags
-
-```bash
-qka init --with-ui-ux      # Include ui-ux-pro-max skill (~410KB, for web/mobile projects)
-qka init --with-browser    # Include browser-devtools skill
-qka init --minimal         # Minimal installation (core files only)
-```
-
-### Full Installation (with all optional features)
-
-```bash
-pip install quickagents[full]
-```
-
-### Development Mode
-
-```bash
-git clone https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM.git
-cd Quick-Agents-for-Z.AI-GLM
-pip install -e .
-```
-
-## 📋 CLI Commands
-
-### Database Operations
-
-```bash
-qka stats                      # Show statistics
-qka sync                       # Sync SQLite to Markdown
-qka memory get <key>           # Get memory value
-qka memory set <key> <value>   # Set memory value
-qka memory search <query>      # Search memory
-```
-
-### Task Management
-
-```bash
-qka tasks list                 # List all tasks
-qka tasks add <id> <name> --priority P0
-qka tasks status <id> <status>
-qka progress                   # Show current progress
-```
-
-### Evolution System
-
-```bash
-qka evolution status           # Show evolution status
-qka evolution stats [skill]    # Skill usage statistics
-qka evolution optimize         # Run periodic optimization
-qka evolution history <skill>  # View skill evolution history
-```
-
-### Git Integration
-
-```bash
-qka hooks install              # Install Git hooks
-qka hooks status               # Check hooks status
-qka git status                 # Git status
-qka git check                  # Pre-commit checks
-```
-
-### TDD Workflow
-
-```bash
-qka tdd red <test_file>        # RED phase
-qka tdd green <test_file>      # GREEN phase
-qka tdd refactor <test_file>   # REFACTOR phase
-qka tdd coverage               # Check coverage
-```
-
-### Feedback Collection
-
-```bash
-qka feedback bug <desc>        # Record a bug
-qka feedback improve <desc>    # Record improvement suggestion
-qka feedback best <desc>       # Record best practice
-qka feedback view [--type <t>] # View collected feedback
-```
-
-### Model Configuration (ZhipuAI GLM Coding Plan)
-
-```bash
-qka models show                # View current config
-qka models list                # List available models
-qka models check-updates       # Check GLM updates
-qka models upgrade --dry-run   # Preview upgrade
-qka models upgrade --force     # Execute upgrade
-qka models strategy coding-plan # Switch to Coding Plan
-qka models lock GLM-5          # Lock single model
-qka models unlock              # Unlock
-```
-
-### Version Management
-
-```bash
-qka version                    # Show version info
-qka version --check            # Check all modules
-qka update                     # Upgrade from PyPI (latest)
-qka update --target 2.7.6      # Upgrade to specific version
-qka update --source github     # Install from GitHub
-qka update --dry-run           # Preview upgrade only
-```
-
-### Uninstall
-
-```bash
-qka uninstall                  # Interactive uninstall
-qka uninstall --dry-run        # Preview what will be removed
-qka uninstall --keep-data      # Uninstall but keep project data
-qka uninstall --keep-config    # Uninstall but keep global config
-qka uninstall --force          # Skip confirmation
-```
-
-> For older versions (v2.7.5 and earlier) without `qka uninstall`, see [Uninstall Guide](Docs/guides/UNINSTALL_GUIDE.md)
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    UnifiedDB V2 Architecture                 │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │              UnifiedDB (Facade)                      │   │
-│   │  - set_memory() / get_memory() / search_memory()    │   │
-│   │  - add_task() / update_task_status()                │   │
-│   │  - init_progress() / update_progress()              │   │
-│   │  - add_feedback() / get_feedbacks()                 │   │
-│   └─────────────────────────────────────────────────────┘   │
-│                          │                                  │
-│   ┌──────────────────────┴──────────────────────────┐       │
-│   │              Session Layer (v2.8.3)              │       │
-│   │  query() / transaction() / read_only() / execute()│      │
-│   └─────────────────────────────────────────────────┘       │
-│                          │                                  │
-│   ┌──────────────────────┴──────────────────────────┐       │
-│   │              Repository Layer                    │       │
-│   ├─────────────────────────────────────────────────┤       │
-│   │  MemoryRepo │ TaskRepo │ ProgressRepo │ FeedbackRepo │  │
-│   │              QueryBuilder (Django-style)         │       │
-│   └─────────────────────────────────────────────────┘       │
-│                          │                                  │
-│   ┌──────────────────────┴──────────────────────────┐       │
-│   │              Core Components                     │       │
-│   ├─────────────────────────────────────────────────┤       │
-│   │  ConnectionManager │ TransactionManager │ MigrationManager │
-│   └─────────────────────────────────────────────────┘       │
-│                                                             │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │         Knowledge Graph + Document Pipeline           │   │
-│   ├──────────────────────────────────────────────────────┤   │
-│   │  KnowledgeGraph │ FTS5 Search │ DocumentPipeline      │   │
-│   │  (WAL mode / batch queries / thread-local conn)       │   │
-│   └──────────────────────────────────────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Three-Dimensional Memory System
-
-| Memory Type | Purpose | Example |
-|-------------|---------|---------|
-| Factual | Static factual information | Project name, tech stack, architecture decisions |
-| Experiential | Dynamic experiential information | Pitfalls, best practices, user feedback |
-| Working | Current working state | Current task, progress, blockers |
-
-## 📦 Module Description
-
-| Module | Function | Token Savings |
-|--------|----------|---------------|
-| UnifiedDB | Unified database management | 60%+ |
-| Session | Unified database session interface | 0 |
-| ConnectionManager | Dynamic pool/pre_ping/PRAGMA tuning | 0 |
-| TransactionManager | ACID transactions/exponential backoff | 0 |
-| QueryBuilder | Django-style chained query builder | 0 |
-| MarkdownSync | Auto-sync to Markdown | 100% |
-| FileManager | Smart file read/write (hash detection) | 90%+ |
-| LoopDetector | Pattern-based loop detection | 100% |
-| Reminder | Event reminders | 100% |
-| SkillEvolution | Skills self-evolution | 0 |
-| KnowledgeGraph | Knowledge graph | 80%+ |
-| Browser | Browser automation | 50%+ |
-| Document | Document pipeline (PDF/Word/Excel/XMind etc.) | 80%+ |
-| Encoding | Unified UTF-8 encoding (cross-platform) | 0 |
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pytest tests/
-
-# Run specific tests
-pytest tests/knowledge_graph/
-
-# Coverage report
-pytest --cov=quickagents tests/
-```
-
-## 📚 Documentation
-
-- [API Documentation](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/api)
-- [Architecture Design](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs)
-- [User Guide](https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs/guides)
-
-## 🤝 Contributing
-
-Contributions are welcome! Please check [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+| 模块 | 说明 | Token 节省 |
+|------|------|-----------|
+| FileManager | 哈希检测文件变化，缓存未变文件 | 90%+ |
+| LoopDetector | V3 循环检测（stuck/oscillation 三级升级） | 100% |
+| Reminder | 工具调用计数、长时间运行提醒、上下文压力响应 | 100% |
+| ContextCompressor | 70%/80%/85%/90%/99% 分级渐进压缩 | 54%+ |
+| ParallelExecutor | asyncio.gather + ThreadPool，最多 3 并发 | 间接 |
+| MCPBridge | 只读桥接 OpenCode MCP 配置，发现可用工具 | 0 |
+| SkillAuditor | Skill 描述质量审计 | 0 |
+| MarkdownSync | SQLite → Markdown 双向同步，并行优化 | 100% |
+| GitHooks | post-commit 自动触发进化分析 | 0 |
+| Encoding | 统一 UTF-8 编码，Windows/Linux/macOS 一致 | 0 |
 
 ---
 
-## 📊 Project Stats
+## CLI 命令完整列表
 
-- **Version**: 2.11.0
-- **Python Support**: 3.9+
-- **License**: MIT
-- **Author**: Coder-Beam
+所有命令通过 `qka` 调用，`qka --help` 查看帮助。
 
-## 🔗 Links
+### 项目初始化
+
+| 命令 | 说明 |
+|------|------|
+| `qka init` | 初始化 QuickAgents 到当前项目 |
+| `qka init --force` | 覆盖现有文件 |
+| `qka init --dry-run` | 预览将安装的文件 |
+| `qka init --minimal` | 最小安装 |
+| `qka init --with-ui-ux` | 含 ui-ux-pro-max 技能 |
+| `qka init --with-browser` | 含 browser-devtools 技能 |
+
+### 记忆与数据库
+
+| 命令 | 说明 |
+|------|------|
+| `qka stats` | 数据库统计信息 |
+| `qka sync` | 同步 SQLite → Markdown |
+| `qka sync memory` | 仅同步记忆 |
+| `qka sync tasks` | 仅同步任务 |
+| `qka sync --force` | 强制同步，忽略冲突 |
+| `qka memory get <key>` | 获取记忆值 |
+| `qka memory set <key> <value>` | 设置记忆值 |
+| `qka memory search <keyword>` | 搜索记忆 |
+
+### 任务管理
+
+| 命令 | 说明 |
+|------|------|
+| `qka progress` | 查看当前进度 |
+
+### 愚公循环 (YuGong)
+
+| 命令 | 说明 |
+|------|------|
+| `qka yugong start <file>` | 启动自主开发循环 |
+| `qka yugong start <file> --mode conservative` | 保守模式 |
+| `qka yugong start <file> --mode aggressive` | 激进模式 |
+| `qka yugong start <file> --provider openai` | 使用 OpenAI |
+| `qka yugong start <file> --dry-run` | 预览 |
+| `qka yugong status` | 查看循环状态 |
+| `qka yugong resume` | 从断点恢复 |
+| `qka yugong parse <file>` | 解析需求文件 |
+| `qka yugong config <mode>` | 查看/切换配置模式 |
+| `qka yugong report` | 生成执行报告 |
+
+### 自我进化系统
+
+| 命令 | 说明 |
+|------|------|
+| `qka evolution status` | 进化系统状态 |
+| `qka evolution stats [skill]` | Skills 使用统计 |
+| `qka evolution optimize` | 执行定期优化 |
+| `qka evolution history <skill>` | Skill 进化历史 |
+| `qka evolution sync` | 同步到 Markdown |
+
+### 审计问责
+
+| 命令 | 说明 |
+|------|------|
+| `qka audit status` | 审计系统状态 |
+| `qka audit run --type atomic` | 原子级检查 |
+| `qka audit run --type full` | 全量级检查 |
+| `qka audit log` | 审计日志 |
+| `qka audit issues` | 查看问题 |
+| `qka audit lessons` | 学习经验 |
+| `qka audit report --format md` | 生成报告 |
+| `qka audit init` | 初始化配置 |
+
+### TDD 工作流
+
+| 命令 | 说明 |
+|------|------|
+| `qka tdd red <test_file>` | RED 阶段（测试应失败） |
+| `qka tdd green <test_file>` | GREEN 阶段（测试应通过） |
+| `qka tdd refactor <test_file>` | REFACTOR 阶段 |
+| `qka tdd coverage` | 查看覆盖率 |
+| `qka tdd stats` | TDD 统计 |
+
+### 经验编译
+
+| 命令 | 说明 |
+|------|------|
+| `qka experience stats` | 编译器统计 |
+| `qka experience compile <path>` | 编译指定路径 |
+| `qka experience query <keyword>` | 查询知识 |
+| `qka experience lint` | 检查问题 |
+| `qka experience clear` | 清空缓冲区 |
+
+### 上下文压缩
+
+| 命令 | 说明 |
+|------|------|
+| `qka compress stats` | 压缩器统计 |
+| `qka compress check --usage 85` | 检查并建议压缩策略 |
+| `qka compress reset` | 重置压缩器 |
+
+### Skill 审计
+
+| 命令 | 说明 |
+|------|------|
+| `qka skill audit <path>` | 审计 Skill 文件/目录 |
+| `qka skill lint --content "..."` | 检查 Skill 内容 |
+
+### Git 集成
+
+| 命令 | 说明 |
+|------|------|
+| `qka hooks install` | 安装 Git 钩子 |
+| `qka hooks uninstall` | 卸载 Git 钩子 |
+| `qka hooks status` | 钩子状态 |
+| `qka git status` | Git 状态 |
+| `qka git check` | Pre-commit 检查 |
+| `qka git commit <type> <scope> <subject>` | 格式化提交 |
+| `qka git push` | 推送到远程 |
+
+### 文档导入
+
+| 命令 | 说明 |
+|------|------|
+| `qka import PALs/` | 导入文档目录 |
+| `qka import PALs/ --with-source` | 同时导入源码 |
+| `qka import PALs/ --dry-run` | 预览 |
+| `qka import PALs/ --output <dir>` | 指定输出目录 |
+
+### 反馈收集
+
+| 命令 | 说明 |
+|------|------|
+| `qka feedback bug <desc>` | 记录 Bug |
+| `qka feedback improve <desc>` | 记录改进建议 |
+| `qka feedback best <desc>` | 记录最佳实践 |
+| `qka feedback view [--type <t>]` | 查看反馈 |
+| `qka feedback stats` | 反馈统计 |
+
+### 模型配置（智谱 GLM Coding Plan）
+
+| 命令 | 说明 |
+|------|------|
+| `qka models show` | 查看当前模型配置 |
+| `qka models list` | 列出可用模型 |
+| `qka models check-updates` | 检查 GLM 版本更新 |
+| `qka models upgrade --dry-run` | 预览升级 |
+| `qka models upgrade --force` | 执行升级 |
+| `qka models strategy coding-plan` | 切换到 Coding Plan 策略 |
+| `qka models lock <model>` | 锁定单一模型 |
+| `qka models unlock` | 解除锁定 |
+
+### 文件操作
+
+| 命令 | 说明 |
+|------|------|
+| `qka read <file>` | 智能读取（哈希检测缓存） |
+| `qka write <file> <content>` | 写入文件 |
+| `qka edit <file> <old> <new>` | 编辑文件 |
+| `qka hash <file>` | 获取文件哈希 |
+
+### 缓存与检测
+
+| 命令 | 说明 |
+|------|------|
+| `qka cache stats` | 缓存统计 |
+| `qka cache clear` | 清空缓存 |
+| `qka cache list` | 列出缓存文件 |
+| `qka loop check` | 检查循环模式 |
+| `qka loop reset` | 重置循环检测 |
+| `qka loop stats` | 循环检测统计 |
+| `qka reminder check` | 检查提醒 |
+| `qka reminder stats` | 提醒统计 |
+
+### 版本与升级
+
+| 命令 | 说明 |
+|------|------|
+| `qka version` | 查看版本 |
+| `qka version --check` | 检查所有模块完整性 |
+| `qka update` | 从 PyPI 升级 |
+| `qka update --target 2.11.0` | 升级到指定版本 |
+| `qka update --source github` | 从 GitHub 源码安装 |
+| `qka update --dry-run` | 仅预览 |
+
+### 导出
+
+| 命令 | 说明 |
+|------|------|
+| `qka export` | 导出干净项目文件到 Output/ |
+| `qka export --version 1.0` | 指定版本号 |
+| `qka export --dry-run` | 预览导出 |
+| `qka export --list-excludes` | 列出排除规则 |
+| `qka export --inject-gitignore` | 注入排除规则到 .gitignore |
+
+### 卸载
+
+| 命令 | 说明 |
+|------|------|
+| `qka uninstall` | 交互式卸载（项目级） |
+| `qka uninstall --dry-run` | 预览卸载内容 |
+| `qka uninstall --keep-data` | 保留 .quickagents/ |
+| `qka uninstall --keep-opencode` | 保留 .opencode/ |
+| `qka uninstall --force` | 跳过确认 |
+
+---
+
+## Python API 速查
+
+```python
+# 核心导入
+from quickagents import (
+    # 数据库
+    UnifiedDB, MemoryType, TaskStatus, FeedbackType,
+    # 进化
+    SkillEvolution, get_evolution,
+    # 知识图谱
+    KnowledgeGraph, NodeType, EdgeType,
+    # 工具
+    FileManager, LoopDetector, Reminder,
+    MarkdownSync, GitHooks, CacheDB,
+    # v2.11.0 新增
+    SkillAuditor, ContextCompressor, ExperienceCompiler,
+    ParallelExecutor, MCPBridge,
+    # 浏览器（需 pip install quickagents[browser]）
+    Browser,
+    # 审计
+    AuditGuard, AuditConfig,
+    # 记忆辅助
+    update_memory, update_memories, add_experiential_memory,
+    # 愚公循环
+    YuGongLoop, YuGongConfig,
+)
+
+# 快速使用
+db = UnifiedDB('.quickagents/unified.db')
+db.set_memory('key', 'value', MemoryType.FACTUAL)
+db.get_memory('key')
+
+evolution = get_evolution()
+evolution.on_task_complete({'task_id': 'T001', 'success': True})
+
+kg = KnowledgeGraph()
+node = kg.create_node(NodeType.REQUIREMENT, title='需求', content='描述')
+results = kg.search('关键词')
+```
+
+---
+
+## 可选依赖
+
+| 安装命令 | 功能 |
+|----------|------|
+| `pip install quickagents[browser]` | 浏览器自动化（Playwright） |
+| `pip install quickagents[document]` | 文档解析（PDF/Word/Excel/XMind） |
+| `pip install quickagents[source-code]` | 多语言源码解析（tree-sitter） |
+| `pip install quickagents[ocr]` | OCR 识别（PaddleOCR） |
+| `pip install quickagents[windows]` | Windows 特定功能（pywin32/WMI） |
+| `pip install quickagents[full]` | 完整安装（以上全部） |
+
+核心功能零外部依赖，仅需 `psutil` + `httpx`。
+
+---
+
+## 项目结构
+
+```
+quickagents/
+├── __init__.py              # 统一入口，全部公开 API
+├── cli/                     # CLI 命令（qka）
+│   ├── main.py              # 命令行入口 + 30+ 子命令
+│   ├── init_cmd.py          # qka init 初始化
+│   └── qa.py                # 旧入口兼容
+├── core/                    # 核心模块
+│   ├── unified_db.py        # 统一数据库 (Facade)
+│   ├── session.py           # 会话层
+│   ├── connection_manager.py # 连接池管理
+│   ├── transaction_manager.py # 事务管理
+│   ├── migration_manager.py # 数据库迁移
+│   ├── repositories/        # Repository 层 + QueryBuilder
+│   ├── markdown_sync.py     # SQLite ↔ Markdown 同步
+│   ├── file_manager.py      # 智能文件管理（哈希缓存）
+│   ├── memory.py            # 记忆管理器
+│   ├── loop_detector.py     # Doom-Loop 检测器
+│   ├── reminder.py          # 事件提醒系统
+│   ├── evolution.py         # 自我进化引擎
+│   ├── git_hooks.py         # Git 钩子管理
+│   ├── cache_db.py          # 缓存数据库
+│   ├── context_compressor.py # 上下文压缩器
+│   ├── experience_compiler.py # 经验编译器（Karpathy 模式）
+│   ├── parallel_executor.py # 并行任务执行器
+│   ├── mcp_bridge.py        # MCP 配置桥接
+│   └── skill_auditor.py     # Skill 质量审计
+├── knowledge_graph/         # 知识图谱
+│   ├── knowledge_graph.py   # 核心图操作
+│   ├── types.py             # 节点/边类型定义
+│   ├── storage/             # SQLite WAL 存储
+│   └── core/                # FTS5 搜索引擎
+├── document/                # 文档理解管道
+│   ├── pipeline.py          # 三层处理管道
+│   ├── parsers/             # PDF/Word/Excel/XMind/FreeMind/OPML/MD/源码解析器
+│   ├── matching/            # 追踪匹配引擎
+│   ├── validators/          # 交叉验证 + 评审流
+│   ├── storage/             # Markdown 导出 + 知识保存
+│   └── extractors/          # 知识提取器
+├── yugong/                  # 愚公循环
+│   ├── autonomous_loop.py   # 15步自主循环引擎
+│   ├── config.py            # 配置（默认/保守/激进）
+│   ├── models.py            # 数据模型
+│   ├── safety_guard.py      # 安全熔断器
+│   ├── exit_detector.py     # 退出检测器
+│   ├── task_orchestrator.py # 任务编排器
+│   ├── agent_executor.py    # Agent 执行器
+│   ├── tool_executor.py     # 工具执行器
+│   ├── llm_client.py        # LLM 客户端（httpx）
+│   ├── requirement_parser.py # 需求解析器
+│   ├── context_injector.py  # 上下文注入
+│   ├── progress_logger.py   # 进度日志
+│   ├── report_generator.py  # 报告生成器
+│   └── db.py                # 持久化存储
+├── audit/                   # 审计问责
+│   ├── audit_guard.py       # 门面类
+│   ├── code_audit.py        # 代码变更追踪
+│   ├── quality_gate.py      # 质量门禁
+│   ├── accountability.py    # 问责引擎
+│   ├── audit_reporter.py    # 报告生成
+│   └── models.py            # 数据模型
+├── browser/                 # 浏览器自动化
+│   ├── browser.py           # Browser/Page 封装
+│   └── installer.py         # Lightpanda/Chromium 安装
+├── skills/                  # Skills 本地化
+│   ├── feedback_collector.py
+│   ├── tdd_workflow.py
+│   ├── git_commit.py
+│   ├── category_router.py
+│   ├── model_router.py
+│   └── project_detector.py
+├── utils/                   # 工具模块
+│   ├── memory_helper.py     # 记忆辅助函数
+│   ├── smart_editor.py      # 智能编辑
+│   ├── encoding.py          # UTF-8 编码
+│   ├── hash_cache.py        # 哈希缓存
+│   ├── script_helper.py     # Windows 脚本替代
+│   └── sync_conflict.py     # 同步冲突检测
+└── templates/               # 项目模板（qka init 使用）
+    ├── AGENTS.md
+    ├── opencode.json
+    ├── opencode/             # OpenCode 配置模板
+    ├── docs/                 # 文档模板
+    └── skills-optional/      # 可选 Skills
+```
+
+---
+
+## 测试
+
+```bash
+pytest tests/
+pytest tests/knowledge_graph/          # 特定模块
+pytest --cov=quickagents tests/        # 覆盖率
+```
+
+---
+
+## 许可证
+
+MIT License - 详见 [LICENSE](LICENSE) 文件。
+
+---
+
+## 链接
 
 - **GitHub**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM
 - **PyPI**: https://pypi.org/project/quickagents/
-- **Documentation**: https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM/tree/main/Docs
+- **智谱 GLM**: https://bigmodel.cn
+- **OpenCode**: https://opencode.ai
 
 ---
 
-Made with ❤️ by Coder-Beam
+*Made by Coder-Beam*
