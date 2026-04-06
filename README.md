@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/Version-2.8.3-green.svg)](https://pypi.org/project/quickagents/2.8.3/)
+[![Version](https://img.shields.io/badge/Version-2.10.0-green.svg)](https://pypi.org/project/quickagents/2.10.0/)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
 
 **AI Agent Enhancement Toolkit with Self-Evolution** | **AI代理增强工具包，支持自我进化**

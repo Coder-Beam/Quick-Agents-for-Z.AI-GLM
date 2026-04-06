@@ -92,15 +92,9 @@ class SkillEvolution:
                     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_evolution_skill ON skill_evolution(skill_name)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_evolution_trigger ON skill_evolution(trigger_type)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_evolution_status ON skill_evolution(status)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_evolution_skill ON skill_evolution(skill_name)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_evolution_trigger ON skill_evolution(trigger_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_evolution_status ON skill_evolution(status)")
 
             # Skills使用统计表
             cursor.execute("""
@@ -114,12 +108,8 @@ class SkillEvolution:
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_usage_skill ON skill_usage(skill_name)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_usage_created ON skill_usage(created_at)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_usage_skill ON skill_usage(skill_name)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_usage_created ON skill_usage(created_at)")
 
             # 进化配置表
             cursor.execute("""
@@ -259,9 +249,7 @@ class SkillEvolution:
         if "fix" in commit_info.get("message", "").lower():
             # 尝试从 files_changed 提取修复范围
             files_changed = commit_info.get("files_changed", [])
-            fix_scope = ", ".join(
-                sorted(set(f.split("/")[0] for f in files_changed if "/" in f))[:3]
-            )
+            fix_scope = ", ".join(sorted(set(f.split("/")[0] for f in files_changed if "/" in f))[:3])
             self.db.add_feedback(
                 FeedbackType.BUG,  # type: ignore[arg-type]
                 title=f"Bug修复: {commit_info.get('message', '')[:80]}",
@@ -404,9 +392,7 @@ class SkillEvolution:
 
     # ==================== Skill管理 ====================
 
-    def record_skill_creation(
-        self, skill_name: str, reason: str, expected_use: Optional[str] = None
-    ) -> Dict:
+    def record_skill_creation(self, skill_name: str, reason: str, expected_use: Optional[str] = None) -> Dict:
         """记录Skill创建"""
         record_id = self._add_evolution_record(
             skill_name=skill_name,
@@ -422,9 +408,7 @@ class SkillEvolution:
             "details": {"expected_use": expected_use},
         }
 
-    def record_skill_update(
-        self, skill_name: str, version: str, changes: List[str], reason: str
-    ) -> Dict:
+    def record_skill_update(self, skill_name: str, version: str, changes: List[str], reason: str) -> Dict:
         """记录Skill更新"""
         record_id = self._add_evolution_record(
             skill_name=skill_name,
@@ -744,11 +728,7 @@ class SkillEvolution:
         }
 
         for type_key, type_info in commit_type_map.items():
-            if (
-                type_key + "(" in message
-                or type_key + ":" in message
-                or message.startswith(type_key)
-            ):
+            if type_key + "(" in message or type_key + ":" in message or message.startswith(type_key):
                 improvements.append(
                     {
                         "title": type_info["title"],
@@ -769,9 +749,7 @@ class SkillEvolution:
                     module = parts[0]
                     dir_counts[module] = dir_counts.get(module, 0) + 1
 
-            hot_modules = [
-                m for m, c in sorted(dir_counts.items(), key=lambda x: -x[1]) if c >= 2
-            ]
+            hot_modules = [m for m, c in sorted(dir_counts.items(), key=lambda x: -x[1]) if c >= 2]
             if hot_modules:
                 improvements.append(
                     {
@@ -796,11 +774,7 @@ class SkillEvolution:
                 ".cfg",
                 ".env",
             )
-            config_files = [
-                f
-                for f in files_changed
-                if any(f.endswith(ext) for ext in config_extensions)
-            ]
+            config_files = [f for f in files_changed if any(f.endswith(ext) for ext in config_extensions)]
             if config_files:
                 improvements.append(
                     {
@@ -813,11 +787,7 @@ class SkillEvolution:
                 )
 
             # 2c. 测试覆盖检测
-            src_files = [
-                f
-                for f in files_changed
-                if f.startswith("src/") and not f.startswith("src/test")
-            ]
+            src_files = [f for f in files_changed if f.startswith("src/") and not f.startswith("src/test")]
             test_files = [f for f in files_changed if "test" in f.lower()]
             if src_files and not test_files:
                 improvements.append(
@@ -866,9 +836,7 @@ class SkillEvolution:
 
                     meta = json.loads(meta) if meta else {}
 
-                if meta.get("category") == "fix" and error_type in str(
-                    meta.get("tags", [])
-                ):
+                if meta.get("category") == "fix" and error_type in str(meta.get("tags", [])):
                     suggestion = meta.get("suggestion", "")
                     if suggestion:
                         return suggestion
@@ -879,7 +847,7 @@ class SkillEvolution:
                     suggestion = meta.get("suggestion", "")
                     if suggestion:
                         return suggestion
-        except Exception:
+        except Exception as e:
             pass
 
         # 2. 通用映射（fallback）
@@ -922,9 +890,7 @@ class SkillEvolution:
         """获取最后一次Git提交信息"""
         try:
             # 获取提交hash
-            result = subprocess.run(
-                ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5)
             if result.returncode != 0:
                 return None
             commit_hash = result.stdout.strip()
@@ -987,9 +953,7 @@ class SkillEvolution:
                 (datetime.now().isoformat(),),
             )
 
-            cursor.execute(
-                "SELECT value FROM evolution_config WHERE key = 'task_count'"
-            )
+            cursor.execute("SELECT value FROM evolution_config WHERE key = 'task_count'")
             return int(cursor.fetchone()["value"])
 
     def _reset_task_count(self) -> None:
@@ -1100,9 +1064,7 @@ class SkillEvolution:
 
         return result
 
-    def _generate_skill_md(
-        self, skill_name: str, history: List[Dict], stats: Dict
-    ) -> str:
+    def _generate_skill_md(self, skill_name: str, history: List[Dict], stats: Dict) -> str:
         """生成Skill的Markdown文档"""
         # Handle None values with proper defaults
         avg_duration = stats.get("avg_duration_ms") or 0
@@ -1170,9 +1132,7 @@ class SkillEvolution:
 _global_evolution: Optional[SkillEvolution] = None
 
 
-def get_evolution(
-    db_path: str = ".quickagents/unified.db", project_name: Optional[str] = None
-) -> SkillEvolution:
+def get_evolution(db_path: str = ".quickagents/unified.db", project_name: Optional[str] = None) -> SkillEvolution:
     """获取全局进化系统实例"""
     global _global_evolution
     if _global_evolution is None:

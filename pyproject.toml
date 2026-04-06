@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quickagents"
-version = "2.9.0"
+version = "2.10.0"
 description = "QuickAgents - AI Agent Enhancement Toolkit with Document Understanding, Self-Evolution and Unified UTF-8 Encoding"
 readme = "README.md"
 requires-python = ">=3.9"

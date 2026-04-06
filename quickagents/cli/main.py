@@ -1513,12 +1513,8 @@ def cmd_export(args):
         if result.returncode == 0:
             commit_hash = result.stdout.strip()
             commit_short = commit_hash[:7]
-    except Exception:
-        pass
-
-    if not commit_hash:
-        print("[FAIL] 无法获取当前 commit hash")
-        print("  请先执行至少一次 git commit")
+    except Exception as e:
+        logger.debug(f"Git命令执行失败: {e}")
         return
 
     # 检查工作树是否干净
@@ -1541,16 +1537,8 @@ def cmd_export(args):
             if dirty_lines:
                 is_dirty = True
                 dirty_count = len(dirty_lines)
-    except Exception:
-        pass
-
-    if is_dirty:
-        print(f"[FAIL] 工作树有 {dirty_count} 个未提交的变更")
-        print("  qka export 要求所有变更已 commit，确保导出与 commit 一一对应")
-        print()
-        print("  请先提交:")
-        print("    git add .")
-        print('    git commit -m "feat: xxx"')
+    except Exception as e:
+        logger.debug(f"Git命令执行失败: {e}")
         return
 
     # --- 确定版本号 ---
