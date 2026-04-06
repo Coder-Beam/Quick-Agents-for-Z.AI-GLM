@@ -1,6 +1,7 @@
 # 设计文档 (DESIGN.md)
 
-> QuickAgents v2.8.3 系统设计文档
+> QuickAgents v2.9.0 系统设计文档
+> 产品化改造进行中 → v2.10.0
 
 ---
 
@@ -17,7 +18,8 @@ QuickAgents 是一个 AI 代理增强工具包（Python 包），通过本地处
 | Token 节省 | 减少不必要的 API 调用 | 60-100% |
 | 跨会话连续性 | 项目上下文保持 | 100% 可恢复 |
 | 代码质量 | mypy/ruff 错误 | 0 |
-| 测试覆盖 | 自动化测试通过率 | 100% (580 tests) |
+| 测试覆盖 | 自动化测试通过率 | 100% (907+ tests) |
+| 自主循环 | YuGong 全自动执行 | 需求→完整项目 |
 
 ### 1.3 技术目标
 
@@ -36,29 +38,31 @@ QuickAgents 是一个 AI 代理增强工具包（Python 包），通过本地处
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         QuickAgents v2.8.3                           │
+│                         QuickAgents v2.9.0                           │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌─────────────────────────────────────────────────────────────┐     │
 │  │                    CLI Layer (qka)                           │     │
 │  │  stats / sync / memory / tasks / evolution / hooks / tdd    │     │
+│  │  yugong start / resume / report / config                    │     │
 │  └─────────────────────────────────────────────────────────────┘     │
 │                              │                                       │
 │  ┌─────────────────────────────────────────────────────────────┐     │
 │  │                 Python API (Facade)                          │     │
 │  │  UnifiedDB │ KnowledgeGraph │ SkillEvolution │ Browser      │     │
+│  │  YuGongLoop │ AgentExecutor │ ReportGenerator              │     │
 │  └─────────────────────────────────────────────────────────────┘     │
 │                              │                                       │
 │  ┌──────────────┬──────────────┬──────────────┬────────────────┐     │
-│  │    Core      │  Knowledge   │  Document    │    Utils       │     │
-│  │  Layer       │  Graph       │  Pipeline    │                │     │
+│  │    Core      │  YuGong      │  Knowledge   │  Document      │     │
+│  │  Layer       │  Engine      │  Graph       │  Pipeline      │     │
 │  ├──────────────┼──────────────┼──────────────┼────────────────┤     │
-│  │ Session      │ KG Facade    │ Pipeline     │ Encoding       │     │
-│  │ ConnMgr      │ Searcher     │ 7 Parsers    │ SmartEditor    │     │
-│  │ TxMgr        │ Storage      │ Extractors   │ SyncConflict   │     │
-│  │ MigrationMgr │ FTS5 Index   │ Matching     │                │     │
-│  │ Repos        │ Types        │ Validators   │                │     │
-│  │ MarkdownSync │              │              │                │     │
+│  │ Session      │ YuGongLoop   │ KG Facade    │ Pipeline       │     │
+│  │ ConnMgr      │ AgentExec    │ Searcher     │ 7 Parsers      │     │
+│  │ TxMgr        │ LLMClient    │ Storage      │ Extractors     │     │
+│  │ MigrationMgr │ ToolExec     │ FTS5 Index   │ Matching       │     │
+│  │ Repos        │ YuGongDB     │ Types        │ Validators     │     │
+│  │ MarkdownSync │ ReportGen    │              │                │     │
 │  └──────────────┴──────────────┴──────────────┴────────────────┘     │
 │                              │                                       │
 │  ┌─────────────────────────────────────────────────────────────┐     │
@@ -79,7 +83,10 @@ QuickAgents 是一个 AI 代理增强工具包（Python 包），通过本地处
 | `browser/` | 浏览器自动化（Playwright） | playwright |
 | `cli/` | CLI 工具（qka 命令行） | core/, knowledge_graph/ |
 | `skills/` | TDD/Git/反馈等技能模块 | core/ |
+| `yugong/` | 愚公自主循环引擎（LLM客户端、Agent、工具执行） | httpx |
 | `utils/` | 编码、编辑器、同步冲突 | - |
+| `yugong/` | 愚公自主循环引擎（需求→项目全自动） | llm_client, tool_executor, db |
+| `audit/` | 审计问责（CodeAudit + QualityGate + Accountability） | core/ |
 
 ### 2.3 技术选型
 
@@ -184,7 +191,10 @@ sync.sync_all()  # v2.8.3 并行同步
 | `qka memory get/set/search` | 记忆操作 |
 | `qka tasks list/add/status` | 任务管理 |
 | `qka import PALs/` | 文档导入 |
-| `qka tdd red/green/refactor` | TDD 工作流 |
+| `qka yugong start <req>` | 启动愚公自主循环 |
+| `qka yugong resume` | 从DB恢复继续执行 |
+| `qka yugong report` | 生成执行报告(MD+JSON) |
+| `qka yugong config` | 初始化/查看配置 |
 | `qka evolution status/stats` | 进化系统 |
 | `qka hooks install/status` | Git 钩子 |
 
@@ -235,9 +245,10 @@ sync.sync_all()  # v2.8.3 并行同步
 
 | 测试类型 | 数量 | 通过率 |
 |----------|------|--------|
-| 全部测试 | 580 | 100% |
+| 全部测试 | 907 | 100% (242 yugong) |
 | 文档模块 | 340 | 100% |
 | 知识图谱 | 204 | 100% |
+| YuGong模块 | 242 | 100% |
 
 ---
 
@@ -285,4 +296,4 @@ sync.sync_all()  # v2.8.3 并行同步
 
 ---
 
-*最后更新: 2026-04-05 | v2.8.3*
+*最后更新: 2026-04-06 | v2.9.0 (产品化改造中 → v2.10.0)*

@@ -19,6 +19,7 @@ from .db import YuGongDB
 from .llm_client import LLMClient, LLMConfig
 from .tool_executor import ToolExecutor
 from .agent_executor import AgentExecutor, AgentConfig
+from .report_generator import ReportGenerator
 
 __all__ = [
     # 数据模型
@@ -44,4 +45,6 @@ __all__ = [
     # Agent 执行器
     "AgentExecutor",
     "AgentConfig",
+    # 报告生成器
+    "ReportGenerator",
 ]
