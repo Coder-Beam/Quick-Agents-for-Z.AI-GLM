@@ -82,6 +82,7 @@ from .core.cache_db import CacheDB
 from .core.skill_auditor import SkillAuditor, AuditResult, ComponentScore, Component, SmellType
 from .core.context_compressor import ContextCompressor, CompressionTier
 from .core.experience_compiler import ExperienceCompiler, CompileResult
+from .core.parallel_executor import ParallelExecutor, TaskResult, ParallelStats
 from .utils.hash_cache import HashCache
 from .skills import (
     FeedbackCollector,
@@ -221,6 +222,9 @@ __all__ = [
     "CompressionTier",
     "ExperienceCompiler",
     "CompileResult",
+    "ParallelExecutor",
+    "TaskResult",
+    "ParallelStats",
     # Version
     "__version__",
 ]

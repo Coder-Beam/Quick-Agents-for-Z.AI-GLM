@@ -61,6 +61,7 @@ from .evolution import SkillEvolution
 from .skill_auditor import SkillAuditor, AuditResult, ComponentScore, Component, SmellType
 from .context_compressor import ContextCompressor, CompressionTier
 from .experience_compiler import ExperienceCompiler, CompileResult
+from .parallel_executor import ParallelExecutor, TaskResult, ParallelStats
 
 __all__ = [
     # V2 核心组件
@@ -115,4 +116,7 @@ __all__ = [
     "CompressionTier",
     "ExperienceCompiler",
     "CompileResult",
+    "ParallelExecutor",
+    "TaskResult",
+    "ParallelStats",
 ]
