@@ -2763,6 +2763,8 @@ def main():
     p_yugong.add_argument("--report-dir", "-o", type=str, default=".quickagents/reports", help="报告输出目录")
     p_yugong.set_defaults(func=cmd_yugong)
 
+    args = parser.parse_args()
+
     if hasattr(args, "func"):
         args.func(args)
     else:
