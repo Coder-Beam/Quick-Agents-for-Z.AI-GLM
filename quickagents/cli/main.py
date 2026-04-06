@@ -2189,6 +2189,217 @@ def cmd_import(args):
         sys.exit(1)
 
 
+# ==================== 愚公循环命令 ====================
+
+
+def cmd_yugong(args):
+    """愚公循环命令 - 自主开发循环"""
+    from ..yugong import YuGongLoop, YuGongConfig
+    from ..yugong.requirement_parser import RequirementParser
+
+    action = args.action
+
+    if action == "config":
+        mode = args.mode
+        if mode == "conservative":
+            config = YuGongConfig.conservative()
+        elif mode == "aggressive":
+            config = YuGongConfig.aggressive()
+        else:
+            config = YuGongConfig()
+
+        print(f"[YuGong] 配置模式: {mode}")
+        print("=" * 50)
+        for key, value in sorted(config.to_dict().items()):
+            print(f"  {key}: {value}")
+        return
+
+    if action == "parse":
+        if not args.file:
+            print("[FAIL] 请提供需求文件路径")
+            print("  用法: qka yugong parse <requirement.json>")
+            return
+
+        from pathlib import Path
+
+        file_path = Path(args.file)
+        if not file_path.exists():
+            print(f"[FAIL] 文件不存在: {file_path}")
+            return
+
+        content = file_path.read_text(encoding="utf-8")
+        parser = RequirementParser()
+        req = parser.parse(content)
+
+        print(f"[YuGong] 需求解析完成")
+        print("=" * 50)
+        print(f"  项目: {req.project_name}")
+        print(f"  分支: {req.branch_name}")
+        print(f"  格式: {req.format}")
+        print(f"  Stories: {len(req.user_stories)}")
+        print()
+        for story in req.user_stories:
+            status_icon = "⏳" if story.status.value == "pending" else "✅"
+            print(f"  {status_icon} {story.id}: {story.title}")
+            if story.acceptance_criteria:
+                for ac in story.acceptance_criteria:
+                    print(f"      - {ac}")
+        return
+
+    if action == "status":
+        from pathlib import Path
+        from ..yugong.db import YuGongDB
+
+        db_path = Path(".quickagents/unified.db")
+        print("[YuGong] 愚公循环状态")
+        print("=" * 50)
+
+        if not db_path.exists():
+            print("  状态: 未初始化 (没有找到 .quickagents/unified.db)")
+            print()
+            print("  启动循环:")
+            print("    qka yugong start <requirement.json>")
+            return
+
+        db = YuGongDB(str(db_path))
+        state = db.load_state()
+        stats = db.get_stats()
+
+        if state:
+            print(f"  状态: {state.status}")
+            print(f"  迭代: {state.current_iteration}")
+            print(f"  进度: {state.completed_stories}/{state.total_stories} stories")
+            if state.start_time:
+                print(f"  开始时间: {state.start_time.isoformat()}")
+        else:
+            print("  状态: 无活跃循环")
+
+        print()
+        print(f"  Stories 总数: {stats['total_stories']}")
+        print(f"  迭代总数: {stats['total_iterations']}")
+        print(f"  检查点: {stats['total_checkpoints']}")
+
+        if stats["stories_by_status"]:
+            print()
+            print("  Stories 状态分布:")
+            for status, count in stats["stories_by_status"].items():
+                print(f"    {status}: {count}")
+
+        db.close()
+        return
+
+    if action == "start":
+        if not args.file:
+            print("[FAIL] 请提供需求文件路径")
+            print("  用法: qka yugong start <requirement.json>")
+            return
+
+        from pathlib import Path
+
+        file_path = Path(args.file)
+        if not file_path.exists():
+            print(f"[FAIL] 文件不存在: {file_path}")
+            return
+
+        # 构建配置
+        overrides = {}
+        if args.max_iterations:
+            overrides["max_iterations"] = args.max_iterations
+
+        if args.mode == "conservative":
+            config = YuGongConfig.conservative()
+        elif args.mode == "aggressive":
+            config = YuGongConfig.aggressive()
+        else:
+            config = YuGongConfig()
+
+        if overrides:
+            config = config.merge(overrides)
+
+        if args.dry_run:
+            print("[YuGong] DRY-RUN 模式 - 仅预览")
+            print("=" * 50)
+            print(f"  配置: max_iterations={config.max_iterations}")
+            print(f"  需求文件: {file_path}")
+            print()
+            content = file_path.read_text(encoding="utf-8")
+            parser = RequirementParser()
+            req = parser.parse(content)
+            print(f"  项目: {req.project_name}")
+            print(f"  Stories: {len(req.user_stories)}")
+            print()
+            print("  移除 --dry-run 参数以执行实际循环")
+            return
+
+        print("[YuGong] 愚公循环启动!")
+        print("=" * 50)
+        print()
+
+        # 解析需求文件
+        from pathlib import Path
+
+        file_path = Path(args.file)
+        content = file_path.read_text(encoding="utf-8")
+        parser = RequirementParser()
+        req = parser.parse(content)
+
+        print(f"  项目: {req.project_name}")
+        print(f"  Stories: {len(req.user_stories)}")
+        print()
+
+        # 构建 LLM 客户端 (D4: 默认 ZhipuAI)
+        from ..yugong.llm_client import LLMConfig, LLMClient
+        from ..yugong.tool_executor import ToolExecutor
+        from ..yugong.agent_executor import AgentExecutor, AgentConfig
+
+        try:
+            llm_config = LLMConfig.from_env(provider="zhipuai")
+        except ValueError:
+            print("[FAIL] 未找到 API Key")
+            print("  请设置环境变量: ZHIPUAI_API_KEY")
+            print("  或: OPENAI_API_KEY (使用 --provider openai)")
+            return
+
+        if args.provider == "openai":
+            try:
+                llm_config = LLMConfig.from_env(provider="openai")
+            except ValueError:
+                print("[FAIL] 未找到 OpenAI API Key")
+                print("  请设置环境变量: OPENAI_API_KEY")
+                return
+
+        llm_client = LLMClient(llm_config)
+        tool_executor = ToolExecutor(working_dir=str(file_path.parent.resolve()))
+        agent = AgentExecutor(
+            llm_client=llm_client,
+            tool_executor=tool_executor,
+            config=AgentConfig(max_turns=args.max_turns or 15),
+        )
+
+        # 创建循环并执行
+        loop = YuGongLoop(config=config, agent_fn=agent)
+
+        print(f"  Provider: {args.provider or 'zhipuai'}")
+        print(f"  Model: {llm_config.model}")
+        print(f"  Max iterations: {config.max_iterations}")
+        print()
+        print("  执行中...")
+        print("-" * 50)
+
+        outcome = loop.start(req)
+
+        # 输出结果
+        print()
+        print("=" * 50)
+        if outcome.success:
+            print(f"[SUCCESS] 所有 Story 完成!")
+        else:
+            print(f"[DONE] 循环结束: {outcome.reason}")
+        print(f"  迭代次数: {outcome.total_iterations}")
+        print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
+        print(f"  耗时: {outcome.duration_seconds:.1f}s")
+
+
 def main():
     parser = argparse.ArgumentParser(description="QuickAgents CLI")
     subparsers = parser.add_subparsers(dest="command", help="命令")
@@ -2411,6 +2622,27 @@ def main():
     p_export.add_argument("--list-excludes", action="store_true", help="列出所有排除规则")
     p_export.add_argument("--inject-gitignore", action="store_true", help="将排除规则注入 .gitignore")
     p_export.set_defaults(func=cmd_export)
+
+    # ==================== 愚公循环命令 ====================
+
+    # yugong 命令
+    p_yugong = subparsers.add_parser("yugong", help="愚公循环 - 自主开发循环")
+    p_yugong.add_argument(
+        "action",
+        choices=["start", "status", "parse", "config"],
+        help="操作: start=启动循环, status=查看状态, parse=解析需求, config=查看配置",
+    )
+    p_yugong.add_argument("file", nargs="?", help="需求文件路径 (JSON/Markdown)")
+    p_yugong.add_argument(
+        "--mode", "-m", choices=["default", "conservative", "aggressive"], default="default", help="配置模式"
+    )
+    p_yugong.add_argument("--max-iterations", "-i", type=int, help="最大迭代次数")
+    p_yugong.add_argument("--dry-run", "-d", action="store_true", help="仅预览，不执行")
+    p_yugong.add_argument(
+        "--provider", "-p", choices=["zhipuai", "openai"], default="zhipuai", help="LLM Provider (默认: zhipuai)"
+    )
+    p_yugong.add_argument("--max-turns", "-t", type=int, default=15, help="单次执行最大对话轮次 (默认: 15)")
+    p_yugong.set_defaults(func=cmd_yugong)
 
     args = parser.parse_args()
 
