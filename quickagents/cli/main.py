@@ -2399,6 +2399,135 @@ def cmd_yugong(args):
         print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
         print(f"  耗时: {outcome.duration_seconds:.1f}s")
 
+    if action == "report":
+        # 生成执行报告 (D3决策: Markdown+JSON双格式)
+        from pathlib import Path
+        from ..yugong.db import YuGongDB
+        from ..yugong.report_generator import ReportGenerator
+        from ..yugong.autonomous_loop import LoopOutcome
+
+        report_dir = args.report_dir or ".quickagents/reports"
+        db_path = Path(args.db_path or ".quickagents/yugong.db")
+
+        if not db_path.exists():
+            # 尝试 unified.db 作为备选
+            alt_db = Path(".quickagents/unified.db")
+            if alt_db.exists():
+                db_path = alt_db
+            else:
+                print("[FAIL] 未找到 YuGong 数据库")
+                print(f"  搜索路径: {db_path}, {alt_db}")
+                print("  先运行 qka yugong start 创建数据库")
+                return
+
+        db = YuGongDB(str(db_path))
+        gen = ReportGenerator(db)
+
+        # 从 DB 获取最后的循环结果构建 LoopOutcome
+        state = db.load_state()
+        if not state:
+            print("[FAIL] 数据库中无循环状态")
+            db.close()
+            return
+
+        stats = db.get_stats()
+        outcome = LoopOutcome(
+            success=state.status == "completed",
+            reason=state.status,
+            total_iterations=state.current_iteration,
+            total_stories=state.total_stories,
+            completed_stories=state.completed_stories,
+            duration_seconds=0.0,
+            state=state,
+        )
+
+        saved = gen.save(outcome, output_dir=report_dir)
+        db.close()
+
+        print("[YuGong] 报告生成完成!")
+        print(f"  Markdown: {saved.get('markdown', 'N/A')}")
+        print(f"  JSON: {saved.get('json', 'N/A')}")
+
+    if action == "resume":
+        # 从 DB 恢复并继续执行
+        from pathlib import Path
+        from ..yugong.db import YuGongDB
+        from ..yugong.llm_client import LLMConfig, LLMClient
+        from ..yugong.tool_executor import ToolExecutor
+        from ..yugong.agent_executor import AgentExecutor, AgentConfig
+
+        db_path = Path(args.db_path or ".quickagents/yugong.db")
+        if not db_path.exists():
+            alt_db = Path(".quickagents/unified.db")
+            if alt_db.exists():
+                db_path = alt_db
+            else:
+                print("[FAIL] 未找到 YuGong 数据库，无法恢复")
+                return
+
+        db = YuGongDB(str(db_path))
+        state = db.load_state()
+        if not state or state.status not in ("paused", "stopped", "waiting"):
+            print(f"[FAIL] 无法恢复: 当前状态={state.status if state else 'None'}")
+            print("  仅 paused/stopped/waiting 状态可恢复")
+            db.close()
+            return
+
+        # 加载之前的需求
+        stories = db.get_all_stories()
+        if not stories:
+            print("[FAIL] 数据库中无 Story 记录")
+            db.close()
+            return
+
+        from ..yugong.models import ParsedRequirement, UserStory
+        from ..yugong.requirement_parser import RequirementParser
+
+        req = ParsedRequirement(
+            project_name="resumed-project",
+            branch_name="main",
+            user_stories=[s for s in stories if s.status.value in ("pending", "failed", "running")],
+        )
+
+        # 重建 Agent
+        try:
+            llm_config = LLMConfig.from_env(provider=args.provider or "zhipuai")
+        except ValueError:
+            print("[FAIL] 未找到 API Key，请设置 ZHIPUAI_API_KEY")
+            db.close()
+            return
+
+        llm_client = LLMClient(llm_config)
+        tool_executor = ToolExecutor(working_dir=".")
+        agent = AgentExecutor(
+            llm_client=llm_client,
+            tool_executor=tool_executor,
+            config=AgentConfig(max_turns=args.max_turns or 15),
+        )
+
+        config = YuGongConfig()
+        loop = YuGongLoop(config=config, agent_fn=agent)
+
+        print("[YuGong] 从 DB 恢复循环...")
+        print(f"  之前状态: {state.status}")
+        print(f"  已完成: {state.completed_stories}/{state.total_stories}")
+        print(f"  待恢复 Stories: {len(req.user_stories)}")
+        print()
+
+        outcome = loop.start(req)
+
+        # 持久化
+        db.save_state(loop.state)
+        db.close()
+
+        print()
+        print("=" * 50)
+        if outcome.success:
+            print("[SUCCESS] 恢复执行完成!")
+        else:
+            print(f"[DONE] 恢复执行结束: {outcome.reason}")
+        print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="QuickAgents CLI")
@@ -2629,22 +2758,22 @@ def main():
     p_yugong = subparsers.add_parser("yugong", help="愚公循环 - 自主开发循环")
     p_yugong.add_argument(
         "action",
-        choices=["start", "status", "parse", "config"],
-        help="操作: start=启动循环, status=查看状态, parse=解析需求, config=查看配置",
+        choices=["start", "status", "parse", "config", "report", "resume"],
+        help="操作: start=启动循环, status=查看状态, parse=解析需求, config=查看配置, report=生成报告, resume=恢复执行",
     )
     p_yugong.add_argument("file", nargs="?", help="需求文件路径 (JSON/Markdown)")
     p_yugong.add_argument(
         "--mode", "-m", choices=["default", "conservative", "aggressive"], default="default", help="配置模式"
     )
     p_yugong.add_argument("--max-iterations", "-i", type=int, help="最大迭代次数")
-    p_yugong.add_argument("--dry-run", "-d", action="store_true", help="仅预览，不执行")
+    p_yugong.add_argument("--dry-run", "-d", action="store_true", help="仅预览,不执行")
     p_yugong.add_argument(
         "--provider", "-p", choices=["zhipuai", "openai"], default="zhipuai", help="LLM Provider (默认: zhipuai)"
     )
     p_yugong.add_argument("--max-turns", "-t", type=int, default=15, help="单次执行最大对话轮次 (默认: 15)")
+    p_yugong.add_argument("--db-path", "-b", type=str, default=".quickagents/yugong.db", help="数据库路径")
+    p_yugong.add_argument("--report-dir", "-o", type=str, default=".quickagents/reports", help="报告输出目录")
     p_yugong.set_defaults(func=cmd_yugong)
-
-    args = parser.parse_args()
 
     if hasattr(args, "func"):
         args.func(args)
