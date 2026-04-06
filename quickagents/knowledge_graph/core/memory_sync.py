@@ -6,6 +6,7 @@ Syncs high-importance knowledge nodes to MEMORY.md.
 
 from pathlib import Path
 from typing import List
+from datetime import datetime
 
 from ..types import NodeType, KnowledgeNode
 from .node_manager import NodeManager
@@ -132,23 +133,34 @@ class MemorySync:
         return "\n".join(lines)
 
     def _write_memory_file(self, memory_path: str, nodes: List[KnowledgeNode]) -> None:
-        """
-        Write nodes to MEMORY.md file.
-
-        Args:
-            memory_path: Path to write to
-            nodes: Nodes to write
-        """
-        # Ensure parent directory exists
+        """将高重要度节点追加到 MEMORY.md 的 KG Sync section（不破坏现有内容）"""
         path = Path(memory_path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Build content
-        content_parts = ["# Project Memory", "", "## Knowledge Graph Sync", ""]
+        # 如果文件不存在，创建新文件
+        if not path.exists():
+            header = "# Project Memory\n\nAuto-synced by QuickAgents Knowledge Graph.\n\n"
+            path.write_text(header, encoding="utf-8")
 
+        # 读取现有内容
+        existing = path.read_text(encoding="utf-8")
+
+        # 查找 KG Sync section 的边界
+        section_marker = "## Knowledge Graph Sync"
+        if section_marker in existing:
+            # 截断到 section_marker 之前
+            content_before = existing[: existing.index(section_marker)]
+        else:
+            content_before = existing.rstrip() + "\n\n"
+
+        # 构建 KG section
+        kg_section = f"{section_marker}\n> 自动同步: {datetime.now().isoformat()}\n\n"
         for node in nodes:
-            content_parts.append(self.format_for_memory(node))
-            content_parts.append("")
+            kg_section += f"### {node.title}\n"
+            kg_section += f"- 类型: {node.node_type.value if hasattr(node.node_type, 'value') else node.node_type}\n"
+            kg_section += f"- 重要度: {node.importance:.1f}\n"
+            if node.content:
+                kg_section += f"- 内容: {node.content[:200]}\n"
+            kg_section += "\n"
 
-        # Write file
-        path.write_text("\n".join(content_parts), encoding="utf-8")
+        path.write_text(content_before + kg_section, encoding="utf-8")

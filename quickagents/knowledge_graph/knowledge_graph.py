@@ -46,9 +46,7 @@ class KnowledgeGraph:
         self.searcher = KnowledgeSearcher(self.storage)
         self.sync = MemorySync(self.nodes)
 
-    def create_node(
-        self, node_type: NodeType, title: str, content: str, **kwargs
-    ) -> KnowledgeNode:
+    def create_node(self, node_type: NodeType, title: str, content: str, **kwargs) -> KnowledgeNode:
         """Create a knowledge node."""
         return self.nodes.create_node(node_type, title, content, **kwargs)
 
@@ -70,9 +68,7 @@ class KnowledgeGraph:
         """List nodes with optional filter."""
         return self.nodes.list_nodes(node_type=node_type, limit=limit, offset=offset)
 
-    def create_edge(
-        self, source_id: str, target_id: str, edge_type: EdgeType, **kwargs
-    ) -> KnowledgeEdge:
+    def create_edge(self, source_id: str, target_id: str, edge_type: EdgeType, **kwargs) -> KnowledgeEdge:
         """Create an edge between nodes."""
         return self.edges.create_edge(source_id, target_id, edge_type, **kwargs)
 
@@ -84,15 +80,11 @@ class KnowledgeGraph:
         """Delete an edge."""
         return self.edges.delete_edge(edge_id)
 
-    def get_outgoing_edges(
-        self, node_id: str, edge_type: Optional[EdgeType] = None
-    ) -> List[KnowledgeEdge]:
+    def get_outgoing_edges(self, node_id: str, edge_type: Optional[EdgeType] = None) -> List[KnowledgeEdge]:
         """Get outgoing edges for a node."""
         return self.edges.get_outgoing_edges(node_id, edge_type=edge_type)
 
-    def get_incoming_edges(
-        self, node_id: str, edge_type: Optional[EdgeType] = None
-    ) -> List[KnowledgeEdge]:
+    def get_incoming_edges(self, node_id: str, edge_type: Optional[EdgeType] = None) -> List[KnowledgeEdge]:
         """Get incoming edges for a node."""
         return self.edges.get_incoming_edges(node_id, edge_type=edge_type)
 
@@ -104,9 +96,7 @@ class KnowledgeGraph:
         """Search by tags."""
         return self.searcher.search_by_tags(tags, limit=limit)
 
-    def discover(
-        self, node_id: str, strategies: Optional[List[str]] = None
-    ) -> List[KnowledgeEdge]:
+    def discover(self, node_id: str, strategies: Optional[List[str]] = None) -> List[KnowledgeEdge]:
         """
         Discover relations using specified strategies.
 
@@ -133,11 +123,26 @@ class KnowledgeGraph:
         if "transitive" in strategies:
             discovered.extend(self.discovery.discover_transitive_relations(node_id))
 
-        return discovered
+        # 自动持久化发现的关系
+        persisted = []
+        for edge in discovered:
+            try:
+                # 跳过已存在的边（按 source+target+type 去重）
+                existing = self.edges.get_outgoing_edges(edge.source_id)
+                already_exists = (
+                    any(e.target_id == edge.target_id and str(e.edge_type) == str(edge.edge_type) for e in existing)
+                    if existing
+                    else False
+                )
+                if not already_exists:
+                    self.edges.create_edge(edge)
+                    persisted.append(edge)
+            except Exception:
+                persisted.append(edge)  # 保留未持久化的
 
-    def find_path(
-        self, from_node: str, to_node: str, max_depth: int = 5
-    ) -> Optional[List[str]]:
+        return persisted if persisted else discovered
+
+    def find_path(self, from_node: str, to_node: str, max_depth: int = 5) -> Optional[List[str]]:
         """Find path between two nodes."""
         return self.discovery.find_path(from_node, to_node, max_depth=max_depth)
 
@@ -161,9 +166,7 @@ class KnowledgeGraph:
         """Get knowledge graph statistics."""
         return self.storage.get_stats()
 
-    def show_relations(
-        self, node_id: str, direction: str = "both"
-    ) -> Dict[str, List[KnowledgeEdge]]:
+    def show_relations(self, node_id: str, direction: str = "both") -> Dict[str, List[KnowledgeEdge]]:
         """
         Show all relations for a node.
 

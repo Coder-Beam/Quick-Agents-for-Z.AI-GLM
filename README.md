@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/Version-2.11.0-green.svg)](https://pypi.org/project/quickagents/)
+[![Version](https://img.shields.io/badge/Version-2.25.3-green.svg)](https://pypi.org/project/quickagents/)
 [![OpenCode Compatible](https://img.shields.io/badge/OpenCode-Compatible-blue.svg)](https://opencode.ai)
 [![GLM Optimized](https://img.shields.io/badge/GLM-Coding_Plan-orange.svg)](https://bigmodel.cn)
 
@@ -677,6 +677,41 @@ pytest --cov=quickagents tests/        # 覆盖率
 ## 许可证
 
 MIT License - 详见 [LICENSE](LICENSE) 文件。
+
+---
+
+## 更新日志
+
+### v2.25.3 (2026-04-07) — 架构完整性修复
+
+**P0 紧急修复（运行时崩溃）:**
+- 修复 `qka audit status` 崩溃（KeyError: `today_changes`）
+- 修复 `qka audit run` 崩溃（AttributeError: `report.passed` → `report.all_passed`）
+- 修复 `qka audit log` 崩溃（`get_changes_by_session()` 不存在）
+- 添加 decisions 表 migration_005 + `add_decision()` 方法
+- 愚公循环 `YuGongLoop` 接入 `YuGongDB` 持久化（每次迭代 + 最终保存）
+
+**P1 架构修复（数据一致性）:**
+- CLI `qka memory` 改用 `UnifiedDB`（SQLite）替代 `MemoryManager`（纯文件）
+- `SkillEvolution.on_task_complete()` 自动调用 `ExperienceCompiler.accumulate()`
+- 修复进化系统 CLI `stats['total_usage']` → `stats['usage_count']`
+- `DocumentPipeline.save()` 接入 `KnowledgeSaver` 写入 SQLite
+- 知识图谱 `discover()` 结果自动持久化到 SQLite
+- 知识图谱 `sync_to_memory()` 改为追加模式，不破坏主记忆系统
+- 新增 `qka knowledge` CLI 命令（status/search/discover）
+
+**P2 改善（恢复路径修复）:**
+- `restore_decisions_from_md()` 真正解析并插入 SQLite
+- `restore_feedback_from_md()` 真正解析并插入 SQLite
+- `restore_progress_from_json()` 移除对不存在方法的调用
+- 新增 `qka tasks` 和 `qka progress` CLI 命令
+
+### v2.11.0 (2026-04-05) — 研究驱动增强
+
+- 新增 MCPBridge（OpenCode MCP 工具发现）
+- 新增 ParallelExecutor（并发任务执行）
+- 新增 CJK 感知记忆搜索
+- 新增 SkillEvolution 批量分析
 
 ---
 

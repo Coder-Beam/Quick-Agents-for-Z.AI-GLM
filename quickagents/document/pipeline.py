@@ -59,9 +59,7 @@ class DocumentPipeline:
         for fmt, qualname in _parser_specs:
             module_path, class_name = qualname.rsplit(".", 1)
             try:
-                mod = importlib.import_module(
-                    module_path, package="quickagents.document"
-                )
+                mod = importlib.import_module(module_path, package="quickagents.document")
                 parser_cls = getattr(mod, class_name)
                 if self.registry.has_parser(fmt):
                     continue
@@ -146,6 +144,20 @@ class DocumentPipeline:
                 content = self._serialize_result(result)
                 output_path.write_text(content, encoding="utf-8")
                 logger.info(f"Saved result to {output_path}")
+
+            # 同步到知识图谱（如果可用）
+            try:
+                from ..knowledge_graph import KnowledgeGraph
+                from .storage.knowledge_saver import KnowledgeSaver
+
+                kg = KnowledgeGraph()
+                saver = KnowledgeSaver(kg)
+                if hasattr(result, "document_id"):
+                    saver.save_document(result)
+                elif hasattr(result, "source_id"):
+                    saver.save_source(result)
+            except Exception:
+                pass  # KG 可选，失败不影响主流程
 
     def import_all(
         self,

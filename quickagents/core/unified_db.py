@@ -28,6 +28,7 @@ UnifiedDB V2 - 统一数据访问层
 import uuid
 import logging
 import sqlite3
+import json
 import atexit
 from typing import Optional, List, Dict, Any
 from pathlib import Path
@@ -492,6 +493,28 @@ class UnifiedDB:
         except Exception as e:
             logger.error(f"获取决策失败: {e}")
             return []
+
+    def add_decision(
+        self,
+        decision_id: str,
+        title: str,
+        decision: str,
+        context: Optional[str] = None,
+        status: str = "pending",
+        metadata: Optional[Dict] = None,
+    ) -> None:
+        """添加决策记录"""
+        import time
+
+        now = time.time()
+        meta_json = json.dumps(metadata) if metadata else None
+        with self._connection_manager.get_connection() as conn:
+            conn.execute(
+                """INSERT OR REPLACE INTO decisions 
+                (id, title, decision, context, status, created_at, updated_at, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (decision_id, title, decision, context, status, now, now, meta_json),
+            )
 
     def get_next_task(self) -> Optional[Task]:
         """

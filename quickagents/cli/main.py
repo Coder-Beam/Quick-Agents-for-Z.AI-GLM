@@ -175,34 +175,45 @@ def cmd_cache(args):
 
 
 def cmd_memory(args):
-    """记忆管理命令"""
-    memory = MemoryManager()
+    """记忆管理命令（通过 UnifiedDB SQLite）"""
+    from ..core.unified_db import UnifiedDB, MemoryType
+
+    db_path = ".quickagents/unified.db"
+    db = UnifiedDB(db_path)
 
     if args.action == "get":
         if not args.key:
             print("[FAIL] 请提供键名")
             return
-        value = memory.get(args.key)
+        value = db.get_memory(args.key)
         if value is not None:
             print(f"{args.key}: {value}")
         else:
             print(f"[FAIL] 未找到: {args.key}")
 
     elif args.action == "set":
-        memory.set_factual(args.key, args.value)
-        memory.save()
+        if not args.key or not args.value:
+            print("[FAIL] 请提供键名和值")
+            return
+        db.set_memory(args.key, args.value, memory_type=MemoryType.FACTUAL)
         print(f"[OK] 已设置: {args.key} = {args.value}")
 
     elif args.action == "search":
-        keyword = args.keyword or args.key  # 支持位置参数或选项
+        keyword = args.keyword or args.key
         if not keyword:
             print("[FAIL] 请提供搜索关键词")
             return
-        results = memory.search(keyword)
+        results = db.search_memory(keyword, limit=20)
         print(f"[Search] 搜索结果 ({len(results)} 条)")
         print("-" * 50)
         for r in results:
-            print(f"  [{r['type']}] {r.get('key', r.get('category', ''))}: {r.get('value', r.get('content', ''))}")
+            key = r.key if hasattr(r, "key") else r.get("key", "")
+            val = r.value if hasattr(r, "value") else r.get("value", "")
+            mtype = r.memory_type if hasattr(r, "memory_type") else r.get("memory_type", "")
+            print(f"  [{mtype}] {key}: {val}")
+
+    else:
+        print(f"[FAIL] 未知操作: {args.action}")
 
 
 def cmd_loop(args):
@@ -559,12 +570,12 @@ def cmd_evolution(args):
             stats = evolution.get_skill_stats(skill_name)
             print(f"[Evolution] {skill_name} 统计")
             print("=" * 50)
-            print(f"  总使用次数: {stats['total_usage']}")
-            print(f"  成功次数: {stats['success_count']}")
-            print(f"  失败次数: {stats['failure_count']}")
-            print(f"  成功率: {stats['success_rate']:.1%}")
-            if stats["avg_duration_ms"]:
-                print(f"  平均耗时: {stats['avg_duration_ms']:.0f}ms")
+            print(f"  总使用次数: {stats.get('usage_count', 0)}")
+            print(f"  成功次数: {stats.get('success_count', 0)}")
+            print(f"  失败次数: {stats.get('failure_count', 0)}")
+            print(f"  成功率: {stats.get('success_rate', 0):.1%}")
+            if stats.get("avg_duration_ms"):
+                print(f"  平均耗时: {stats.get('avg_duration_ms'):.0f}ms")
 
             if stats["recent_errors"]:
                 print("\n[Recent Errors]")
@@ -675,8 +686,9 @@ def cmd_audit(args):
 
             print("\n[CodeAudit] 变更追踪")
             tracker = summary["tracker"]
-            print(f"  总变更数: {tracker['total_changes']}")
-            print(f"  今日变更: {tracker['today_changes']}")
+            print(f"  总变更数: {tracker.get('total_changes', 0)}")
+            print(f"  总会话数: {tracker.get('total_sessions', 0)}")
+            print(f"  涉及文件: {tracker.get('total_files', 0)}")
 
             print("\n[Accountability] 问责统计")
             acc = summary["accountability"]
@@ -700,7 +712,9 @@ def cmd_audit(args):
                 print("[Audit] 执行原子级检查...")
                 report = guard.on_git_commit(session_id="cli")
 
-                if report.passed:
+                if report is None:
+                    print("[INFO] 质量门禁已禁用，跳过检查")
+                elif report.all_passed:
                     print("[OK] 所有检查通过")
                 else:
                     print(f"[FAIL] 检查失败: {len(report.failed_checks)} 项")
@@ -711,7 +725,9 @@ def cmd_audit(args):
                 print("[Audit] 执行全量级检查...")
                 report = guard.on_task_complete(task_id="cli-manual")
 
-                if report.passed:
+                if report is None:
+                    print("[INFO] 质量门禁已禁用，跳过检查")
+                elif report.all_passed:
                     print("[OK] 所有检查通过")
                 else:
                     print(f"[FAIL] 检查失败: {len(report.failed_checks)} 项")
@@ -729,7 +745,7 @@ def cmd_audit(args):
             print("=" * 50)
 
             if session_id:
-                changes = guard.tracker.get_changes_by_session(session_id)
+                changes = guard.tracker.get_changes(session_id=session_id)
             elif file_path:
                 changes = guard.tracker.get_file_history(file_path)
             else:
@@ -2681,6 +2697,146 @@ def cmd_compress(args):
         print(f"[ERROR] {e}")
 
 
+def cmd_tasks(args):
+    """任务管理命令"""
+    from ..core.unified_db import UnifiedDB, TaskStatus
+
+    db_path = ".quickagents/unified.db"
+    if not os.path.exists(db_path):
+        print(f"[FAIL] 数据库不存在: {db_path}")
+        return
+
+    db = UnifiedDB(db_path)
+
+    try:
+        if args.action == "list":
+            status = getattr(args, "status", None)
+            tasks = db.get_tasks(status=status)
+            print(f"[Tasks] 任务列表 ({len(tasks)} 条)")
+            print("-" * 50)
+            for t in tasks:
+                tid = t.id if hasattr(t, "id") else t.get("id", "")
+                name = t.name if hasattr(t, "name") else t.get("name", "")
+                pri = t.priority if hasattr(t, "priority") else t.get("priority", "")
+                sts = t.status if hasattr(t, "status") else t.get("status", "")
+                print(f"  [{sts}] {tid}: {name} (优先级: {pri})")
+
+        elif args.action == "add":
+            task_id = args.task_id
+            name = args.name
+            priority = getattr(args, "priority", "P2") or "P2"
+            db.add_task(task_id, name, priority=priority)
+            print(f"[OK] 已添加任务: {task_id} - {name}")
+
+        elif args.action == "status":
+            task_id = args.task_id
+            new_status = args.new_status
+            db.update_task_status(task_id, new_status)
+            print(f"[OK] 任务 {task_id} 状态已更新为: {new_status}")
+
+        else:
+            print(f"[FAIL] 未知操作: {args.action}")
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+
+
+def cmd_progress(args):
+    """进度管理命令"""
+    from ..core.unified_db import UnifiedDB
+
+    db_path = ".quickagents/unified.db"
+    if not os.path.exists(db_path):
+        print(f"[FAIL] 数据库不存在: {db_path}")
+        return
+
+    db = UnifiedDB(db_path)
+
+    try:
+        if args.action == "show":
+            project = getattr(args, "project", None) or os.path.basename(os.getcwd())
+            progress = db.get_progress(project)
+            if progress:
+                print(f"[Progress] {project}")
+                print(f"  总任务: {progress.total_tasks if hasattr(progress, 'total_tasks') else 'N/A'}")
+                print(f"  已完成: {progress.completed_tasks if hasattr(progress, 'completed_tasks') else 'N/A'}")
+                pct = progress.completion_percentage if hasattr(progress, "completion_percentage") else 0
+                print(f"  进度: {pct:.1f}%")
+            else:
+                print(f"[INFO] 项目 '{project}' 无进度记录")
+
+        elif args.action == "init":
+            project = args.project or os.path.basename(os.getcwd())
+            total = int(args.total) if args.total else 0
+            db.init_progress(project, total_tasks=total)
+            print(f"[OK] 已初始化进度: {project} (总任务: {total})")
+
+        elif args.action == "update":
+            project = args.project or os.path.basename(os.getcwd())
+            db.increment_progress(project)
+            print(f"[OK] 进度已更新: {project}")
+
+        else:
+            print(f"[FAIL] 未知操作: {args.action}")
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+
+
+def cmd_knowledge(args):
+    """知识图谱命令"""
+    from ..core.unified_db import UnifiedDB
+
+    db_path = ".quickagents/unified.db"
+    if not os.path.exists(db_path):
+        print(f"[FAIL] 数据库不存在: {db_path}")
+        return
+
+    db = UnifiedDB(db_path)
+    kg = db.knowledge
+
+    try:
+        if args.action == "status":
+            stats = kg.get_stats()
+            print("[KnowledgeGraph] 知识图谱状态")
+            print("=" * 50)
+            print(f"  节点数: {stats.get('total_nodes', 0)}")
+            print(f"  边数: {stats.get('total_edges', 0)}")
+            print(f"  节点类型: {stats.get('node_types', {})}")
+
+        elif args.action == "search":
+            query = args.query or ""
+            if not query:
+                print("[FAIL] 请提供搜索查询")
+                return
+            results = kg.search(query)
+            nodes = results.nodes if hasattr(results, "nodes") else []
+            print(f"[KnowledgeGraph] 搜索结果 ({len(nodes)} 节点)")
+            for node in nodes[:20]:
+                title = node.title if hasattr(node, "title") else str(node)
+                ntype = node.node_type if hasattr(node, "node_type") else ""
+                print(f"  [{ntype}] {title}")
+
+        elif args.action == "discover":
+            node_id = args.node_id or ""
+            if not node_id:
+                print("[FAIL] 请提供 --node-id")
+                return
+            edges = kg.discover(node_id)
+            print(f"[KnowledgeGraph] 发现 {len(edges)} 条关系")
+            for edge in edges[:20]:
+                src = edge.source_id if hasattr(edge, "source_id") else ""
+                tgt = edge.target_id if hasattr(edge, "target_id") else ""
+                etype = edge.edge_type if hasattr(edge, "edge_type") else ""
+                print(f"  {src} --[{etype}]--> {tgt}")
+
+        else:
+            print(f"[FAIL] 未知操作: {args.action}")
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="QuickAgents CLI")
     subparsers = parser.add_subparsers(dest="command", help="命令")
@@ -2806,6 +2962,30 @@ def main():
     p_experience.add_argument("source", nargs="?", help="编译源路径 (compile时使用)")
     p_experience.add_argument("--keyword", "-k", help="查询关键词 (query时使用)")
     p_experience.set_defaults(func=cmd_experience)
+
+    # tasks 命令
+    p_tasks = subparsers.add_parser("tasks", help="任务管理")
+    p_tasks.add_argument("action", choices=["list", "add", "status"], help="操作")
+    p_tasks.add_argument("--status", "-s", help="按状态筛选 (list时使用)")
+    p_tasks.add_argument("--task-id", help="任务ID (add/status时使用)")
+    p_tasks.add_argument("--name", help="任务名称 (add时使用)")
+    p_tasks.add_argument("--priority", "-p", help="优先级 (add时使用)")
+    p_tasks.add_argument("--new-status", help="新状态 (status时使用)")
+    p_tasks.set_defaults(func=cmd_tasks)
+
+    # progress 命令
+    p_progress = subparsers.add_parser("progress", help="进度管理")
+    p_progress.add_argument("action", choices=["show", "init", "update"], help="操作")
+    p_progress.add_argument("--project", help="项目名称")
+    p_progress.add_argument("--total", help="总任务数 (init时使用)")
+    p_progress.set_defaults(func=cmd_progress)
+
+    # knowledge 命令
+    p_knowledge = subparsers.add_parser("knowledge", help="知识图谱管理")
+    p_knowledge.add_argument("action", choices=["status", "search", "discover"], help="操作")
+    p_knowledge.add_argument("--query", "-q", help="搜索查询")
+    p_knowledge.add_argument("--node-id", help="节点ID (discover时使用)")
+    p_knowledge.set_defaults(func=cmd_knowledge)
 
     # compress 命令
     p_compress = subparsers.add_parser("compress", help="上下文压缩管理")

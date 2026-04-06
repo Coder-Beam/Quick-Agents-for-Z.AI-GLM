@@ -286,7 +286,31 @@ class MigrationManager:
         )
         migration_004_exp.__post_init__()
 
-        self.migrations = [migration_001, migration_002, migration_004_exp]
+        migration_005 = Migration(
+            version="005",
+            name="decisions_table",
+            up_sql="""
+                CREATE TABLE IF NOT EXISTS decisions (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    decision TEXT NOT NULL,
+                    context TEXT,
+                    status TEXT DEFAULT 'pending',
+                    created_at REAL DEFAULT (strftime('%s', 'now')),
+                    updated_at REAL DEFAULT (strftime('%s', 'now')),
+                    metadata TEXT
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_decisions_status ON decisions(status);
+                CREATE INDEX IF NOT EXISTS idx_decisions_created ON decisions(created_at);
+            """,
+            down_sql="""
+                DROP TABLE IF EXISTS decisions;
+            """,
+        )
+        migration_005.__post_init__()
+
+        self.migrations = [migration_001, migration_002, migration_004_exp, migration_005]
 
     # ==================== 外部迁移文件 ====================
 

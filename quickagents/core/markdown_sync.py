@@ -736,11 +736,37 @@ class MarkdownSync:
         pattern = r"##\s*(D\d+)\s*-\s*(.+)$"
 
         for match in re.finditer(pattern, content, re.MULTILINE):
-            match.group(1)
-            match.group(2)
+            decision_id = match.group(1)
+            title = match.group(2).strip()
 
-            # 这里简化处理，实际需要更复杂的解析
-            restored += 1
+            # 解析决策详情（查找后续内容直到下一个 ## 或文件结尾）
+            start_pos = match.end()
+            next_section = content.find("\n## ", start_pos)
+            detail = content[start_pos:next_section].strip() if next_section > 0 else content[start_pos:].strip()
+
+            # 提取决策内容
+            decision_text = ""
+            context_text = ""
+            for line in detail.split("\n"):
+                line = line.strip()
+                if line.startswith("决策:") or line.startswith("决定:"):
+                    decision_text = line.split(":", 1)[1].strip()
+                elif line.startswith("背景:") or line.startswith("上下文:"):
+                    context_text = line.split(":", 1)[1].strip()
+
+            if not decision_text:
+                decision_text = detail[:200] if detail else title
+
+            try:
+                self.db.add_decision(
+                    decision_id=decision_id,
+                    title=title,
+                    decision=decision_text,
+                    context=context_text,
+                )
+                restored += 1
+            except Exception as e:
+                logger.warning("恢复决策失败 %s: %s", decision_id, e)
 
         return restored
 
@@ -750,6 +776,29 @@ class MarkdownSync:
 
         if not path.exists():
             return 0
+
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+
+            # 恢复进度
+            project_name = data.get("plan_name", data.get("project_name", ""))
+            total_tasks = data.get("total_tasks", 0)
+            completed = data.get("completed_tasks", 0)
+
+            if project_name:
+                self.db.init_progress(project_name, total_tasks=total_tasks)
+                # 恢复已完成数
+                for _ in range(completed):
+                    try:
+                        self.db.increment_progress(project_name)
+                    except Exception:
+                        pass
+                return 1
+
+        except Exception as e:
+            logger.warning("恢复进度失败: %s", e)
+
+        return 0
 
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -775,30 +824,47 @@ class MarkdownSync:
             print(f"恢复进度失败: {e}")
             return 0
 
-    def restore_feedback_from_md(self) -> int:
-        """从反馈Markdown文件恢复"""
-        feedback_dir = self.quickagents_dir / "feedback"
+    def restore_feedback_from_md(self, feedback_path: Optional[str] = None) -> int:
+        """从FEEDBACK.md恢复反馈"""
+        path = Path(feedback_path) if feedback_path else self.docs_dir / "feedback.md"
 
-        if not feedback_dir.exists():
+        if not path.exists():
             return 0
 
+        content = path.read_text(encoding="utf-8")
         restored = 0
-        type_files = {
-            "bugs.md": FeedbackType.BUG,
-            "improvements.md": FeedbackType.IMPROVEMENT,
-            "best-practices.md": FeedbackType.BEST_PRACTICE,
-            "skill-review.md": FeedbackType.SKILL_REVIEW,
-            "agent-review.md": FeedbackType.AGENT_REVIEW,
-        }
 
-        for filename, fb_type in type_files.items():
-            file_path = feedback_dir / filename
-            if file_path.exists():
-                content = file_path.read_text(encoding="utf-8")
-                # 简单解析，实际需要更复杂的解析
-                # 这里只计数
-                entries = content.count("## ")
-                restored += entries
+        # 解析反馈格式: ## 类型: 标题
+        pattern = r"##\s*(.+?):\s*(.+)$"
+
+        for match in re.finditer(pattern, content, re.MULTILINE):
+            fb_type = match.group(1).strip().lower()
+            title = match.group(2).strip()
+
+            # 解析后续内容
+            start_pos = match.end()
+            next_section = content.find("\n## ", start_pos)
+            detail = content[start_pos:next_section].strip() if next_section > 0 else content[start_pos:].strip()
+
+            # 映射类型
+            type_map = {
+                "bug": "bug",
+                "改进": "improvement",
+                "最佳实践": "best_practice",
+                "improvement": "improvement",
+                "best practice": "best_practice",
+            }
+            mapped_type = type_map.get(fb_type, "general")
+
+            try:
+                self.db.add_feedback(
+                    feedback_type=mapped_type,
+                    title=title,
+                    description=detail[:500],
+                )
+                restored += 1
+            except Exception as e:
+                logger.warning("恢复反馈失败 '%s': %s", title, e)
 
         return restored
 

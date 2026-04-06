@@ -190,6 +190,24 @@ class SkillEvolution:
         if self.check_periodic_trigger():
             result["periodic_optimization_due"] = True
 
+        # 6. 积累经验到编译器
+        try:
+            from .experience_compiler import ExperienceCompiler
+
+            compiler = ExperienceCompiler(str(self.db.db_path))
+            compiler.accumulate(
+                {
+                    "task_id": task_info.get("task_id", "unknown"),
+                    "skill": ", ".join(task_info.get("skills_used", [])),
+                    "success": task_info.get("success", True),
+                    "duration_ms": task_info.get("duration_ms", 0),
+                    "observations": task_info.get("error") or task_info.get("task_name", ""),
+                    "category": "evolution",
+                }
+            )
+        except Exception as e:
+            logger.debug("经验编译器积累失败（非致命）: %s", e)
+
         return result
 
     def on_git_commit(self, commit_info: Optional[Dict] = None) -> Dict:

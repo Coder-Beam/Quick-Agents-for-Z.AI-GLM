@@ -25,6 +25,7 @@ from .models import (
 from .safety_guard import SafetyGuard, SafetyCheckResult
 from .exit_detector import ExitDetector, ExitCheckResult
 from .task_orchestrator import TaskOrchestrator
+from .db import YuGongDB
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class YuGongLoop:
         self,
         config: Optional[YuGongConfig] = None,
         agent_fn: Optional[Callable[[str], dict]] = None,
+        db: Optional[YuGongDB] = None,
     ):
         """
         Args:
@@ -66,6 +68,7 @@ class YuGongLoop:
         """
         self.config = config or YuGongConfig()
         self.agent_fn = agent_fn
+        self.db = db
 
         # 子组件
         self.safety = SafetyGuard(self.config)
@@ -111,6 +114,15 @@ class YuGongLoop:
         """
         # 初始化
         self.orchestrator.load_from_requirement(requirement)
+
+        # 初始持久化
+        if self.db:
+            try:
+                for sid, story in self.orchestrator._stories.items():
+                    self.db.save_story(story)
+            except Exception as e:
+                logger.warning("初始DB持久化失败: %s", e)
+
         self.state = LoopState(
             status="running",
             total_stories=self.orchestrator.total_stories,
@@ -201,6 +213,15 @@ class YuGongLoop:
             self.state.add_iteration(result)
             self.safety.record_iteration(result)
 
+            # Phase 4: 持久化到 SQLite
+            if self.db:
+                try:
+                    self.db.save_state(self.state)
+                    self.db.save_story(story)
+                    self.db.save_iteration(result)
+                except Exception as e:
+                    logger.warning("DB持久化失败: %s", e)
+
             if self._on_iteration_end:
                 self._on_iteration_end(iteration, result)
 
@@ -237,6 +258,15 @@ class YuGongLoop:
             outcome.completed_stories,
             outcome.total_stories,
         )
+
+        # 最终持久化
+        if self.db:
+            try:
+                self.db.save_state(self.state)
+                for sid, s in self.orchestrator._stories.items():
+                    self.db.save_story(s)
+            except Exception as e:
+                logger.warning("最终DB持久化失败: %s", e)
 
         return outcome
 
