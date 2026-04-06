@@ -123,8 +123,16 @@ from .utils.memory_helper import (
 # 智能编辑工具（v2.6.9+）
 from .utils.smart_editor import smart_edit, diagnose_edit
 
-# 浏览器自动化（可选依赖）
-from .browser import Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest
+# 浏览器自动化（可选依赖 - 需 pip install quickagents[browser]）
+try:
+    from .browser import Browser, BrowserBackend, Page, ConsoleLog, NetworkRequest
+except ImportError:
+    # playwright 未安装时，browser 模块不可用
+    Browser = None  # type: ignore[misc,assignment]
+    BrowserBackend = None  # type: ignore[misc,assignment]
+    Page = None  # type: ignore[misc,assignment]
+    ConsoleLog = None  # type: ignore[misc,assignment]
+    NetworkRequest = None  # type: ignore[misc,assignment]
 
 # AuditGuard 审计问责（v2.9.0+）
 from .audit import AuditGuard, AuditConfig

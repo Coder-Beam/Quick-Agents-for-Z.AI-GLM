@@ -18,7 +18,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -30,13 +29,17 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 
-# 核心依赖（跨平台）- 必须安装
+# 核心依赖（跨平台）- 零外部依赖设计，仅用标准库+轻量工具
 dependencies = [
-    "psutil",           # 系统工具 (latest)
-    "playwright",       # 浏览器自动化 (latest) - 强制依赖
+    "psutil",           # 系统工具 (进程/内存/磁盘信息)
+    "httpx",            # HTTP客户端 (YuGong LLM调用)
 ]
 
 [project.optional-dependencies]
+# 浏览器自动化 - Playwright + Chromium/Lightpanda
+browser = [
+    "playwright",       # 浏览器自动化
+]
 # Windows特定功能
 windows = [
     "pywin32",          # Windows功能 (latest)
@@ -61,10 +64,11 @@ ocr = [
 ]
 # 完整安装（包含所有功能）
 full = [
-    "pywin32",          # Windows功能 (latest)
-    "wmi",              # WMI (latest)
-    "psutil",           # 系统工具 (latest)
-    "playwright",       # 浏览器自动化 (latest)
+    "pywin32",
+    "wmi",
+    "psutil",
+    "httpx",
+    "playwright",
     "PyMuPDF",
     "pdfplumber",
     "python-docx",
