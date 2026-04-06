@@ -540,6 +540,254 @@ class SkillEvolution:
 
             return stats
 
+    # ==================== 批量优化与历史模式分析 (v2.11.0) ====================
+
+    def batch_analyze_skills(self, batch_size: int = 50) -> Dict:
+        """
+        批量分析Skills使用记录，一次性处理多个记录 (MCE论文: batch-level 13.6x faster)
+
+        Args:
+            batch_size: 单批处理的记录数
+
+        Returns:
+            批量分析结果
+        """
+        with self.db._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # 获取最近的usage记录
+            cursor.execute(
+                """
+                SELECT skill_name, success, duration_ms, error_message, created_at
+                FROM skill_usage
+                ORDER BY created_at DESC
+                LIMIT ?
+            """,
+                (batch_size,),
+            )
+            rows = [dict(row) for row in cursor.fetchall()]
+
+        if not rows:
+            return {"batch_size": 0, "analysis": {}, "patterns": []}
+
+        # 按skill分组批量计算
+        skill_data = {}  # type: Dict[str, Dict]
+        for row in rows:
+            name = row["skill_name"]
+            if name not in skill_data:
+                skill_data[name] = {"total": 0, "success": 0, "durations": [], "errors": []}
+            skill_data[name]["total"] += 1
+            if row["success"]:
+                skill_data[name]["success"] += 1
+            if row["duration_ms"]:
+                skill_data[name]["durations"].append(row["duration_ms"])
+            if row["error_message"]:
+                skill_data[name]["errors"].append(row["error_message"])
+
+        # 批量分析每个skill
+        analysis = {}
+        for name, data in skill_data.items():
+            success_rate = data["success"] / data["total"] if data["total"] > 0 else 0
+            avg_duration = sum(data["durations"]) / len(data["durations"]) if data["durations"] else 0
+
+            # 性能分级
+            if success_rate >= 0.9 and avg_duration < 5000:
+                grade = "A"
+            elif success_rate >= 0.8:
+                grade = "B"
+            elif success_rate >= 0.6:
+                grade = "C"
+            else:
+                grade = "D"
+
+            # 检测退化趋势 (最近5次vs全部)
+            recent = rows[: min(5, len(rows))]
+            recent_success = sum(1 for r in recent if r["skill_name"] == name and r["success"])
+            recent_total = sum(1 for r in recent if r["skill_name"] == name)
+            recent_rate = recent_success / recent_total if recent_total > 0 else success_rate
+            degrading = recent_rate < success_rate - 0.1
+
+            analysis[name] = {
+                "grade": grade,
+                "success_rate": round(success_rate, 3),
+                "avg_duration_ms": round(avg_duration, 1),
+                "usage_count": data["total"],
+                "unique_errors": len(set(data["errors"])),
+                "degrading": degrading,
+            }
+
+        # 检测跨skill模式
+        patterns = self._detect_batch_patterns(skill_data)
+
+        return {
+            "batch_size": len(rows),
+            "skills_analyzed": len(skill_data),
+            "analysis": analysis,
+            "patterns": patterns,
+        }
+
+    def analyze_history_patterns(self, lookback_days: int = 30) -> Dict:
+        """
+        分析历史模式，发现重复出现的问题和成功模式
+
+        Args:
+            lookback_days: 回看天数
+
+        Returns:
+            历史模式分析结果
+        """
+        from datetime import timedelta
+
+        cutoff = (datetime.now() - timedelta(days=lookback_days)).isoformat()
+
+        with self.db._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # 获取历史进化记录
+            cursor.execute(
+                """
+                SELECT skill_name, trigger_type, change_type, description, details, created_at
+                FROM skill_evolution
+                WHERE created_at >= ?
+                ORDER BY created_at DESC
+            """,
+                (cutoff,),
+            )
+            evolution_rows = [dict(row) for row in cursor.fetchall()]
+
+            # 获取历史使用记录
+            cursor.execute(
+                """
+                SELECT skill_name, success, duration_ms, error_message, created_at
+                FROM skill_usage
+                WHERE created_at >= ?
+                ORDER BY created_at ASC
+            """,
+                (cutoff,),
+            )
+            usage_rows = [dict(row) for row in cursor.fetchall()]
+
+        # 1. 重复错误模式
+        error_patterns = {}  # type: Dict[str, int]
+        for row in usage_rows:
+            if not row["success"] and row["error_message"]:
+                # 简化错误消息以归类
+                err_key = row["error_message"][:80]
+                error_patterns[err_key] = error_patterns.get(err_key, 0) + 1
+
+        recurring_errors = [
+            {"error": k, "count": v} for k, v in sorted(error_patterns.items(), key=lambda x: -x[1]) if v >= 2
+        ]
+
+        # 2. Skill使用趋势 (按周聚合)
+        weekly_trend = {}  # type: Dict[str, Dict[str, int]]
+        for row in usage_rows:
+            # 按周分组 (使用ISO week)
+            try:
+                dt = datetime.fromisoformat(row["created_at"])
+                week_key = dt.strftime("%Y-W%W")
+            except (ValueError, TypeError):
+                week_key = "unknown"
+
+            if week_key not in weekly_trend:
+                weekly_trend[week_key] = {"total": 0, "success": 0}
+
+            weekly_trend[week_key]["total"] += 1
+            if row["success"]:
+                weekly_trend[week_key]["success"] += 1
+
+        # 3. 高频Skill组合 (成功任务中经常一起出现的skills)
+        skill_co_occurrence = {}  # type: Dict[str, int]
+        for row in evolution_rows:
+            details_str = row.get("details", "")
+            if details_str and row["change_type"] in ("pattern_extracted", "skills_combination"):
+                try:
+                    details = json.loads(details_str) if isinstance(details_str, str) else details_str
+                    skills = details.get("skills_used", [])
+                    if len(skills) >= 2:
+                        key = " + ".join(sorted(skills))
+                        skill_co_occurrence[key] = skill_co_occurrence.get(key, 0) + 1
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+        top_combos = sorted(skill_co_occurrence.items(), key=lambda x: -x[1])[:5]
+
+        # 4. 性能退化检测
+        degraded_skills = []
+        for row in evolution_rows:
+            if row["change_type"] == "improvement_needed":
+                degraded_skills.append(
+                    {"skill": row["skill_name"], "description": row["description"], "date": row["created_at"]}
+                )
+
+        return {
+            "lookback_days": lookback_days,
+            "total_records": len(evolution_rows) + len(usage_rows),
+            "recurring_errors": recurring_errors[:10],
+            "weekly_trend": dict(sorted(weekly_trend.items())),
+            "top_skill_combos": [{"combo": k, "count": v} for k, v in top_combos],
+            "degraded_skills": degraded_skills[-5:],
+            "summary": {
+                "unique_errors": len(error_patterns),
+                "recurring_error_count": len(recurring_errors),
+                "weeks_analyzed": len(weekly_trend),
+                "skill_combos_found": len(skill_co_occurrence),
+            },
+        }
+
+    def _detect_batch_patterns(self, skill_data: Dict[str, Dict]) -> List[Dict]:
+        """检测批量数据中的跨skill模式"""
+        patterns = []
+
+        # 1. 多个skill同时退化
+        degraded = [
+            name for name, data in skill_data.items() if data["total"] >= 3 and data["success"] / data["total"] < 0.7
+        ]
+        if len(degraded) >= 2:
+            patterns.append(
+                {
+                    "type": "multi_skill_degradation",
+                    "description": f"多个skill成功率低于70%: {', '.join(degraded)}",
+                    "affected_skills": degraded,
+                    "severity": "high",
+                }
+            )
+
+        # 2. 所有skill都成功的模式 (最佳实践)
+        all_good = [
+            name for name, data in skill_data.items() if data["total"] >= 2 and data["success"] == data["total"]
+        ]
+        if len(all_good) >= 3:
+            patterns.append(
+                {
+                    "type": "all_success_pattern",
+                    "description": f"这些skill在本批次全部成功: {', '.join(all_good[:5])}",
+                    "skills": all_good[:5],
+                    "severity": "info",
+                }
+            )
+
+        # 3. 慢skill检测 (平均耗时>10秒)
+        slow_skills = [
+            {
+                "name": name,
+                "avg_ms": sum(data["durations"]) / len(data["durations"]) if data["durations"] else 0,
+            }
+            for name, data in skill_data.items()
+            if data["durations"] and sum(data["durations"]) / len(data["durations"]) > 10000
+        ]
+        if slow_skills:
+            patterns.append(
+                {
+                    "type": "slow_skills",
+                    "description": f"慢skill (avg>10s): {', '.join(s['name'] for s in slow_skills)}",
+                    "details": slow_skills,
+                    "severity": "medium",
+                }
+            )
+
+        return patterns
+
     # ==================== 内部方法 ====================
 
     def _add_evolution_record(
