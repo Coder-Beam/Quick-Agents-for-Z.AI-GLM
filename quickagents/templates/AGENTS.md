@@ -329,7 +329,8 @@ evolution.check_periodic_trigger()  # 等同于 qka evolution status
 │                                                              │
 │  3. 【关键】安装QuickAgents插件                               │
 │     ├─ 检查 .opencode/plugins/quickagents.ts 是否存在        │
-│     ├─ 不存在 → 从QuickAgents仓库复制                         │
+│     ├─ 不存在 → 运行 qka init 重新初始化项目                    │
+│     │   └─ 此文件由 qka init 自动生成，无需手动复制            │
 │     ├─ 执行 pip install quickagents（确保Python API可用）     │
 │     └─ AI输出：「QuickAgents插件已安装」                      │
 │                                                              │

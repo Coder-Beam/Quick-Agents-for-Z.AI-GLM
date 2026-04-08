@@ -10,6 +10,10 @@
 
 ---
 
+> **⚠️ 如果你克隆了此仓库**：这是 QuickAgents 的**源码仓库**。要在项目中使用，请运行 `pip install quickagents && qka init`。详见 [CLONE_README.md](./CLONE_README.md)
+
+---
+
 ## 安装
 
 ### 方式一：一行命令安装（推荐）
