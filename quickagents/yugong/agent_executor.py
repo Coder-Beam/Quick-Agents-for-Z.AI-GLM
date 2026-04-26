@@ -101,22 +101,39 @@ class AgentExecutor:
         total_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
         final_output = ""
         last_error = None
+        llm_consecutive_failures = 0
+        llm_max_retries = 3
 
         try:
-            for turn in range(self.config.max_turns):
-                # 调用 LLM
-                response = self.llm.chat(
-                    messages,
-                    tools=self.tools.get_tool_definitions(),
-                )
+            turn = 0
+            while turn < self.config.max_turns:
+                try:
+                    response = self.llm.chat(
+                        messages,
+                        tools=self.tools.get_tool_definitions(),
+                    )
+                    llm_consecutive_failures = 0
+                except Exception as llm_err:
+                    llm_consecutive_failures += 1
+                    err_msg = str(llm_err).lower()
+                    is_transient = any(
+                        kw in err_msg
+                        for kw in ("timeout", "timed out", "connection", "429", "rate limit", "500", "502", "503", "504")
+                    )
+                    if is_transient and llm_consecutive_failures < llm_max_retries:
+                        wait = min(5 * (3 ** (llm_consecutive_failures - 1)), 60)
+                        logger.warning(
+                            "LLM 调用失败 (%d/%d), %ds 后重试 (不消耗 turn): %s",
+                            llm_consecutive_failures, llm_max_retries, wait, llm_err,
+                        )
+                        time.sleep(wait)
+                        continue
+                    raise
 
-                # 累计 Token
                 for key in total_usage:
                     total_usage[key] += response.usage.get(key, 0)
 
-                # 检查是否有工具调用
                 if response.tool_calls:
-                    # 添加 assistant 消息（含工具调用）
                     messages.append(
                         Message(
                             role="assistant",
@@ -125,7 +142,6 @@ class AgentExecutor:
                         )
                     )
 
-                    # 执行每个工具调用
                     for tc in response.tool_calls:
                         result = self._execute_tool(tc)
                         messages.append(
@@ -136,14 +152,13 @@ class AgentExecutor:
                             )
                         )
 
-                    continue  # 继续下一轮
+                    turn += 1
+                    continue
 
-                # 无工具调用 = Agent 完成
                 final_output = response.content or ""
                 break
 
             else:
-                # max_turns 耗尽
                 final_output = f"Max turns ({self.config.max_turns}) exceeded"
                 last_error = "max_turns_exceeded"
                 logger.warning("Agent 达到最大轮次: %d", self.config.max_turns)
@@ -154,11 +169,10 @@ class AgentExecutor:
             last_error = str(e)
 
         duration_ms = int((time.monotonic() - start_time) * 1000)
-        success = (
-            last_error is None
-            and "TASK_COMPLETE" in final_output
-            or (last_error is None and final_output and "max_turns" not in final_output.lower())
-        )
+        if last_error is None:
+            success = bool(final_output) and "max_turns" not in final_output.lower()
+        else:
+            success = False
 
         return {
             "output": final_output,

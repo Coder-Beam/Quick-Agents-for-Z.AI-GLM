@@ -31,7 +31,7 @@ class LLMConfig:
     max_tokens: int = 8192
     temperature: float = 0.1
     timeout: int = 120  # 秒
-    max_retries: int = 2
+    max_retries: int = 4
 
     def to_dict(self) -> dict:
         return {
@@ -184,11 +184,24 @@ class LLMClient:
             except Exception as e:
                 last_error = e
                 if attempt < self.config.max_retries:
-                    wait = 2**attempt
+                    if not self._is_retryable(e):
+                        raise
+                    wait = min(5 * (3 ** attempt), 120)
                     logger.warning("LLM 请求失败，%ds 后重试: %s", wait, e)
                     time.sleep(wait)
+                else:
+                    raise
 
-        raise last_error  # type: ignore
+    @staticmethod
+    def _is_retryable(error: Exception) -> bool:
+        if isinstance(error, Exception):
+            err_msg = str(error).lower()
+            retryable_keywords = [
+                "timeout", "timed out", "connection", "429", "rate limit",
+                "500", "502", "503", "504", "overloaded",
+            ]
+            return any(kw in err_msg for kw in retryable_keywords)
+        return True
 
     def _http_post(self, url: str, **kwargs) -> httpx.Response:
         """HTTP POST（可被子类/mock 覆盖）"""

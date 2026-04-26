@@ -192,6 +192,8 @@ class ScriptHelper:
                 shell=True,
                 capture_output=capture,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=cwd,
                 timeout=timeout,
                 check=check,

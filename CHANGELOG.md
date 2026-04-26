@@ -5,6 +5,84 @@ All notable changes to QuickAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.25.7] - 2026-04-26
+
+### Yugong Pipeline Bug Fixes (9 items from QuickAgents_Bugs.md)
+
+#### P0 — Critical
+
+- **BUG-1**: `yugong start` passes file content as string to `RequirementParser.parse()`, causing JSON/Markdown format detection to fail. Fixed to pass `Path` object instead.
+- **Audit #1**: `_execute_iteration()` did not extract `error` field from `agent_output`, making `max_turns_exceeded` detection dead code. Now fixed — BUG-6 fix is effective.
+
+#### P1 — High
+
+- **BUG-2**: Yugong pipeline fully refactored to DB-driven architecture:
+  - `YuGongDB` gains `save_requirement()`, `get_next_pending_story()`, `get_executable_stories()`
+  - `TaskOrchestrator` gains `load_from_db()` with optional `db` parameter
+  - `YuGongLoop` gains `resume_from_db()` and `_ensure_state_persisted()` with `try/finally` safety
+  - `yugong start` now persists stories to DB before execution, reads from DB as source of truth
+  - `yugong resume` relaxed to accept any state with pending stories
+  - New `--continue` flag: `qka yugong start --continue` resumes from DB without file
+- **BUG-3**: `qka init-db` failed with `cannot import name 'MemoryType' from 'quickagents.core.memory'`. Fixed import path to `quickagents.core.unified_db`.
+- **BUG-4**: `subprocess.run` with `text=True` caused GBK encoding errors on Chinese Windows. Added `encoding="utf-8", errors="replace"` to 23 call sites across 7 files.
+- **Audit #2**: `_determine_reason()` returned uninformative `"running"` when all stories are non-executable (failed/exhausted). Now returns descriptive reason with failure count.
+- **Audit #3**: `SkillEvolution.modify_skill()` wrote empty `.bak` backup file. Fixed to save original content before modification.
+
+#### P2 — Medium
+
+- **BUG-5**: LLM retry improved:
+  - `max_retries` increased from 2 to 4
+  - Exponential backoff: 5s → 15s → 45s → 120s
+  - Distinguishes retryable errors (timeout, 429, 5xx) from non-retryable (auth, 400)
+  - `AgentExecutor` retries LLM transient failures without consuming a turn
+- **BUG-6**: Agent `max_turns` exhaustion no longer terminates the entire yugong loop. Failed story is marked and loop continues to next story.
+- **BUG-7**: `_parse_markdown()` enhanced to support:
+  - `###` / `####` headings as sub-tasks
+  - `| table | rows |` extraction (header-aware)
+  - ` ``` ` code blocks in descriptions
+  - `- ` / `* ` list items as acceptance criteria
+  - `**bold**` text extraction as key requirements
+- **Audit #4**: `SafetyGuard.record_iteration()` called non-existent `LoopDetector.record_tool_call()`. Removed dead call — loop detection is handled by `check_before_iteration()`.
+
+#### P3 — Low
+
+- **ISSUE-8**: `acceptance_criteria` string values in JSON now auto-split by newline/semicolon into a list.
+- **ISSUE-9**: State persistence on abnormal exit — `try/finally` ensures state saved as `"stopped"` to DB.
+- **Audit #5-6**: Removed duplicate `MCPBridge` import and duplicate `"Session"` in `__all__` from `core/__init__.py`.
+- **Audit #7**: `VERSION.md` synced to `2.25.6`.
+- **Audit #8**: Removed unused `StoryPriority` import from `requirement_parser.py`.
+- **Audit #9**: Added `@note` annotations to `ContextInjector` and `ProgressLogger` marking them as not yet integrated into production pipeline.
+
+### Test Results
+
+- **242 yugong tests passed**, 0 failures
+- 1 test fix: `test_retry_on_transient_error` mock updated to raise `HTTPStatusError` directly
+
+### Files Changed (20 files)
+
+| File | Changes |
+|------|---------|
+| `quickagents/cli/init_cmd.py` | Import path fix |
+| `quickagents/cli/main.py` | BUG-1 fix, DB-driven start/resume, `--continue` flag, subprocess encoding |
+| `quickagents/yugong/agent_executor.py` | LLM retry without turn consumption, success logic fix |
+| `quickagents/yugong/autonomous_loop.py` | DB-driven refactor, `resume_from_db()`, error extraction, reason diagnostics |
+| `quickagents/yugong/db.py` | New DB helper methods |
+| `quickagents/yugong/llm_client.py` | Retry/backoff/retryable-error logic |
+| `quickagents/yugong/requirement_parser.py` | Markdown regex enhancement, string acceptance_criteria, unused import removal |
+| `quickagents/yugong/task_orchestrator.py` | DB-backed mode, `load_from_db()` |
+| `quickagents/yugong/tool_executor.py` | Subprocess encoding |
+| `quickagents/yugong/safety_guard.py` | Dead code removal |
+| `quickagents/yugong/context_injector.py` | `@note` annotation |
+| `quickagents/yugong/progress_logger.py` | `@note` annotation |
+| `quickagents/core/__init__.py` | Duplicate import/`__all__` cleanup |
+| `quickagents/core/evolution.py` | Backup file fix, subprocess encoding |
+| `quickagents/utils/script_helper.py` | Subprocess encoding |
+| `quickagents/audit/quality_gate.py` | Subprocess encoding |
+| `quickagents/skills/tdd_workflow.py` | Subprocess encoding |
+| `quickagents/skills/git_commit.py` | Subprocess encoding (10 sites) |
+| `VERSION.md` | Version sync |
+| `tests/yugong/test_llm_client.py` | Mock fix for retry test |
+
 ## [2.25.5] - 2026-04-07
 
 ### Architecture Grade-A Verification — 991 Tests, 0 Failures

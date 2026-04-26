@@ -1,4 +1,4 @@
-﻿# QuickAgents Version
+# QuickAgents Version
 
 > Version information file - for version detection and updates | 版本信息文件 - 用于版本检测和更新
 
@@ -8,9 +8,9 @@
 
 | Property | Value |
 |-----------|-------|
-| Version | 2.25.5 |
-| Git Tag | v2.25.5 |
-| Release Date | 2026-04-07 |
+| Version | 2.25.7 |
+| Git Tag | v2.25.7 |
+| Release Date | 2026-04-26 |
 | Minimum Compatible | 2.0.0 |
 | Repository | https://github.com/Coder-Beam/Quick-Agents-for-Z.AI-GLM |
 | PyPI Package | https://pypi.org/project/quickagents/ |

@@ -251,8 +251,7 @@ class TestChatErrors:
                 mock_resp = _mock_response(status_code=500, json_data={"error": "server error"})
                 from httpx import HTTPStatusError
 
-                mock_resp.raise_for_status.side_effect = HTTPStatusError("500", request=MagicMock(), response=mock_resp)
-                return mock_resp
+                raise HTTPStatusError("500 Server Error", request=MagicMock(), response=mock_resp)
             return _mock_response(
                 json_data={
                     "id": "ok",

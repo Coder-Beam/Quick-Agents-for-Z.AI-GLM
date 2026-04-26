@@ -73,7 +73,7 @@ class YuGongLoop:
         # 子组件
         self.safety = SafetyGuard(self.config)
         self.exit_detector = ExitDetector(self.config)
-        self.orchestrator = TaskOrchestrator()
+        self.orchestrator = TaskOrchestrator(db=db)
 
         # 循环状态
         self.state = LoopState()
@@ -106,20 +106,23 @@ class YuGongLoop:
         """
         启动愚公循环
 
+        流程: 解析需求 → 持久化到 DB → 从 DB 加载 → 执行循环
+
         Args:
             requirement: 解析后的需求
 
         Returns:
             LoopOutcome: 循环结果
         """
-        # 初始化
         self.orchestrator.load_from_requirement(requirement)
 
-        # 初始持久化
         if self.db:
             try:
-                for sid, story in self.orchestrator._stories.items():
-                    self.db.save_story(story)
+                self.db.save_requirement(requirement)
+                saved_state = self.db.load_state()
+                if saved_state and saved_state.status in ("running",):
+                    logger.info("检测到未完成的循环状态, 从 DB 恢复 stories")
+                    self.orchestrator.load_from_db(self.db)
             except Exception as e:
                 logger.warning("初始DB持久化失败: %s", e)
 
@@ -138,6 +141,58 @@ class YuGongLoop:
             return self._run_loop()
         finally:
             self._running = False
+            self._ensure_state_persisted()
+
+    def resume_from_db(self) -> LoopOutcome:
+        """
+        从 DB 恢复并继续执行
+
+        流程: 从 DB 加载 stories → 从 DB 加载 state → 继续循环
+
+        Returns:
+            LoopOutcome: 循环结果
+        """
+        if not self.db:
+            raise ValueError("resume_from_db 需要 db 实例")
+
+        count = self.orchestrator.load_from_db(self.db)
+        if count == 0:
+            logger.warning("DB 中无 stories, 无法恢复")
+
+        saved_state = self.db.load_state()
+
+        self.state = saved_state or LoopState(
+            status="running",
+            total_stories=self.orchestrator.total_stories,
+            start_time=datetime.now(),
+        )
+        self.state.status = "running"
+        self.state.total_stories = self.orchestrator.total_stories
+        self._running = True
+        self._cancelled = False
+        self._paused = False
+
+        logger.info("愚公循环从 DB 恢复: %d stories (已完成: %d)",
+                     self.orchestrator.total_stories, self.orchestrator.completed_stories)
+
+        try:
+            return self._run_loop()
+        finally:
+            self._running = False
+            self._ensure_state_persisted()
+
+    def _ensure_state_persisted(self) -> None:
+        """确保最终状态持久化到 DB"""
+        if not self.db:
+            return
+        try:
+            if self.state.status not in ("completed",):
+                self.state.status = "stopped"
+            self.db.save_state(self.state)
+            for sid, s in self.orchestrator._stories.items():
+                self.db.save_story(s)
+        except Exception as e:
+            logger.warning("最终状态持久化失败: %s", e)
 
     def pause(self) -> bool:
         """暂停循环"""
@@ -191,7 +246,15 @@ class YuGongLoop:
             # 2. 获取下一个 Story
             story = self.orchestrator.get_next_story()
             if story is None:
-                logger.info("没有可执行的 Story")
+                if self.orchestrator.all_done:
+                    self.state.status = "completed"
+                else:
+                    self.state.status = "completed"
+                logger.info(
+                    "没有可执行的 Story (completed=%d, total=%d)",
+                    self.orchestrator.completed_stories,
+                    self.orchestrator.total_stories,
+                )
                 break
 
             # 3. 迭代开始
@@ -224,6 +287,10 @@ class YuGongLoop:
 
             if self._on_iteration_end:
                 self._on_iteration_end(iteration, result)
+
+            if result.error == "max_turns_exceeded":
+                logger.warning("Story %s 达到 max_turns, 标记为 failed, 继续下一个 story", story.id)
+                continue
 
             # 退出检查
             exit_result = self.exit_detector.check(result.output, self.state)
@@ -258,15 +325,6 @@ class YuGongLoop:
             outcome.completed_stories,
             outcome.total_stories,
         )
-
-        # 最终持久化
-        if self.db:
-            try:
-                self.db.save_state(self.state)
-                for sid, s in self.orchestrator._stories.items():
-                    self.db.save_story(s)
-            except Exception as e:
-                logger.warning("最终DB持久化失败: %s", e)
 
         # 触发自我进化
         try:
@@ -312,6 +370,7 @@ class YuGongLoop:
             token_usage = agent_output.get("token_usage", {"total": 0})
             files_changed = agent_output.get("files_changed", [])
             agent_success = agent_output.get("success", True)
+            agent_error = agent_output.get("error")
         except Exception as e:
             duration_ms = int((time.monotonic() - start_ms) * 1000)
             return LoopResult(
@@ -334,6 +393,7 @@ class YuGongLoop:
             duration_ms=duration_ms,
             token_usage=token_usage,
             files_changed=files_changed,
+            error=agent_error,
         )
 
     def _process_result(self, story: UserStory, result: LoopResult) -> None:
@@ -370,6 +430,9 @@ class YuGongLoop:
         if self.state.status == "completed":
             if self.orchestrator.completed_stories == self.orchestrator.total_stories:
                 return "所有 Story 完成"
+            failed_count = self.orchestrator.failed_stories
+            if failed_count > 0:
+                return f"没有可执行的 Story ({failed_count} 个已失败且不可重试)"
             return "达到退出条件"
         if self.state.status == "stopped":
             return "安全检查失败"

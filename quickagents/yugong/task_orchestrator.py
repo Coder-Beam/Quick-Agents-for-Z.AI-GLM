@@ -25,10 +25,15 @@ class TaskOrchestrator:
     1. 管理 UserStory 集合
     2. 按优先级 + 依赖选择下一个可执行 Story
     3. 提供进度统计
+
+    支持两种模式:
+    - 内存模式: 所有数据在内存中 (默认)
+    - DB 驱动模式: 数据源为 DB, 每次操作从 DB 加载
     """
 
-    def __init__(self):
+    def __init__(self, db: Optional["YuGongDB"] = None):
         self._stories: dict[str, UserStory] = {}
+        self._db = db
 
     # === Story 管理 ===
 
@@ -45,6 +50,20 @@ class TaskOrchestrator:
         """从解析后的需求加载 Stories"""
         self._stories.clear()
         self.add_stories(requirement.user_stories)
+
+    def load_from_db(self, db: "YuGongDB") -> int:
+        """从 DB 加载所有可执行的 stories (pending + failed 可重试)
+
+        Returns:
+            加载的 story 数量
+        """
+        from .db import YuGongDB
+
+        self._stories.clear()
+        all_stories = db.get_all_stories()
+        for story in all_stories:
+            self._stories[story.id] = story
+        return len(self._stories)
 
     def get_story(self, story_id: str) -> Optional[UserStory]:
         """获取指定 Story"""

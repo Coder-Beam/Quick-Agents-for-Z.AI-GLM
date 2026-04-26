@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import Union
 
-from .models import UserStory, ParsedRequirement, StoryPriority
+from .models import UserStory, ParsedRequirement
 from .config import YuGongConfig
 
 logger = logging.getLogger(__name__)
@@ -89,14 +89,17 @@ class RequirementParser:
 
         stories = []
         for i, s in enumerate(raw_stories):
-            # 支持 acceptanceCriteria 和 acceptance_criteria
             ac = s.get("acceptanceCriteria", s.get("acceptance_criteria", []))
+            if isinstance(ac, str):
+                ac = [item.strip() for item in ac.replace("\n", ";").split(";") if item.strip()]
+            elif not isinstance(ac, list):
+                ac = []
             stories.append(
                 UserStory(
                     id=s.get("id", f"US-{i + 1:03d}"),
                     title=s.get("title", ""),
                     description=s.get("description", ""),
-                    acceptance_criteria=ac if isinstance(ac, list) else [],
+                    acceptance_criteria=ac,
                     notes=s.get("notes", ""),
                 )
             )
@@ -115,46 +118,125 @@ class RequirementParser:
         )
 
     def _parse_markdown(self, content: str) -> ParsedRequirement:
-        """解析 Markdown 格式需求"""
+        """解析 Markdown 格式需求
+
+        支持:
+        - ## / ### / #### 标题作为 Story
+        - - [ ] / - [x] checkbox 作为验收标准
+        - - / * 无序列表项作为验收标准
+        - | 表格行提取表头+内容
+        - ``` 代码块追加到 description
+        """
+        import re
+
         lines = content.split("\n")
 
-        # 提取项目名称 (# 一级标题)
         project_name = "Untitled"
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith("# "):
+            if stripped.startswith("# ") and not stripped.startswith("## "):
                 project_name = stripped[2:].strip()
                 break
 
-        # 提取 ## 二级标题作为 Story, - [ ] / - [x] 作为验收标准
         stories: list[UserStory] = []
         current_story: UserStory | None = None
         desc_lines: list[str] = []
+        in_code_block = False
+        code_lines: list[str] = []
+
+        heading_pattern = re.compile(r"^(#{2,4})\s+(.+)$")
+        checkbox_pattern = re.compile(r"^[-*]\s+\[[ xX]\]\s*(.+)$")
+        list_pattern = re.compile(r"^[-*]\s+(.+)$")
+        table_separator = re.compile(r"^\|?[\s\-:|]+\|?$")
+        bold_pattern = re.compile(r"\*\*(.+?)\*\*")
+
+        def finalize_story():
+            nonlocal current_story, desc_lines
+            if current_story:
+                current_story.description = "\n".join(desc_lines).strip()
+                stories.append(current_story)
 
         for line in lines:
-            stripped = line.strip()
-            if stripped.startswith("## "):
-                if current_story:
-                    current_story.description = "\n".join(desc_lines).strip()
-                    stories.append(current_story)
-                current_story = UserStory(
-                    id=f"US-{len(stories) + 1:03d}",
-                    title=stripped[3:].strip(),
-                    description="",
-                )
-                desc_lines = []
-            elif stripped.startswith("- [") and "]" in stripped:
-                # 验收标准 (checkbox)
-                bracket_end = stripped.index("]")
-                criteria = stripped[bracket_end + 1 :].strip()
-                if current_story and criteria:
+            raw = line.rstrip()
+            stripped = raw.strip()
+
+            if stripped.startswith("```"):
+                if in_code_block:
+                    in_code_block = False
+                    if current_story:
+                        code_text = "\n".join(code_lines)
+                        if code_text.strip():
+                            desc_lines.append("\n```\n" + code_text + "\n```")
+                    code_lines = []
+                else:
+                    in_code_block = True
+                    code_lines = []
+                continue
+
+            if in_code_block:
+                code_lines.append(raw)
+                continue
+
+            heading_match = heading_pattern.match(stripped)
+            if heading_match:
+                level = len(heading_match.group(1))
+                title = heading_match.group(2).strip()
+
+                if level == 2:
+                    finalize_story()
+                    current_story = UserStory(
+                        id=f"US-{len(stories) + 1:03d}",
+                        title=title,
+                        description="",
+                    )
+                    desc_lines = []
+                elif current_story:
+                    bold_matches = bold_pattern.findall(title)
+                    if bold_matches:
+                        for bm in bold_matches:
+                            current_story.acceptance_criteria.append(bm)
+                    else:
+                        desc_lines.append(f"{'#' * level} {title}")
+                continue
+
+            checkbox_match = checkbox_pattern.match(stripped)
+            if checkbox_match and current_story:
+                criteria = checkbox_match.group(1).strip()
+                if criteria:
                     current_story.acceptance_criteria.append(criteria)
-            elif current_story and stripped:
+                continue
+
+            if stripped.startswith("|") and current_story:
+                cells = [c.strip() for c in stripped.strip("|").split("|")]
+                if not table_separator.match(stripped):
+                    meaningful = [c for c in cells if c and c not in ("-", "--", "---")]
+                    if meaningful:
+                        if len(meaningful) >= 2 and any(
+                            kw in meaningful[0].lower()
+                            for kw in ("criteria", "标准", "acceptance", "requirement", "验收")
+                        ):
+                            for cell in meaningful[1:]:
+                                if cell.strip():
+                                    current_story.acceptance_criteria.append(cell.strip())
+                        else:
+                            desc_lines.append("| " + " | ".join(meaningful) + " |")
+                continue
+
+            list_match = list_pattern.match(stripped)
+            if list_match and current_story:
+                item = list_match.group(1).strip()
+                bold_in_item = bold_pattern.findall(item)
+                if bold_in_item:
+                    for bm in bold_in_item:
+                        current_story.acceptance_criteria.append(bm)
+                elif item and not item.startswith("["):
+                    current_story.acceptance_criteria.append(item)
+                continue
+
+            if current_story and stripped:
                 desc_lines.append(stripped)
 
-        if current_story:
-            current_story.description = "\n".join(desc_lines).strip()
-            stories.append(current_story)
+        finalize_story()
 
         return ParsedRequirement(
             project_name=project_name,

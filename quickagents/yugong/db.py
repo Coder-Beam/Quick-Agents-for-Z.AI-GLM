@@ -634,3 +634,34 @@ class YuGongDB:
             "total_checkpoints": total_checkpoints,
             "stories_by_status": status_counts,
         }
+
+    # ==================== DB 驱动辅助 ====================
+
+    def save_requirement(self, requirement) -> None:
+        """批量保存 ParsedRequirement 中的所有 stories"""
+        for story in requirement.user_stories:
+            self.save_story(story)
+
+    def get_next_pending_story(self) -> Optional[UserStory]:
+        """获取下一个可执行的 story (pending 或 failed 可重试)"""
+        pending = self.get_stories_by_status(StoryStatus.PENDING)
+        if pending:
+            pending.sort(key=lambda s: (s.priority.value, s.id))
+            return pending[0]
+
+        failed = self.get_stories_by_status(StoryStatus.FAILED)
+        retryable = [s for s in failed if s.can_retry()]
+        if retryable:
+            retryable.sort(key=lambda s: (s.priority.value, s.id))
+            return retryable[0]
+
+        return None
+
+    def get_executable_stories(self) -> list[UserStory]:
+        """获取所有可执行的 stories (pending + failed 可重试), 按优先级排序"""
+        pending = self.get_stories_by_status(StoryStatus.PENDING)
+        failed = self.get_stories_by_status(StoryStatus.FAILED)
+        retryable = [s for s in failed if s.can_retry()]
+        all_executable = pending + retryable
+        all_executable.sort(key=lambda s: (s.priority.value, s.id))
+        return all_executable

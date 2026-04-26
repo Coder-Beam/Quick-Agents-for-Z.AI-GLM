@@ -1526,6 +1526,8 @@ def cmd_export(args):
             ["git", "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=5,
             cwd=str(project_root),
         )
@@ -1543,6 +1545,8 @@ def cmd_export(args):
             ["git", "status", "--porcelain"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=10,
             cwd=str(project_root),
         )
@@ -1760,6 +1764,8 @@ def _detect_project_version():
             ["git", "describe", "--tags", "--abbrev=0"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=5,
         )
         if result.returncode == 0:
@@ -1881,7 +1887,7 @@ def cmd_update(args):
         ]
         print(f"\nDry run: {' '.join(cmd)}")
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
             print(result.stdout)
             if result.returncode != 0:
                 print(f"Error: {result.stderr}")
@@ -1895,7 +1901,7 @@ def cmd_update(args):
     print("-" * 50)
 
     try:
-        result = subprocess.run(cmd, capture_output=False, text=True, timeout=120)
+        result = subprocess.run(cmd, capture_output=False, text=True, encoding="utf-8", errors="replace", timeout=120)
 
         if result.returncode == 0:
             # 重新检查版本
@@ -2296,17 +2302,7 @@ def cmd_yugong(args):
         return
 
     if action == "start":
-        if not args.file:
-            print("[FAIL] 请提供需求文件路径")
-            print("  用法: qka yugong start <requirement.json>")
-            return
-
         from pathlib import Path
-
-        file_path = Path(args.file)
-        if not file_path.exists():
-            print(f"[FAIL] 文件不存在: {file_path}")
-            return
 
         # 构建配置
         overrides = {}
@@ -2323,38 +2319,65 @@ def cmd_yugong(args):
         if overrides:
             config = config.merge(overrides)
 
-        if args.dry_run:
-            print("[YuGong] DRY-RUN 模式 - 仅预览")
+        # DB 初始化
+        db_path = Path(args.db_path or ".quickagents/yugong.db")
+        alt_db = Path(".quickagents/unified.db")
+        if alt_db.exists() and not db_path.exists():
+            db_path = alt_db
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        from ..yugong.db import YuGongDB
+
+        db = YuGongDB(str(db_path))
+
+        use_continue = getattr(args, "continue_", False) or getattr(args, "continue", False)
+
+        if use_continue:
+            print("[YuGong] 从 DB 恢复循环...")
             print("=" * 50)
-            print(f"  配置: max_iterations={config.max_iterations}")
-            print(f"  需求文件: {file_path}")
             print()
-            content = file_path.read_text(encoding="utf-8")
+        else:
+            if not args.file:
+                print("[FAIL] 请提供需求文件路径 (或使用 --continue 从 DB 恢复)")
+                print("  用法: qka yugong start <requirement.json>")
+                print("  或:   qka yugong start --continue")
+                db.close()
+                return
+
+            file_path = Path(args.file)
+            if not file_path.exists():
+                print(f"[FAIL] 文件不存在: {file_path}")
+                db.close()
+                return
+
+            if args.dry_run:
+                print("[YuGong] DRY-RUN 模式 - 仅预览")
+                print("=" * 50)
+                print(f"  配置: max_iterations={config.max_iterations}")
+                print(f"  需求文件: {file_path}")
+                print()
+                parser = RequirementParser()
+                req = parser.parse(file_path)
+                print(f"  项目: {req.project_name}")
+                print(f"  Stories: {len(req.user_stories)}")
+                print()
+                print("  移除 --dry-run 参数以执行实际循环")
+                db.close()
+                return
+
+            print("[YuGong] 愚公循环启动!")
+            print("=" * 50)
+            print()
+
             parser = RequirementParser()
-            req = parser.parse(content)
+            req = parser.parse(file_path)
+
             print(f"  项目: {req.project_name}")
             print(f"  Stories: {len(req.user_stories)}")
+            print(f"  DB: {db_path}")
             print()
-            print("  移除 --dry-run 参数以执行实际循环")
-            return
 
-        print("[YuGong] 愚公循环启动!")
-        print("=" * 50)
-        print()
-
-        # 解析需求文件
-        from pathlib import Path
-
-        file_path = Path(args.file)
-        content = file_path.read_text(encoding="utf-8")
-        parser = RequirementParser()
-        req = parser.parse(content)
-
-        print(f"  项目: {req.project_name}")
-        print(f"  Stories: {len(req.user_stories)}")
-        print()
-
-        # 构建 LLM 客户端 (D4: 默认 ZhipuAI)
+        # 构建 LLM 客户端
         from ..yugong.llm_client import LLMConfig, LLMClient
         from ..yugong.tool_executor import ToolExecutor
         from ..yugong.agent_executor import AgentExecutor, AgentConfig
@@ -2365,6 +2388,7 @@ def cmd_yugong(args):
             print("[FAIL] 未找到 API Key")
             print("  请设置环境变量: ZHIPUAI_API_KEY")
             print("  或: OPENAI_API_KEY (使用 --provider openai)")
+            db.close()
             return
 
         if args.provider == "openai":
@@ -2373,18 +2397,19 @@ def cmd_yugong(args):
             except ValueError:
                 print("[FAIL] 未找到 OpenAI API Key")
                 print("  请设置环境变量: OPENAI_API_KEY")
+                db.close()
                 return
 
+        working_dir = str(Path(args.file).parent.resolve()) if args.file and not use_continue else "."
         llm_client = LLMClient(llm_config)
-        tool_executor = ToolExecutor(working_dir=str(file_path.parent.resolve()))
+        tool_executor = ToolExecutor(working_dir=working_dir)
         agent = AgentExecutor(
             llm_client=llm_client,
             tool_executor=tool_executor,
             config=AgentConfig(max_turns=args.max_turns or 15),
         )
 
-        # 创建循环并执行
-        loop = YuGongLoop(config=config, agent_fn=agent)
+        loop = YuGongLoop(config=config, agent_fn=agent, db=db)
 
         print(f"  Provider: {args.provider or 'zhipuai'}")
         print(f"  Model: {llm_config.model}")
@@ -2393,18 +2418,32 @@ def cmd_yugong(args):
         print("  执行中...")
         print("-" * 50)
 
-        outcome = loop.start(req)
+        try:
+            if use_continue:
+                outcome = loop.resume_from_db()
+            else:
+                outcome = loop.start(req)
+        except Exception as e:
+            logger.error("愚公循环异常: %s", e)
+            print(f"\n[ERROR] 循环异常: {e}")
+            outcome = None
 
         # 输出结果
         print()
         print("=" * 50)
-        if outcome.success:
-            print(f"[SUCCESS] 所有 Story 完成!")
+        if outcome:
+            if outcome.success:
+                print(f"[SUCCESS] 所有 Story 完成!")
+            else:
+                print(f"[DONE] 循环结束: {outcome.reason}")
+            print(f"  迭代次数: {outcome.total_iterations}")
+            print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
+            print(f"  耗时: {outcome.duration_seconds:.1f}s")
         else:
-            print(f"[DONE] 循环结束: {outcome.reason}")
-        print(f"  迭代次数: {outcome.total_iterations}")
-        print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
-        print(f"  耗时: {outcome.duration_seconds:.1f}s")
+            print("[DONE] 循环因异常终止, 状态已保存到 DB")
+            print("  使用 qka yugong start --continue 恢复执行")
+
+        db.close()
 
     if action == "report":
         # 生成执行报告 (D3决策: Markdown+JSON双格式)
@@ -2456,7 +2495,6 @@ def cmd_yugong(args):
         print(f"  JSON: {saved.get('json', 'N/A')}")
 
     if action == "resume":
-        # 从 DB 恢复并继续执行
         from pathlib import Path
         from ..yugong.db import YuGongDB
         from ..yugong.llm_client import LLMConfig, LLMClient
@@ -2474,29 +2512,23 @@ def cmd_yugong(args):
 
         db = YuGongDB(str(db_path))
         state = db.load_state()
-        if not state or state.status not in ("paused", "stopped", "waiting"):
-            print(f"[FAIL] 无法恢复: 当前状态={state.status if state else 'None'}")
-            print("  仅 paused/stopped/waiting 状态可恢复")
-            db.close()
-            return
-
-        # 加载之前的需求
         stories = db.get_all_stories()
+
         if not stories:
             print("[FAIL] 数据库中无 Story 记录")
             db.close()
             return
 
-        from ..yugong.models import ParsedRequirement, UserStory
-        from ..yugong.requirement_parser import RequirementParser
+        executable = [s for s in stories if s.status.value in ("pending", "failed", "running")]
+        if not executable:
+            print("[DONE] 所有 Stories 已完成")
+            db.close()
+            return
 
-        req = ParsedRequirement(
-            project_name="resumed-project",
-            branch_name="main",
-            user_stories=[s for s in stories if s.status.value in ("pending", "failed", "running")],
-        )
+        prev_status = state.status if state else "None"
+        prev_completed = state.completed_stories if state else 0
+        prev_total = state.total_stories if state else len(stories)
 
-        # 重建 Agent
         try:
             llm_config = LLMConfig.from_env(provider=args.provider or "zhipuai")
         except ValueError:
@@ -2513,27 +2545,34 @@ def cmd_yugong(args):
         )
 
         config = YuGongConfig()
-        loop = YuGongLoop(config=config, agent_fn=agent)
+        loop = YuGongLoop(config=config, agent_fn=agent, db=db)
 
         print("[YuGong] 从 DB 恢复循环...")
-        print(f"  之前状态: {state.status}")
-        print(f"  已完成: {state.completed_stories}/{state.total_stories}")
-        print(f"  待恢复 Stories: {len(req.user_stories)}")
+        print(f"  之前状态: {prev_status}")
+        print(f"  已完成: {prev_completed}/{prev_total}")
+        print(f"  待恢复 Stories: {len(executable)}")
         print()
 
-        outcome = loop.start(req)
-
-        # 持久化
-        db.save_state(loop.state)
-        db.close()
+        try:
+            outcome = loop.resume_from_db()
+        except Exception as e:
+            logger.error("愚公循环恢复异常: %s", e)
+            print(f"\n[ERROR] 恢复异常: {e}")
+            outcome = None
 
         print()
         print("=" * 50)
-        if outcome.success:
-            print("[SUCCESS] 恢复执行完成!")
+        if outcome:
+            if outcome.success:
+                print("[SUCCESS] 恢复执行完成!")
+            else:
+                print(f"[DONE] 恢复执行结束: {outcome.reason}")
+            print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
+            print(f"  耗时: {outcome.duration_seconds:.1f}s")
         else:
-            print(f"[DONE] 恢复执行结束: {outcome.reason}")
-        print(f"  Stories: {outcome.completed_stories}/{outcome.total_stories}")
+            print("[DONE] 恢复因异常终止, 状态已保存到 DB")
+
+        db.close()
 
 
 def cmd_skill(args):
@@ -3141,6 +3180,7 @@ def main():
     p_yugong.add_argument("--max-turns", "-t", type=int, default=15, help="单次执行最大对话轮次 (默认: 15)")
     p_yugong.add_argument("--db-path", "-b", type=str, default=".quickagents/yugong.db", help="数据库路径")
     p_yugong.add_argument("--report-dir", "-o", type=str, default=".quickagents/reports", help="报告输出目录")
+    p_yugong.add_argument("--continue", dest="continue_", action="store_true", help="从 DB 恢复继续执行 (不需要文件)")
     p_yugong.set_defaults(func=cmd_yugong)
 
     args = parser.parse_args()

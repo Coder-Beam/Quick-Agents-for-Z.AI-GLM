@@ -173,6 +173,8 @@ class TDDWorkflow:
                 shell=True,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root),
                 timeout=60
             )
@@ -228,6 +230,8 @@ class TDDWorkflow:
                     shell=True,
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     cwd=str(self.project_root),
                     timeout=120
                 )

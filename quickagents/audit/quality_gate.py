@@ -325,7 +325,7 @@ def _run_command(cmd: List[str], cwd: str, timeout: int) -> Dict:
     """执行命令并返回标准化结果"""
     start = time.time()
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=timeout)
+        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=cwd, timeout=timeout)
         duration = (time.time() - start) * 1000
         return {
             "passed": proc.returncode == 0,

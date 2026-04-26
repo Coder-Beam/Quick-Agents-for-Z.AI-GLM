@@ -1207,7 +1207,7 @@ class SkillEvolution:
         """获取最后一次Git提交信息"""
         try:
             # 获取提交hash
-            result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5)
             if result.returncode != 0:
                 return None
             commit_hash = result.stdout.strip()
@@ -1217,6 +1217,8 @@ class SkillEvolution:
                 ["git", "log", "-1", "--pretty=%s"],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=5,
             )
             message = result.stdout.strip() if result.returncode == 0 else ""
@@ -1233,6 +1235,8 @@ class SkillEvolution:
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=5,
             )
             files = result.stdout.strip().split("\n") if result.returncode == 0 else []
@@ -1355,8 +1359,9 @@ class SkillEvolution:
                     content = re.sub(rf"({value['param']}:\s*)\d+", rf"\g<1>{value['new_value']}", content)
 
             backup_path = skill_path + ".bak"
+            original_content = content
             with open(backup_path, "w", encoding="utf-8") as f:
-                pass
+                f.write(original_content)
 
             with open(skill_path, "w", encoding="utf-8") as f:
                 f.write(content)

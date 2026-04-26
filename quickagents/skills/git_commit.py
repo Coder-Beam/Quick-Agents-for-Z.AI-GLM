@@ -83,6 +83,8 @@ class GitCommit:
                 ['git', 'status', '--porcelain', '--branch'],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root)
             )
             
@@ -148,6 +150,8 @@ class GitCommit:
             cmd,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=str(self.project_root)
         )
         
@@ -208,6 +212,8 @@ class GitCommit:
                 cmd,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root),
                 timeout=120
             )
@@ -231,6 +237,8 @@ class GitCommit:
                 ['npm', 'list', 'eslint'],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root)
             )
             if 'eslint' in result.stdout:
@@ -247,6 +255,8 @@ class GitCommit:
                 cmd,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root),
                 timeout=60
             )
@@ -277,6 +287,8 @@ class GitCommit:
                 cmd,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root),
                 timeout=60
             )
@@ -419,6 +431,8 @@ class GitCommit:
                 ['git', 'commit', '-m', message],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root)
             )
             
@@ -431,6 +445,8 @@ class GitCommit:
                     ['git', 'rev-parse', 'HEAD'],
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     cwd=str(self.project_root)
                 )
                 commit_hash = hash_result.stdout.strip()[:7]
@@ -442,7 +458,7 @@ class GitCommit:
                     # 获取变更文件列表
                     files_result = subprocess.run(
                         ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', commit_hash],
-                        capture_output=True, text=True, timeout=5
+                        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5
                     )
                     files_changed = files_result.stdout.strip().split('\n') if files_result.returncode == 0 else []
                     trigger_git_commit({
@@ -480,6 +496,8 @@ class GitCommit:
                 ['git', 'push', remote, branch],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=str(self.project_root)
             )
             

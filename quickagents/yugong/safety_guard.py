@@ -128,12 +128,6 @@ class SafetyGuard:
         self.hourly_calls += 1
         self.hourly_tokens += result.token_usage.get("total", 0)
 
-        if self._loop_detector:
-            try:
-                self._loop_detector.record_tool_call("yugong_iteration", result.to_dict())
-            except Exception as e:
-                logger.debug(f"LoopDetector record failed: {e}")
-
         if not result.success:
             self.consecutive_no_progress += 1
             error_key = (result.error or "unknown")[:100]

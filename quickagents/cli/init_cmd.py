@@ -403,7 +403,7 @@ class InitCommand:
             db = UnifiedDB(str(db_path))
 
             # Set initial memory
-            from ..core.memory import MemoryType
+            from ..core.unified_db import MemoryType
 
             db.set_memory("project.name", self.project_dir.name, MemoryType.FACTUAL)
             db.set_memory("project.path", str(self.project_dir), MemoryType.FACTUAL)
